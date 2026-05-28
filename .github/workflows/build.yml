@@ -80,9 +80,10 @@ jobs:
       - name: Extract release notes
         shell: pwsh
         run: |
+          $root = "${{ github.workspace }}"
           $tag = "${{ github.ref_name }}"
           $ver = $tag -replace '^v', ''
-          $lines = Get-Content CHANGELOG.md
+          $lines = Get-Content "$root/CHANGELOG.md"
           $in = $false
           $out = @()
           foreach ($line in $lines) {
