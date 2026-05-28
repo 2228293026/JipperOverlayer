@@ -57,18 +57,24 @@ public class PlayCount
         try
         {
             string path = FilePath;
-            if (File.Exists(path)) File.Copy(path, path + ".bak", true);
-            using FileStream fs = new(path, FileMode.Create);
-            using MemoryStream ms = new();
-            ms.WriteByte(1);
-            ms.WriteInt(Datas.Count);
-            foreach (var pair in Datas)
+            if (Datas == null) { Main.Mod.Logger.Warning("Save skipped: Datas is null"); return; }
+            string tmpPath = path + ".tmp";
+            using (FileStream fs = new(tmpPath, FileMode.Create))
+            using (MemoryStream ms = new())
             {
-                if (pair.Value == null) continue;
-                ms.Write(pair.Key.data, 0, pair.Key.data.Length);
-                pair.Value.Write(ms);
+                ms.WriteByte(1);
+                ms.WriteInt(Datas.Count);
+                foreach (var pair in Datas)
+                {
+                    if (pair.Value == null) continue;
+                    ms.Write(pair.Key.data, 0, pair.Key.data.Length);
+                    pair.Value.Write(ms);
+                }
+                ms.WriteTo(fs);
             }
-            ms.WriteTo(fs);
+            if (File.Exists(path)) File.Copy(path, path + ".bak", true);
+            File.Delete(path);
+            File.Move(tmpPath, path);
         }
         catch (Exception e) { Main.Mod.Logger.Warning($"Error saving play data: {e.Message}"); }
     }

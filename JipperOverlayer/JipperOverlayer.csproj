@@ -119,6 +119,7 @@
     <Compile Include="Overlayer\BundleLoader.cs" />
     <Compile Include="Overlayer\IOverlayTextManager.cs" />
     <Compile Include="Overlayer\Overlay.cs" />
+    <Compile Include="Overlayer\OverlayMono.cs" />
     <Compile Include="Overlayer\OverlayTextManagerNormal.cs" />
     <Compile Include="Overlayer\OverlayTextManagerCoop.cs" />
     <Compile Include="Overlayer\PlayCount.cs" />

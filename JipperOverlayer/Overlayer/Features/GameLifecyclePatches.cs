@@ -23,12 +23,9 @@ internal static class GameLifecyclePatches
 
         PatchManager.RegisterPatches(() => Main.Settings.ShowProgress || Main.Settings.ShowAccuracy ||
               Main.Settings.ShowXAccuracy || Main.Settings.ShowMusicTime || Main.Settings.ShowMapTime ||
-              Main.Settings.ShowCheckpoint || Main.Settings.ShowBest || Main.Settings.ShowProgressBar,
-            typeof(PlanetMoveToNextFloorStatusPatch));
-        PatchManager.RegisterPatches(() => Main.Settings.ShowTimingScale,
-            typeof(PlanetMoveToNextFloorTimingPatch));
-        PatchManager.RegisterPatches(() => Main.Settings.ShowAttempt || Main.Settings.ShowFullAttempt,
-            typeof(PlanetMoveToNextFloorAttemptPatch));
+              Main.Settings.ShowCheckpoint || Main.Settings.ShowBest || Main.Settings.ShowProgressBar ||
+              Main.Settings.ShowTimingScale || Main.Settings.ShowAttempt || Main.Settings.ShowFullAttempt,
+            typeof(PlanetMoveToNextFloorPatch));
         PatchManager.RegisterPatches(() => Main.Settings.JongyeolMode,
             typeof(ScrShowIfDebugUpdatePatch),
             typeof(ScrShowIfDebugAwakePatch),
@@ -137,24 +134,21 @@ internal static class ControllerAwakeRewindPatch
     }
 }
 
-// ========== Progress / Timing / Attempt (version-agnostic) ==========
+// ========== Progress / Timing / Attempt (version-agnostic, merged) ==========
 
 [HarmonyPatch(typeof(scrPlanet), "MoveToNextFloor")]
-internal static class PlanetMoveToNextFloorStatusPatch
+internal static class PlanetMoveToNextFloorPatch
 {
-    static void Postfix(scrPlanet __instance) { GameLifecycleHelper.GetOverlay()?.UpdateProgress(__instance); }
-}
-
-[HarmonyPatch(typeof(scrPlanet), "MoveToNextFloor")]
-internal static class PlanetMoveToNextFloorTimingPatch
-{
-    static void Postfix() { if (Main.Settings.ShowTimingScale) GameLifecycleHelper.GetOverlay()?.UpdateTimingScale(); }
-}
-
-[HarmonyPatch(typeof(scrPlanet), "MoveToNextFloor")]
-internal static class PlanetMoveToNextFloorAttemptPatch
-{
-    static void Postfix() { GameLifecycleHelper.GetOverlay()?.UpdateAttempts(); }
+    static void Postfix(scrPlanet __instance)
+    {
+        var overlay = GameLifecycleHelper.GetOverlay();
+        if (overlay == null) return;
+        var s = Main.Settings;
+        if (s.ShowProgress || s.ShowAccuracy || s.ShowXAccuracy || s.ShowMusicTime || s.ShowMapTime || s.ShowCheckpoint || s.ShowBest || s.ShowProgressBar)
+            overlay.UpdateProgress(__instance);
+        if (s.ShowTimingScale) overlay.UpdateTimingScale();
+        if (s.ShowAttempt || s.ShowFullAttempt) overlay.UpdateAttempts();
+    }
 }
 
 // ========== Jongyeol UI (version-agnostic) ==========

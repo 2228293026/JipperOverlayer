@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -27,7 +26,7 @@ public class Overlay
     public TextMeshProUGUI ComboTitle;
     public TextMeshProUGUI ComboText;
     public RectTransform ComboTextTransform;
-    private RectTransform _comboTitleTransform;
+    internal RectTransform _comboTitleTransform;
     public TextMeshProUGUI BPMText;
     public TextMeshProUGUI JudgementText;
     public TextMeshProUGUI TimingScaleText;
@@ -51,7 +50,6 @@ public class Overlay
     public int[] Checkpoints;
     protected float LastTileBpm = -1;
     protected float LastCurBpm = -1;
-    private readonly Stopwatch _stopwatch = new();
     protected bool SongPlaying;
     public float StartProgress;
     public bool AutoOnceEnabled;
@@ -86,6 +84,9 @@ public class Overlay
         InitializeTimingScale();
         InitializeAttempt();
         UpdateSize();
+        var mono = GameObject.AddComponent<OverlayMono>();
+        mono.Overlay = this;
+        mono.enabled = false;
         RefreshTimeLabels();
         Object.DontDestroyOnLoad(GameObject);
         if (ADOBase.controller is { paused: false } && ADOBase.conductor is { isGameWorld: true })
@@ -504,8 +505,8 @@ public class Overlay
         if (!GameObject.activeSelf) return;
         ComboText.text = combo.ToString();
         ComboText.color = UpdateComboColor(combo);
-        if (bump) { _stopwatch.Restart(); UpdateComboSize(); }
-        else { _stopwatch.Stop(); ComboText.fontSize = 78; if (_comboTitleTransform) _comboTitleTransform.anchoredPosition = new Vector2(0, 43.505f); }
+        if (bump) { var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StartComboBump(); }
+        else { var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StopComboBump(); ComboText.fontSize = 78; if (_comboTitleTransform) _comboTitleTransform.anchoredPosition = new Vector2(0, 43.505f); }
     }
 
     public virtual Color UpdateComboColor(int combo)
@@ -513,21 +514,6 @@ public class Overlay
         if (combo > Main.Settings.ComboColorMax) combo = Main.Settings.ComboColorMax;
         return Main.Settings.Colors.GetComboColor((float)combo / Main.Settings.ComboColorMax);
     }
-
-    public void UpdateComboSize()
-    {
-        if (!_stopwatch.IsRunning || !GameObject.activeSelf) return;
-        double t = _stopwatch.Elapsed.TotalMilliseconds / 500;
-        if (t > 1) { t = 1; _stopwatch.Stop(); }
-        ComboText.fontSize = 30 * OutExpoChange(t) + 78;
-        if (_comboTitleTransform)
-        {
-            try { _comboTitleTransform.anchoredPosition = new Vector2(0, ComboTextTransform.sizeDelta.y / 2); }
-            catch { }
-        }
-    }
-
-    private static float OutExpoChange(double t) => (float)(t == 1 ? 0 : Math.Pow(2, -10 * t));
 
     public virtual void OnNonPerfectHit() { }
 
@@ -628,6 +614,8 @@ public class Overlay
         if (!AutoOnceEnabled) PlayCount.AddAttempts(LastHash, StartProgress);
         SetupTextManager();
         GameObject.SetActive(true);
+        var mono = GameObject.GetComponent<OverlayMono>();
+        if (mono) mono.enabled = true;
         SongPlaying = false; IsDeath = false;
 
         if (Main.Settings.ShowProgress || Main.Settings.ShowMusicTime || Main.Settings.ShowCheckpoint || Main.Settings.ShowBest)
@@ -670,6 +658,7 @@ public class Overlay
         _autoTextOriginalPos = null;
         if (GameObject == null || !GameObject.activeSelf) return;
         GameObject.SetActive(false);
+        if (GameObject.TryGetComponent<OverlayMono>(out var mono)) mono.enabled = false;
         try
         {
             if (!AutoOnceEnabled && _lastSavedStartProgress != -1)

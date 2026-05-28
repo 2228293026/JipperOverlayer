@@ -141,15 +141,8 @@ public static class Main
 
     private static void OnUpdate(UnityModManager.ModEntry modEntry, float deltaTime)
     {
-        if (_overlay == null) return;
-        try
-        {
-            _overlay.UpdateTime();
-            _overlay.UpdateComboSize();
-
-            if (Settings.JongyeolMode)
-                JOverlay.Instance?.UpdateFPS(deltaTime);
-        }
-        catch { }
+        if (Settings.JongyeolMode)
+            try { JOverlay.Instance?.UpdateFPS(deltaTime); }
+            catch { }
     }
 }
