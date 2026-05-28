@@ -1,0 +1,23 @@
+# ===== Build outputs =====
+JipperOverlayer/bin/
+JipperOverlayer/obj/
+
+# ===== Visual Studio =====
+.vs/
+*.suo
+*.sln.docstates
+*.user
+*.userosscache
+*.userprefs
+
+# ===== Unity =====
+JipperOverlayer-Unity/Library/
+JipperOverlayer-Unity/Logs/
+JipperOverlayer-Unity/UserSettings/
+
+# ===== Windows =====
+Desktop.ini
+Thumbs.db
+
+# ===== macOS =====
+.DS_Store

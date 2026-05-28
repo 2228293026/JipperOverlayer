@@ -1,0 +1,11 @@
+{
+  "Id": "JipperOverlayer",
+  "DisplayName": "Jipper Overlayer",
+  "Author": "Jongyeol",
+  "Version": "1.0.0",
+  "Requirements": [],
+  "AssemblyName": "JipperOverlayer.dll",
+  "EntryMethod": "JipperOverlayer.Main.Load",
+  "HomePage": "",
+  "Repository": ""
+}
