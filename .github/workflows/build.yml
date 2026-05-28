@@ -15,16 +15,16 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Build (Release)
         run: msbuild $env:PROJECT_PATH -restore -p:Configuration=Release
 
       - name: Upload DLL
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: JipperOverlayer
           path: JipperOverlayer/bin/Release/JipperOverlayer.dll
@@ -34,11 +34,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: JipperOverlayer
+          path: ./
 
       - name: Prepare mod package
         run: |
@@ -66,7 +67,7 @@ jobs:
           cd JipperOverlayer && zip -r ../JipperOverlayer.zip . && cd ..
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: JipperOverlayer-Package
           path: JipperOverlayer.zip
@@ -76,12 +77,13 @@ jobs:
     needs: package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: JipperOverlayer-Package
+          path: ./
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: JipperOverlayer.zip
           prerelease: ${{ contains(github.ref, '-') }}
