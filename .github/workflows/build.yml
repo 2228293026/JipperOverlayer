@@ -87,7 +87,7 @@ jobs:
           $lines = Get-Content "$root/CHANGELOG.md"
           $in = $false; $out = @()
           foreach ($line in $lines) {
-            if ($line -match "^## $tag`$") { $in = $true; continue }
+            if ($line -match "^## $tag") { $in = $true; continue }
             if ($in -and $line -match "^## ") { break }
             if ($in) { $out += $line }
           }
