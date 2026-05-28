@@ -77,9 +77,24 @@ jobs:
           name: JipperOverlayer-Package
           path: ./
 
+      - name: Extract release notes
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $ver = $tag -replace '^v', ''
+          $lines = Get-Content CHANGELOG.md
+          $in = $false
+          $out = @()
+          foreach ($line in $lines) {
+            if ($line -match "^## $ver") { $in = $true; continue }
+            if ($in -and $line -match "^## ") { break }
+            if ($in) { $out += $line }
+          }
+          $out -join "`n" | Set-Content relnotes.md -Encoding utf8
+
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
           files: JipperOverlayer.zip
           prerelease: ${{ contains(github.ref, '-') }}
-          generate_release_notes: true
+          body_path: relnotes.md
