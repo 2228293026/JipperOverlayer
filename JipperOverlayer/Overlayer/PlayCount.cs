@@ -58,7 +58,7 @@ public class PlayCount
         {
             string path = FilePath;
             if (File.Exists(path)) File.Copy(path, path + ".bak", true);
-            using FileStream fs = File.OpenWrite(path);
+            using FileStream fs = new(path, FileMode.Create);
             using MemoryStream ms = new();
             ms.WriteByte(1);
             ms.WriteInt(Datas.Count);

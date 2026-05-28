@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -63,6 +64,7 @@ public class Overlay
     private string _musicTimeLabel;
     private string _mapTimeLabel;
     private static readonly char[] HexChars = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'];
+    internal static readonly StringBuilder _textSb = new(256);
 
     public Overlay()
     {
@@ -429,9 +431,25 @@ public class Overlay
     public void UpdateJudgement()
     {
         if (!GameObject.activeSelf || Hit == null) return;
-        // Hit[10] only exists in v141+ (11-element array); v136 has 10 elements
-        string ep = Hit.Length > 10 ? $"<color=#60FF4E>{Hit[3] + Hit[10]}</color> " : $"<color=#60FF4E>{Hit[3]}</color> ";
-        JudgementText.text = $"{Hit[9]} <color=red>{Hit[0]} <color=#FF6F4E>{Hit[1]} <color=#A0FF4E>{Hit[2]} {ep}{Hit[4]}</color> {Hit[5]}</color> {Hit[6]}</color> {Hit[8]}";
+        _textSb.Clear();
+        _textSb.Append(Hit[9]);
+        _textSb.Append(" <color=red>");
+        _textSb.Append(Hit[0]);
+        _textSb.Append(" <color=#FF6F4E>");
+        _textSb.Append(Hit[1]);
+        _textSb.Append(" <color=#A0FF4E>");
+        _textSb.Append(Hit[2]);
+        _textSb.Append(" <color=#60FF4E>");
+        _textSb.Append(Hit[3] + (Hit.Length > 10 ? Hit[10] : 0));
+        _textSb.Append("</color> ");
+        _textSb.Append(Hit[4]);
+        _textSb.Append("</color> ");
+        _textSb.Append(Hit[5]);
+        _textSb.Append("</color> ");
+        _textSb.Append(Hit[6]);
+        _textSb.Append("</color> ");
+        _textSb.Append(Hit[8]);
+        JudgementText.text = _textSb.ToString();
     }
 
     public virtual void UpdateTime()
@@ -524,7 +542,16 @@ public class Overlay
         float kps = cbpm / 60;
         if (LastTileBpm == bpm && LastCurBpm == cbpm) return;
         string hex = ColorToHex(Main.Settings.Colors.GetBpmColor(bpm / Main.Settings.BpmColorMax));
-        BPMText.text = $"<color=white>TBPM | <color=#{hex}>{Math.Round(bpm, 2)}</color>\nCBPM |</color> {Math.Round(cbpm, 2)}\n<color=white>KPS |</color> {Math.Round(kps, 2)}";
+        _textSb.Clear();
+        _textSb.Append("<color=white>TBPM | <color=#");
+        _textSb.Append(hex);
+        _textSb.Append('>');
+        _textSb.Append(Math.Round(bpm, 2));
+        _textSb.Append("</color>\nCBPM |</color> ");
+        _textSb.Append(Math.Round(cbpm, 2));
+        _textSb.Append("\n<color=white>KPS |</color> ");
+        _textSb.Append(Math.Round(kps, 2));
+        BPMText.text = _textSb.ToString();
         if (LastCurBpm != cbpm) BPMText.color = Main.Settings.Colors.GetBpmColor(cbpm / Main.Settings.BpmColorMax);
         LastTileBpm = bpm; LastCurBpm = cbpm;
     }

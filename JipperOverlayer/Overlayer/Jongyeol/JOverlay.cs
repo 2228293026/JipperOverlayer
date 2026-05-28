@@ -27,6 +27,7 @@ public class JOverlay : Overlay
     private static object GetLevelData() => scnGame.instance ? scnGame.instance.levelData : null;
     private float _fpsTime;
     private bool _perToCom;
+    private float _timingsSum;
 
     public JOverlay() { Instance = this; }
 
@@ -81,6 +82,7 @@ public class JOverlay : Overlay
         _timings = [];
         UpdateTiming(0);
         _timings.Clear();
+        _timingsSum = 0;
     }
 
     public override void UpdateProgress(scrPlanet planet = null)
@@ -155,8 +157,11 @@ public class JOverlay : Overlay
     public void UpdateFPS(float deltaTime)
     {
         if (!Main.Settings.ShowFPS || !GameObject.activeSelf || (_fpsTime += deltaTime) < 0.01f) return;
-        FPSText.text = $"FPS | {1 / deltaTime:F4}";
         _fpsTime %= 0.01f;
+        Overlay._textSb.Clear();
+        Overlay._textSb.Append("FPS | ");
+        Overlay._textSb.Append((1f / deltaTime).ToString("F4"));
+        FPSText.text = Overlay._textSb.ToString();
     }
 
     public void UpdateAuthor()
@@ -224,11 +229,14 @@ public class JOverlay : Overlay
     public void UpdateTiming(float timing)
     {
         if (!Main.Settings.ShowTiming || !GameObject.activeSelf) return;
-        if (_timings.Count >= 5000) _timings.RemoveRange(0, 1000);
+        if (_timings.Count >= 5000)
+        {
+            for (int i = 0; i < 1000; i++) _timingsSum -= _timings[i];
+            _timings.RemoveRange(0, 1000);
+        }
         _timings.Add(timing);
-        float sum = 0;
-        for (int i = 0; i < _timings.Count; i++) sum += _timings[i];
-        TimingText.text = $"<color=white>Timing |</color> {Math.Round(timing, 5)} ({Math.Round(sum / _timings.Count, 5)})";
+        _timingsSum += timing;
+        TimingText.text = $"<color=white>Timing |</color> {Math.Round(timing, 5)} ({Math.Round(_timingsSum / _timings.Count, 5)})";
         TimingText.color = GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
     }
 
@@ -316,6 +324,7 @@ public class JOverlay : Overlay
     public override void Show(int floor)
     {
         _perToCom = false; _purePerfect = true; _pseudoFloor = -1;
+        _timingsSum = 0;
         if (scrController.checkpointsUsed == 0) ComboTitle.text = "Perfect";
         base.Show(floor);
     }
@@ -324,5 +333,6 @@ public class JOverlay : Overlay
     {
         base.Hide();
         _timings = null;
+        _timingsSum = 0;
     }
 }
