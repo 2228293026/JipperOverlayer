@@ -34,6 +34,9 @@ internal static class GameLifecyclePatches
             typeof(ScrShowIfDebugAwakePatch),
             typeof(RdcSetAutoPatch),
             typeof(ScrMiscGetHitMarginPatch));
+
+        // Always capture beta watermark reference when it awakens
+        PatchManager.RegisterPatches(() => true, typeof(BetaWatermarkCapturePatch));
     }
 
     static void RegisterChangeStatePatch()
@@ -203,6 +206,23 @@ internal static class ScrMiscGetHitMarginPatch
         float angle = (hitangle - refangle) * (isCW ? 1 : -1) * 57.29578f;
         float timing = angle / 180 / bpmTimesSpeed / conductorPitch * 60000;
         Jongyeol.JOverlay.Instance?.UpdateTiming(timing);
+    }
+}
+
+// ========== Beta watermark capture ==========
+
+[HarmonyPatch(typeof(scrEnableIfBeta), "Awake")]
+internal static class BetaWatermarkCapturePatch
+{
+    static void Postfix(scrEnableIfBeta __instance)
+    {
+        if (__instance.setBuildText)
+        {
+            Overlay.BetaWatermark = __instance;
+            var rt = __instance.GetComponent<RectTransform>();
+            if (rt != null)
+                Overlay.BetaWatermarkOriginalPos = rt.anchoredPosition;
+        }
     }
 }
 

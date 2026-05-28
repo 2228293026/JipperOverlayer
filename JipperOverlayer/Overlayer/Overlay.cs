@@ -42,6 +42,8 @@ public class Overlay
     private GameObject _attemptObject;
     private GameObject _progressBarObject;
     public static readonly Shader ShaderRef = (Shader)typeof(ShaderUtilities).GetProperty("ShaderRef_MobileSDF", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null);
+    internal static scrEnableIfBeta BetaWatermark;
+    internal static Vector2? BetaWatermarkOriginalPos;
     protected int LastTime = -1;
     protected int LastMapTime = -1;
     protected int StartTile;
@@ -307,6 +309,27 @@ public class Overlay
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
         if (_progressBarObject) _progressBarObject.SetActive(s.ShowProgressBar);
         if (GameObject.activeSelf) SetupLocationMain();
+        AdjustBetaWatermark();
+    }
+
+    private static void AdjustBetaWatermark()
+    {
+        if (BetaWatermark == null || !BetaWatermark.gameObject.activeInHierarchy) return;
+        var rt = BetaWatermark.GetComponent<RectTransform>();
+        if (rt == null) return;
+        if (BetaWatermarkOriginalPos == null)
+            BetaWatermarkOriginalPos = rt.anchoredPosition;
+        var pos = rt.anchoredPosition;
+        pos.y = Main.Settings.ShowBPM ? BetaWatermarkOriginalPos.Value.y - 110f : BetaWatermarkOriginalPos.Value.y;
+        rt.anchoredPosition = pos;
+    }
+
+    private static void ResetBetaWatermark()
+    {
+        if (BetaWatermark == null || BetaWatermarkOriginalPos == null) return;
+        var rt = BetaWatermark.GetComponent<RectTransform>();
+        if (rt == null) return;
+        rt.anchoredPosition = BetaWatermarkOriginalPos.Value;
     }
 
     protected void SetupShadow(TextMeshProUGUI text) => Shadow(text, 0.5f);
@@ -515,6 +538,7 @@ public class Overlay
         if (Main.Settings.ShowJudgement) UpdateJudgement();
         if (Main.Settings.ShowCombo) UpdateCombo(0, false);
         if (Main.Settings.ShowBPM) UpdateBPM();
+        AdjustBetaWatermark();
         if (Main.Settings.ShowTimingScale) UpdateTimingScale();
         if (Main.Settings.ShowAttempt) UpdateAttempts();
         Features.GameLifecycleHelper.ComboCount = 0;
@@ -539,6 +563,7 @@ public class Overlay
 
     public virtual void Hide()
     {
+        ResetBetaWatermark();
         if (GameObject == null || !GameObject.activeSelf) return;
         GameObject.SetActive(false);
         try
