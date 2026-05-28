@@ -3,6 +3,7 @@ using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityModManagerNet;
+using JipperOverlayer.Overlayer.Localization;
 using JipperOverlayer.Overlayer.Settings;
 
 namespace JipperOverlayer;
@@ -21,105 +22,117 @@ public class Settings : UnityModManager.ModSettings
     public bool JongyeolMode, ShowFPS = true, ShowAuthor = true, ShowState = true;
     public bool HideDebugText = true, ShowDeath = true, ShowStart = true, ShowTiming = true;
     public bool RemoveNotRequireInAuto = true, CheckPseudo = true, YellowCombo = true;
+    public Language Language;
 
     [JsonIgnore] public ColorConfig Colors;
 
     public void OnGUI(UnityModManager.ModEntry modEntry)
     {
-        Size = Slide("Size", Size, 0, 2, () => Overlayer.Overlay.Instance?.UpdateSize());
+        Size = Slide(Tr.Get("size"), Size, 0, 2, () => Overlayer.Overlay.Instance?.UpdateSize());
+
+        // Language selector
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(Tr.Get("lang_label"), GUILayout.Width(100));
+        var langs = new[] { "English", "Korean", "Chinese" };
+        int langIdx = (int)Language;
+        int newLang = GUILayout.SelectionGrid(langIdx, langs, 3);
+        if (newLang != langIdx) { Language = (Language)newLang; Overlayer.Overlay.Instance?.RefreshVisibility(); }
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(5);
 
         // ===== Status section (matches original ResourcePack layout) =====
-        ShowProgress = Tog("Show Progress", ShowProgress);
-        if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), "Progress Color",
+        ShowProgress = Tog(Tr.Get("show_progress"), ShowProgress);
+        if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get("progress_color"),
             () => { Colors.Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
 
-        ShowAccuracy = Tog("Show Accuracy", ShowAccuracy);
-        if (ShowAccuracy) Colors.Accuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), "Accuracy Color",
+        ShowAccuracy = Tog(Tr.Get("show_accuracy"), ShowAccuracy);
+        if (ShowAccuracy) Colors.Accuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get("accuracy_color"),
             () => { Colors.Accuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
 
-        ShowXAccuracy = Tog("Show XAccuracy", ShowXAccuracy);
-        if (ShowXAccuracy) Colors.XAccuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), "XAccuracy Color",
+        ShowXAccuracy = Tog(Tr.Get("show_xaccuracy"), ShowXAccuracy);
+        if (ShowXAccuracy) Colors.XAccuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get("xaccuracy_color"),
             () => { Colors.XAccuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
 
-        ShowMusicTime = Tog("Show Music Time", ShowMusicTime);
-        if (ShowMusicTime) Colors.MusicTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), "Music Time Color",
+        ShowMusicTime = Tog(Tr.Get("show_music_time"), ShowMusicTime);
+        if (ShowMusicTime) Colors.MusicTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get("music_time_color"),
             () => { Colors.MusicTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
 
-        ShowMapTime = Tog("Show Map Time", ShowMapTime);
-        if (ShowMapTime) Colors.MapTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), "Map Time Color",
+        ShowMapTime = Tog(Tr.Get("show_map_time"), ShowMapTime);
+        if (ShowMapTime) Colors.MapTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get("map_time_color"),
             () => { Colors.MapTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
 
-        ShowMapTimeIfNotMusic = Tog("Show Map Time If No Music", ShowMapTimeIfNotMusic);
+        ShowMapTimeIfNotMusic = Tog(Tr.Get("show_map_if_no"), ShowMapTimeIfNotMusic);
 
         // TimeTextType enum selector
         GUILayout.BeginHorizontal();
-        GUILayout.Label("Time Text Type", GUILayout.Width(100));
+        GUILayout.Label(Tr.Get("time_text_type"), GUILayout.Width(100));
         string[] timeTypes = ["Korean", "English"];
         int newTtt = GUILayout.SelectionGrid(TimeTextTypeValue, timeTypes, 2);
         if (newTtt != TimeTextTypeValue) { TimeTextTypeValue = newTtt; Overlayer.Overlay.Instance?.UpdateTime(); }
         GUILayout.EndHorizontal();
 
-        ShowCheckpoint = Tog("Show Checkpoint", ShowCheckpoint);
-        ShowBest = Tog("Show Best", ShowBest);
-        if (ShowBest) Colors.Best.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), "Best Color",
+        ShowCheckpoint = Tog(Tr.Get("show_checkpoint"), ShowCheckpoint);
+        ShowBest = Tog(Tr.Get("show_best"), ShowBest);
+        if (ShowBest) Colors.Best.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get("best_color"),
             () => { Colors.Best = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
 
-        ShowProgressBar = Tog("Show Progress Bar", ShowProgressBar);
+        ShowProgressBar = Tog(Tr.Get("show_progress_bar"), ShowProgressBar);
         if (ShowProgressBar)
         {
-            Colors.ProgressBar.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), "Progress Bar Color",
+            Colors.ProgressBar.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get("progress_bar_color"),
                 () => { Colors.ProgressBar = new([(1f, new Color(0.9216f, 0.8039f, 0.9765f))]); Colors.Save(Main.Mod); });
-            Colors.ProgressBarBackground.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), "Progress Bar Background Color",
+            Colors.ProgressBarBackground.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get("progress_bar_bg_color"),
                 () => { Colors.ProgressBarBackground = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
-            Colors.ProgressBarBorder.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), "Progress Bar Border Color",
+            Colors.ProgressBarBorder.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get("progress_bar_border_color"),
                 () => { Colors.ProgressBarBorder = new([(1f, Color.black)]); Colors.Save(Main.Mod); });
         }
 
         GUILayout.Space(10);
 
         // ===== Combo (matches original Combo.cs layout) =====
-        ShowCombo = Tog("Show Combo", ShowCombo);
+        ShowCombo = Tog(Tr.Get("show_combo"), ShowCombo);
         if (ShowCombo)
         {
-            EnableAutoCombo = Tog("Enable Auto Combo", EnableAutoCombo);
-            ComboColorMax = (int)Slide("Combo Color Max", ComboColorMax, 1, 5000, () => { });
-            Colors.Combo.SettingGUI(ColorChanged(null), "Combo Color");
+            EnableAutoCombo = Tog(Tr.Get("enable_auto_combo"), EnableAutoCombo);
+            ComboColorMax = (int)Slide(Tr.Get("combo_color_max"), ComboColorMax, 1, 5000, () => { });
+            Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get("combo_color"));
         }
 
         // ===== BPM (matches original BPM.cs layout) =====
-        ShowBPM = Tog("Show BPM", ShowBPM);
+        ShowBPM = Tog(Tr.Get("show_bpm"), ShowBPM);
         if (ShowBPM)
         {
-            BpmColorMax = Slide("BPM Color Max", BpmColorMax, 100, 20000, () => { });
-            Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), "BPM Color");
+            BpmColorMax = Slide(Tr.Get("bpm_color_max"), BpmColorMax, 100, 20000, () => { });
+            Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get("bpm_color"));
         }
 
         // ===== Judgement =====
-        ShowJudgement = Tog("Show Judgement", ShowJudgement);
-        if (ShowJudgement) JudgementLocationUp = Tog("Judgement Location Up", JudgementLocationUp);
+        ShowJudgement = Tog(Tr.Get("show_judgement"), ShowJudgement);
+        if (ShowJudgement) JudgementLocationUp = Tog(Tr.Get("judgement_up"), JudgementLocationUp);
 
         // ===== Timing Scale =====
-        ShowTimingScale = Tog("Show Timing Scale", ShowTimingScale);
+        ShowTimingScale = Tog(Tr.Get("show_timing_scale"), ShowTimingScale);
 
         // ===== Attempt (matches original Attempt.cs layout) =====
-        ShowAttempt = Tog("Show Attempt", ShowAttempt);
-        ShowFullAttempt = Tog("Show Full Attempt", ShowFullAttempt);
+        ShowAttempt = Tog(Tr.Get("show_attempt"), ShowAttempt);
+        ShowFullAttempt = Tog(Tr.Get("show_full_attempt"), ShowFullAttempt);
 
         bool prevJongyeol = JongyeolMode;
-        JongyeolMode = Tog("Jongyeol Mode", JongyeolMode);
+        JongyeolMode = Tog(Tr.Get("jongyeol_mode"), JongyeolMode);
         if (JongyeolMode != prevJongyeol) { Main.RecreateOverlay(); PatchManager.RefreshPatches(); }
         if (JongyeolMode)
         {
-            ShowFPS = Tog("Show FPS", ShowFPS);
-            ShowAuthor = Tog("Show Author", ShowAuthor);
-            ShowState = Tog("Show State", ShowState);
-            ShowDeath = Tog("Show Death", ShowDeath);
-            ShowStart = Tog("Show Start", ShowStart);
-            ShowTiming = Tog("Show Timing", ShowTiming);
-            HideDebugText = Tog("Hide Debug Text", HideDebugText);
-            RemoveNotRequireInAuto = Tog("Remove Not Required In Auto", RemoveNotRequireInAuto);
-            CheckPseudo = Tog("Check Pseudo", CheckPseudo);
-            YellowCombo = Tog("Yellow Combo", YellowCombo);
+            ShowFPS = Tog(Tr.Get("show_fps"), ShowFPS);
+            ShowAuthor = Tog(Tr.Get("show_author"), ShowAuthor);
+            ShowState = Tog(Tr.Get("show_state"), ShowState);
+            ShowDeath = Tog(Tr.Get("show_death"), ShowDeath);
+            ShowStart = Tog(Tr.Get("show_start"), ShowStart);
+            ShowTiming = Tog(Tr.Get("show_timing"), ShowTiming);
+            HideDebugText = Tog(Tr.Get("hide_debug_text"), HideDebugText);
+            RemoveNotRequireInAuto = Tog(Tr.Get("remove_auto_req"), RemoveNotRequireInAuto);
+            CheckPseudo = Tog(Tr.Get("check_pseudo"), CheckPseudo);
+            YellowCombo = Tog(Tr.Get("yellow_combo"), YellowCombo);
         }
 
         // Apply toggle changes to overlay

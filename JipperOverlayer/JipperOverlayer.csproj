@@ -135,6 +135,8 @@
     <Compile Include="Overlayer\Jongyeol\JOverlayTextManagerNormal.cs" />
     <Compile Include="Overlayer\Jongyeol\JOverlayTextManagerCoop.cs" />
     <Compile Include="Overlayer\Jongyeol\Jbpm.cs" />
+    <Compile Include="Overlayer\Localization\Language.cs" />
+    <Compile Include="Overlayer\Localization\Tr.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
