@@ -51,8 +51,6 @@ jobs:
           cp Info.json output/
 
           # Asset bundles (rename for runtime version detection)
-          # 2019 and 2022 bundles are identical, copy once under both names
-          cp JipperOverlayer-Unity/Assets/AssetBundles2022/jipperoverlayerbundle output/jipperoverlayerbundle
           cp JipperOverlayer-Unity/Assets/AssetBundles2022/jipperoverlayerbundle output/jipperoverlayerbundle2022
           cp JipperOverlayer-Unity/Assets/AssetBundles6000/jipperoverlayerbundle output/jipperoverlayerbundle6000
 
