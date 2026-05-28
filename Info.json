@@ -2,10 +2,10 @@
   "Id": "JipperOverlayer",
   "DisplayName": "Jipper Overlayer",
   "Author": "Jongyeol",
-  "Version": "1.0.0",
+  "Version": "1.0.1",
   "Requirements": [],
   "AssemblyName": "JipperOverlayer.dll",
   "EntryMethod": "JipperOverlayer.Main.Load",
-  "HomePage": "",
-  "Repository": ""
+  "HomePage": "https://github.com/2228293026/JipperOverlayer",
+  "Repository": "https://raw.githubusercontent.com/2228293026/JipperOverlayer/refs/heads/master/Repository.json"
 }
