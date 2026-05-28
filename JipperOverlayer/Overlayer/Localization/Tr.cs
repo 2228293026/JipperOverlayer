@@ -62,7 +62,8 @@ public static class Tr
 
     public static string Get(string key)
     {
-        var lang = Main.Settings.Language;
+        if (Main.Settings == null) return key;
+        var lang = Main.Settings.CurrentLanguage;
         if (_strings.TryGetValue(key, out var values) && (int)lang < values.Length)
             return values[(int)lang];
         return key;

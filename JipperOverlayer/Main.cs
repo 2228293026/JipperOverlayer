@@ -141,6 +141,7 @@ public static class Main
 
     private static void OnUpdate(UnityModManager.ModEntry modEntry, float deltaTime)
     {
+        MainThreadDispatcher.ExecutePending();
         if (_overlay == null) return;
         try
         {

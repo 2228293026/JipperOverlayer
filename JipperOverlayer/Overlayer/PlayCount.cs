@@ -236,21 +236,27 @@ internal static class StreamExtensions
     public static int ReadInt(this Stream stream)
     {
         byte[] buf = new byte[4];
-        stream.Read(buf, 0, 4);
+        if (stream.Read(buf, 0, 4) < 4) throw new EndOfStreamException();
         return buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
     }
 
     public static float ReadFloat(this Stream stream)
     {
         byte[] buf = new byte[4];
-        stream.Read(buf, 0, 4);
+        if (stream.Read(buf, 0, 4) < 4) throw new EndOfStreamException();
         return BitConverter.ToSingle(buf, 0);
     }
 
     public static byte[] ReadBytes(this Stream stream, int count)
     {
         byte[] buf = new byte[count];
-        stream.Read(buf, 0, count);
+        int offset = 0;
+        while (offset < count)
+        {
+            int read = stream.Read(buf, offset, count - offset);
+            if (read == 0) throw new EndOfStreamException();
+            offset += read;
+        }
         return buf;
     }
 

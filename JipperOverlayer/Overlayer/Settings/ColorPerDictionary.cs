@@ -74,7 +74,7 @@ public class ColorPerDictionary {
         GUILayout.BeginVertical();
 
         if (GUILayout.Button(Tr.Get("add_color_stop"))) {
-            List.Add(new ProgressColorCache(UnityEngine.Random.value, new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value)));
+            List.Add(new ProgressColorCache(Random.value, new Color(Random.value, Random.value, Random.value)));
             SortList();
             onChanged?.Invoke(); changed = true;
         }

@@ -316,23 +316,26 @@ public class Overlay
     {
         Task.Delay(1).ContinueWith(_ =>
         {
-            try
+            MainThreadDispatcher.Enqueue(() =>
             {
-                var baseMat = text.fontSharedMaterial ?? text.fontMaterial;
-                var mat = new Material(baseMat);
-                if (ShaderRef) mat.shader = ShaderRef;
-                mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-                mat.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
-                mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.01f);
-                mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-                mat.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0, 0, 0, a));
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 1f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -1f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
-                text.fontSharedMaterial = mat;
-            }
-            catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
+                try
+                {
+                    var baseMat = text.fontSharedMaterial ?? text.fontMaterial;
+                    var mat = new Material(baseMat);
+                    if (ShaderRef) mat.shader = ShaderRef;
+                    mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
+                    mat.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
+                    mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.01f);
+                    mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+                    mat.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0, 0, 0, a));
+                    mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 1f);
+                    mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -1f);
+                    mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
+                    mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+                    text.fontSharedMaterial = mat;
+                }
+                catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
+            });
         });
     }
 
@@ -447,7 +450,7 @@ public class Overlay
         double t = _stopwatch.Elapsed.TotalMilliseconds / 500;
         if (t > 1) { t = 1; _stopwatch.Stop(); }
         ComboText.fontSize = 30 * OutExpoChange(t) + 78;
-        Task.Delay(1).ContinueWith(_ => UpdateComboLocation());
+        Task.Delay(1).ContinueWith(_ => MainThreadDispatcher.Enqueue(UpdateComboLocation));
     }
 
     private void UpdateComboLocation()

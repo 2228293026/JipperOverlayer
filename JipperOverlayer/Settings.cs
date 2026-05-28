@@ -22,7 +22,7 @@ public class Settings : UnityModManager.ModSettings
     public bool JongyeolMode, ShowFPS = true, ShowAuthor = true, ShowState = true;
     public bool HideDebugText = true, ShowDeath = true, ShowStart = true, ShowTiming = true;
     public bool RemoveNotRequireInAuto = true, CheckPseudo = true, YellowCombo = true;
-    public Language Language;
+    public Language CurrentLanguage;
 
     [JsonIgnore] public ColorConfig Colors;
 
@@ -34,9 +34,9 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.BeginHorizontal();
         GUILayout.Label(Tr.Get("lang_label"), GUILayout.Width(100));
         var langs = new[] { "English", "Korean", "Chinese" };
-        int langIdx = (int)Language;
+        int langIdx = (int)CurrentLanguage;
         int newLang = GUILayout.SelectionGrid(langIdx, langs, 3);
-        if (newLang != langIdx) { Language = (Language)newLang; Overlayer.Overlay.Instance?.RefreshVisibility(); }
+        if (newLang != langIdx) { CurrentLanguage = (Overlayer.Localization.Language)newLang; Overlayer.Overlay.Instance?.RefreshVisibility(); }
         GUILayout.EndHorizontal();
 
         GUILayout.Space(5);

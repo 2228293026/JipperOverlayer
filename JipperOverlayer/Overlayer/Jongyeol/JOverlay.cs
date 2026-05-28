@@ -195,9 +195,10 @@ public class JOverlay : Overlay
 
     private void CheckPurePerfect()
     {
-        for (int i = 0; i < 10; i++)
+        // Hit[3] and Hit[7] are "good" hits that don't break perfect
+        for (int i = 0; i < Hit.Length && i < 10; i++)
         {
-            if (i is 3 or 7) i++;
+            if (i is 3 or 7) continue;
             if (Hit[i] != 0) { _purePerfect = false; return; }
         }
     }
