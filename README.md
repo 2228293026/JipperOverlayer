@@ -74,4 +74,4 @@ This project uses GitHub Actions for automated builds:
 
 ## License
 
-© 2026 Jongyeol
+MIT © 2026 Jongyeol
