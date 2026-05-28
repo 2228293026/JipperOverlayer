@@ -1,5 +1,4 @@
 using System;
-using System;
 using System.Collections.Generic;
 using JipperOverlayer.Overlayer.Localization;
 using Newtonsoft.Json;
