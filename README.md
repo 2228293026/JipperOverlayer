@@ -1,4 +1,8 @@
 # JipperOverlayer
+![C#](https://img.shields.io/badge/Lang-C%23-c9c8e4?logo=csharp)
+![Visual Studio 2022](https://img.shields.io/badge/IDE-Visual%20Studio%202022-5C2D91?logo=visualstudio&logoColor=white)
+[![Downloads](https://img.shields.io/github/downloads/2228293026/JipperOverlayer/total)](https://github.com/2228293026/JipperOverlayer/releases/latest)
+[![Build](https://github.com/2228293026/JipperOverlayer/actions/workflows/build.yml/badge.svg)](https://github.com/2228293026/JipperOverlayer/actions/workflows/build.yml)
 
 A Unity Mod Manager mod for **A Dance of Fire and Ice (ADOFAI)** that provides an in-game overlay with progress, accuracy, BPM, combo, judgement, and more.
 
