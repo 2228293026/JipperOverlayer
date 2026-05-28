@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -153,17 +154,29 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.BeginHorizontal();
         GUILayout.Label(label, GUILayout.Width(120));
         float nv = GUILayout.HorizontalSlider(v, min, max);
-        GUILayout.Label(nv.ToString("F2"), GUILayout.Width(35));
+        // Text input, defaults to F2 when not focused
+        if (!_slideFields.TryGetValue(label, out var text))
+            _slideFields[label] = text = v.ToString("F2");
+        string newText = GUILayout.TextField(text, GUILayout.Width(55));
+        if (newText != text)
+        {
+            _slideFields[label] = newText;
+            if (float.TryParse(newText, out float parsed))
+                nv = Mathf.Clamp(parsed, min, max);
+        }
+        else if (newText == text && Math.Abs(nv - v) > 0.001f)
+        {
+            _slideFields[label] = nv.ToString("F2");
+        }
         GUILayout.EndHorizontal();
         if (Math.Abs(nv - v) > 0.001f) { onChange?.Invoke(); return nv; }
         return v;
     }
 
-    // Color change callback: update overlay only (saving handled by OnSaveGUI)
-    static Action ColorChanged(Action updateOverlay) => () => {
-        updateOverlay?.Invoke();
-        Overlayer.Overlay.Instance?.RefreshVisibility();
-    };
+    static readonly Dictionary<string, string> _slideFields = new();
+
+    // Color change callback: update overlay only (saving handled by OnSaveGUI, layout refresh at end of OnGUI)
+    static Action ColorChanged(Action updateOverlay) => () => updateOverlay?.Invoke();
 
     public void OnSaveGUI(UnityModManager.ModEntry modEntry) { Save(modEntry); Colors?.Save(modEntry); }
     public override void Save(UnityModManager.ModEntry modEntry) { UnityModManagerNet.UnityModManager.ModSettings.Save<Settings>(this, modEntry); }

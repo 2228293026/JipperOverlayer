@@ -42,7 +42,11 @@ public class PlayCount
         }
     }
 
-    public static void Dispose() => Datas = null;
+    public static void Dispose()
+    {
+        Save();
+        Datas = null;
+    }
 
     public static void AddAttempts(Hash hash, float progress) => GetData(hash).AddAttempts(progress, Multiplier);
     public static void RemoveAttempts(Hash hash, float progress) => GetData(hash).RemoveAttempts(progress, Multiplier);
@@ -87,7 +91,6 @@ public class PlayCount
             if (attempts.ContainsKey(key)) attempts[key]++;
             else attempts[key] = 1;
             totalAttempts++;
-            Save();
         }
 
         public void RemoveAttempts(float progress, float multiplier)
@@ -96,7 +99,6 @@ public class PlayCount
             if (value == 1) attempts.Remove((progress, multiplier));
             else attempts[(progress, multiplier)]--;
             totalAttempts--;
-            Save();
         }
 
         public void SetBest(float start, float cur, float multiplier)
@@ -107,7 +109,6 @@ public class PlayCount
                 if (!(best[key] < cur)) return;
             }
             best[key] = cur;
-            Save();
         }
 
         public void Write(Stream stream)

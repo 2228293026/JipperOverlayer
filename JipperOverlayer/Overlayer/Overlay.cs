@@ -60,6 +60,9 @@ public class Overlay
     public PlayCount.Hash LastHash;
     private float _lastSavedStartProgress = -1;
     public float LastMultiplier = 1f;
+    private string _musicTimeLabel;
+    private string _mapTimeLabel;
+    private static readonly char[] HexChars = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'];
 
     public Overlay()
     {
@@ -81,6 +84,7 @@ public class Overlay
         InitializeTimingScale();
         InitializeAttempt();
         UpdateSize();
+        RefreshTimeLabels();
         Object.DontDestroyOnLoad(GameObject);
         if (ADOBase.controller is { paused: false } && ADOBase.conductor is { isGameWorld: true })
             Show(0);
@@ -308,6 +312,8 @@ public class Overlay
         if (_progressBarObject) _progressBarObject.SetActive(s.ShowProgressBar);
         if (GameObject.activeSelf) SetupLocationMain();
         if (GameObject.activeSelf) AdjustBetaWatermark();
+        RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf);
+        RefreshTimeLabels();
     }
 
     private static void AdjustBetaWatermark()
@@ -448,7 +454,7 @@ public class Overlay
                 if (time == 0 && SongPlaying) timeStr = MusicTimeCache;
                 else if (time > 0) { SongPlaying = true; timeStr = GetTimeString(time, hourNeed); }
                 else timeStr = GetTimeString(time, hourNeed);
-                TimeText.text = $"<color=white>{(s.TimeTextTypeValue == 0 ? "음악 시간" : "Music Time")} |</color> {timeStr}~{MusicTimeCache}";
+                TimeText.text = $"{_musicTimeLabel} {timeStr}~{MusicTimeCache}";
                 LastTime = (int)time;
                 TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
             }
@@ -463,7 +469,7 @@ public class Overlay
             bool hourNeed = totalTime >= 3600;
             MapTimeCache ??= GetTimeString(totalTime, hourNeed);
             string tStr = time == totalTime ? MapTimeCache : GetTimeString(time, hourNeed);
-            string txt = $"<color=white>{(s.TimeTextTypeValue == 0 ? "맵 시간" : "Map Time")} |</color> {tStr}~{MapTimeCache}";
+            string txt = $"{_mapTimeLabel} {tStr}~{MapTimeCache}";
             if (s.ShowMapTime) { MapTimeText.text = txt; LastMapTime = (int)time; MapTimeText.color = s.Colors.GetMapTimeColor(time / totalTime); }
             if (requireMusicToMap) { TimeText.text = txt; LastTime = (int)time; TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime); }
         }
@@ -523,8 +529,51 @@ public class Overlay
         LastTileBpm = bpm; LastCurBpm = cbpm;
     }
 
-    protected static string ColorToHex(Color c) =>
-        $"{Mathf.RoundToInt(c.r * 255):X2}{Mathf.RoundToInt(c.g * 255):X2}{Mathf.RoundToInt(c.b * 255):X2}{(c.a == 1 ? "" : Mathf.RoundToInt(c.a * 255).ToString("X2"))}";
+    private void RefreshTimeLabels()
+    {
+        _musicTimeLabel = $"<color=white>{(Main.Settings.TimeTextTypeValue == 0 ? "음악 시간" : "Music Time")} |</color>";
+        _mapTimeLabel = $"<color=white>{(Main.Settings.TimeTextTypeValue == 0 ? "맵 시간" : "Map Time")} |</color>";
+    }
+
+    private static scrShowIfDebug _autoText;
+    private static Vector2? _autoTextOriginalPos;
+
+    private static void RepositionAutoText(bool needRoom)
+    {
+        if (_autoText == null)
+        {
+            var all = Resources.FindObjectsOfTypeAll<scrShowIfDebug>();
+            foreach (var s in all)
+            {
+                if (!s.hideWithNoAuto || !s.gameObject.scene.IsValid()) continue;
+                _autoText = s;
+                break;
+            }
+        }
+        if (_autoText == null) return;
+        var rt = _autoText.GetComponent<RectTransform>();
+        if (rt == null) return;
+        if (_autoTextOriginalPos == null)
+            _autoTextOriginalPos = rt.anchoredPosition;
+        var pos = rt.anchoredPosition;
+        pos.x = needRoom ? 300f : _autoTextOriginalPos.Value.x;
+        rt.anchoredPosition = pos;
+    }
+
+    protected static string ColorToHex(Color c)
+    {
+        int r = Mathf.RoundToInt(c.r * 255);
+        int g = Mathf.RoundToInt(c.g * 255);
+        int b = Mathf.RoundToInt(c.b * 255);
+        int a = c.a == 1 ? -1 : Mathf.RoundToInt(c.a * 255);
+        int len = a >= 0 ? 8 : 6;
+        char[] chars = new char[len];
+        chars[0] = HexChars[r >> 4]; chars[1] = HexChars[r & 0xF];
+        chars[2] = HexChars[g >> 4]; chars[3] = HexChars[g & 0xF];
+        chars[4] = HexChars[b >> 4]; chars[5] = HexChars[b & 0xF];
+        if (a >= 0) { chars[6] = HexChars[a >> 4]; chars[7] = HexChars[a & 0xF]; }
+        return new string(chars);
+    }
 
     public void UpdateTimingScale()
     {
@@ -563,6 +612,9 @@ public class Overlay
         if (Main.Settings.ShowTimingScale) UpdateTimingScale();
         if (Main.Settings.ShowAttempt) UpdateAttempts();
         Features.GameLifecycleHelper.ComboCount = 0;
+        var s2 = Main.Settings;
+        RepositionAutoText(s2.ShowProgress || s2.ShowAccuracy || s2.ShowXAccuracy || s2.ShowMusicTime || s2.ShowMapTime || s2.ShowCheckpoint || s2.ShowBest);
+        RefreshTimeLabels();
     }
 
     public void Death()
@@ -570,6 +622,7 @@ public class Overlay
         IsDeath = true;
         if (AutoOnceEnabled || _lastSavedStartProgress == -1) return;
         PlayCount.SetBest(LastHash, _lastSavedStartProgress, OverlayTextManager.GetProgress(), LastMultiplier);
+        PlayCount.Save();
         _lastSavedStartProgress = -1;
         OverlayTextManager.SetBest(OverlayTextManager.GetProgress());
     }
@@ -585,6 +638,9 @@ public class Overlay
     public virtual void Hide()
     {
         ResetBetaWatermark();
+        RepositionAutoText(false);
+        _autoText = null;
+        _autoTextOriginalPos = null;
         if (GameObject == null || !GameObject.activeSelf) return;
         GameObject.SetActive(false);
         try
@@ -598,6 +654,7 @@ public class Overlay
                 PlayCount.RemoveAttempts(LastHash, StartProgress);
         }
         catch (Exception e) { Main.Mod.Logger.Warning($"Hide: {e.Message}"); }
+        PlayCount.Save();
         StartProgress = StartTile = NoCheckStartTile = -1;
         OverlayTextManager = null;
     }
