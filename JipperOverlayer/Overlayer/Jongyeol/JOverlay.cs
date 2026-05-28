@@ -224,6 +224,7 @@ public class JOverlay : Overlay
     public void UpdateTiming(float timing)
     {
         if (!Main.Settings.ShowTiming || !GameObject.activeSelf) return;
+        if (_timings.Count >= 5000) _timings.RemoveRange(0, 1000);
         _timings.Add(timing);
         float sum = 0;
         for (int i = 0; i < _timings.Count; i++) sum += _timings[i];

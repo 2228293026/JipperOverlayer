@@ -10,10 +10,14 @@ public class OverlayTextManagerCoop : IOverlayTextManager
     public float CurBest = -1;
     public int CurCheck;
     public int LastCheckpoint = -1;
+    private string[] _accStrings;
+    private string[] _xaccStrings;
 
     public OverlayTextManagerCoop(Overlay overlay)
     {
         PlayerDatas = new PlayerData[scrPlayerManager.playerCount];
+        _accStrings = new string[PlayerDatas.Length + 1];
+        _xaccStrings = new string[PlayerDatas.Length + 1];
         overlay.ProgressText.color = Color.white;
         overlay.AccuracyText.color = Color.white;
         overlay.XAccuracyText.color = Color.white;
@@ -53,10 +57,9 @@ public class OverlayTextManagerCoop : IOverlayTextManager
                     SetAccuracy(ref PlayerDatas[i], overlay.NoCheckStartTile, i);
             else SetAccuracy(ref PlayerDatas[index], overlay.NoCheckStartTile, index);
 
-            var strings = new string[PlayerDatas.Length + 1];
-            strings[0] = "Accuracy";
-            for (int i = 0; i < PlayerDatas.Length; i++) strings[i + 1] = PlayerDatas[i].AccuracyString;
-            overlay.AccuracyText.text = string.Concat(strings);
+            _accStrings[0] = "Accuracy";
+            for (int i = 0; i < PlayerDatas.Length; i++) _accStrings[i + 1] = PlayerDatas[i].AccuracyString;
+            overlay.AccuracyText.text = string.Concat(_accStrings);
         }
         if (Main.Settings.ShowXAccuracy)
         {
@@ -65,10 +68,9 @@ public class OverlayTextManagerCoop : IOverlayTextManager
                     SetXAccuracy(ref PlayerDatas[i], i);
             else SetXAccuracy(ref PlayerDatas[index], index);
 
-            var strings = new string[PlayerDatas.Length + 1];
-            strings[0] = "XAccuracy";
-            for (int i = 0; i < PlayerDatas.Length; i++) strings[i + 1] = PlayerDatas[i].XAccuracyString;
-            overlay.XAccuracyText.text = string.Concat(strings);
+            _xaccStrings[0] = "XAccuracy";
+            for (int i = 0; i < PlayerDatas.Length; i++) _xaccStrings[i + 1] = PlayerDatas[i].XAccuracyString;
+            overlay.XAccuracyText.text = string.Concat(_xaccStrings);
         }
     }
 

@@ -34,16 +34,28 @@ public class ColorPerDictionary {
     public Color GetColor(float key) {
         if (key < 0) key = 0;
         if (key > 1) key = 1;
-        if (PerfectColor != null && key == 1) return PerfectColor;
-        if (List.Count == 0) return PerfectColor ?? Color.white;
-        int index = BinarySearch(key);
-        if (index == 0) return List[0];
-        if (index == List.Count) return List[List.Count - 1];
-        if (List[index].Progress == key) return List[index];
-        float s = List[index - 1].Progress;
-        float e = List[index].Progress;
-        return Color.Lerp(List[index - 1], List[index], (key - s) / (e - s));
+        if (_lastKey == key && _lastColor.HasValue) return _lastColor.Value;
+        Color result;
+        if (PerfectColor != null && key == 1) result = PerfectColor;
+        else if (List.Count == 0) result = PerfectColor ?? Color.white;
+        else {
+            int index = BinarySearch(key);
+            if (index == 0) result = List[0];
+            else if (index == List.Count) result = List[List.Count - 1];
+            else if (List[index].Progress == key) result = List[index];
+            else {
+                float s = List[index - 1].Progress;
+                float e = List[index].Progress;
+                result = Color.Lerp(List[index - 1], List[index], (key - s) / (e - s));
+            }
+        }
+        _lastKey = key;
+        _lastColor = result;
+        return result;
     }
+
+    float _lastKey = -1f;
+    Color? _lastColor;
 
     int BinarySearch(float value) {
         if (List.Count == 0) return 0;

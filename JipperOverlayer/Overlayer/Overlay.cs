@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using TMPro;
 using UnityEngine;
@@ -345,6 +346,8 @@ public class Overlay
     protected void SetupShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.5f);
     protected void SetupDarkShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.7f);
 
+    private static readonly Dictionary<float, Material> ShadowMaterialCache = new();
+
     private static readonly int OutlineColorId = ShaderUtilities.ID_OutlineColor;
     private static readonly int OutlineWidthId = ShaderUtilities.ID_OutlineWidth;
     private static readonly int UnderlayColorId = ShaderUtilities.ID_UnderlayColor;
@@ -357,18 +360,22 @@ public class Overlay
     {
         try
         {
-            var baseMat = text.fontSharedMaterial ?? text.fontMaterial;
-            var mat = new Material(baseMat);
-            if (ShaderRef) mat.shader = ShaderRef;
-            mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-            mat.SetColor(OutlineColorId, Color.black);
-            mat.SetFloat(OutlineWidthId, 0.01f);
-            mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-            mat.SetColor(UnderlayColorId, new Color(0, 0, 0, a));
-            mat.SetFloat(UnderlayOffsetXId, 1f);
-            mat.SetFloat(UnderlayOffsetYId, -1f);
-            mat.SetFloat(UnderlayDilateId, 0f);
-            mat.SetFloat(UnderlaySoftnessId, 0f);
+            if (!ShadowMaterialCache.TryGetValue(a, out var mat))
+            {
+                var baseMat = text.fontSharedMaterial ?? text.fontMaterial;
+                mat = new Material(baseMat);
+                if (ShaderRef) mat.shader = ShaderRef;
+                mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
+                mat.SetColor(OutlineColorId, Color.black);
+                mat.SetFloat(OutlineWidthId, 0.01f);
+                mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+                mat.SetColor(UnderlayColorId, new Color(0, 0, 0, a));
+                mat.SetFloat(UnderlayOffsetXId, 1f);
+                mat.SetFloat(UnderlayOffsetYId, -1f);
+                mat.SetFloat(UnderlayDilateId, 0f);
+                mat.SetFloat(UnderlaySoftnessId, 0f);
+                ShadowMaterialCache[a] = mat;
+            }
             text.fontSharedMaterial = mat;
         }
         catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
@@ -437,7 +444,10 @@ public class Overlay
                 if (LastTime == (int)time) return;
                 bool hourNeed = totalTime >= 3600;
                 MusicTimeCache ??= GetTimeString(totalTime, hourNeed);
-                string timeStr = time == 0 && SongPlaying ? MusicTimeCache : (time > 0 ? (SongPlaying = true, GetTimeString(time, hourNeed)).Item2 : GetTimeString(time, hourNeed));
+                string timeStr;
+                if (time == 0 && SongPlaying) timeStr = MusicTimeCache;
+                else if (time > 0) { SongPlaying = true; timeStr = GetTimeString(time, hourNeed); }
+                else timeStr = GetTimeString(time, hourNeed);
                 TimeText.text = $"<color=white>{(s.TimeTextTypeValue == 0 ? "음악 시간" : "Music Time")} |</color> {timeStr}~{MusicTimeCache}";
                 LastTime = (int)time;
                 TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
