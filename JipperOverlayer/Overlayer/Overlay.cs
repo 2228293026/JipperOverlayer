@@ -1,7 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -141,8 +139,7 @@ public class Overlay
         SetupLocationMainText(MapTimeText, s.ShowMapTime, ref y);
         SetupLocationMainText(CheckpointText,
             s.ShowCheckpoint &&
-            (Checkpoints ??= scrLevelMaker.instance.listFloors.Where(f => f.GetComponent<ffxCheckpoint>())
-                .Select(f => f.seqID).ToArray()).Length > 0, ref y);
+            (Checkpoints ??= CollectCheckpoints()).Length > 0, ref y);
         SetupLocationMainText(BestText, s.ShowBest, ref y);
         UpdateProgress();
         VersionSafe.CalculatePercentAcc();
@@ -309,7 +306,7 @@ public class Overlay
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
         if (_progressBarObject) _progressBarObject.SetActive(s.ShowProgressBar);
         if (GameObject.activeSelf) SetupLocationMain();
-        AdjustBetaWatermark();
+        if (GameObject.activeSelf) AdjustBetaWatermark();
     }
 
     private static void AdjustBetaWatermark()
@@ -332,34 +329,49 @@ public class Overlay
         rt.anchoredPosition = BetaWatermarkOriginalPos.Value;
     }
 
-    protected void SetupShadow(TextMeshProUGUI text) => Shadow(text, 0.5f);
-    protected void SetupDarkShadow(TextMeshProUGUI text) => Shadow(text, 0.7f);
-
-    private void Shadow(TextMeshProUGUI text, float a)
+    protected static int[] CollectCheckpoints()
     {
-        Task.Delay(1).ContinueWith(_ =>
+        var floors = scrLevelMaker.instance.listFloors;
+        int count = 0;
+        for (int i = 0; i < floors.Count; i++)
+            if (floors[i].GetComponent<ffxCheckpoint>()) count++;
+        int[] result = new int[count];
+        int idx = 0;
+        for (int i = 0; i < floors.Count; i++)
+            if (floors[i].GetComponent<ffxCheckpoint>()) result[idx++] = floors[i].seqID;
+        return result;
+    }
+
+    protected void SetupShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.5f);
+    protected void SetupDarkShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.7f);
+
+    private static readonly int OutlineColorId = ShaderUtilities.ID_OutlineColor;
+    private static readonly int OutlineWidthId = ShaderUtilities.ID_OutlineWidth;
+    private static readonly int UnderlayColorId = ShaderUtilities.ID_UnderlayColor;
+    private static readonly int UnderlayOffsetXId = ShaderUtilities.ID_UnderlayOffsetX;
+    private static readonly int UnderlayOffsetYId = ShaderUtilities.ID_UnderlayOffsetY;
+    private static readonly int UnderlayDilateId = ShaderUtilities.ID_UnderlayDilate;
+    private static readonly int UnderlaySoftnessId = ShaderUtilities.ID_UnderlaySoftness;
+
+    private void ApplyShadowMaterial(TextMeshProUGUI text, float a)
+    {
+        try
         {
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                try
-                {
-                    var baseMat = text.fontSharedMaterial ?? text.fontMaterial;
-                    var mat = new Material(baseMat);
-                    if (ShaderRef) mat.shader = ShaderRef;
-                    mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-                    mat.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
-                    mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.01f);
-                    mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-                    mat.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0, 0, 0, a));
-                    mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 1f);
-                    mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -1f);
-                    mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
-                    mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
-                    text.fontSharedMaterial = mat;
-                }
-                catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
-            });
-        });
+            var baseMat = text.fontSharedMaterial ?? text.fontMaterial;
+            var mat = new Material(baseMat);
+            if (ShaderRef) mat.shader = ShaderRef;
+            mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            mat.SetColor(OutlineColorId, Color.black);
+            mat.SetFloat(OutlineWidthId, 0.01f);
+            mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            mat.SetColor(UnderlayColorId, new Color(0, 0, 0, a));
+            mat.SetFloat(UnderlayOffsetXId, 1f);
+            mat.SetFloat(UnderlayOffsetYId, -1f);
+            mat.SetFloat(UnderlayDilateId, 0f);
+            mat.SetFloat(UnderlaySoftnessId, 0f);
+            text.fontSharedMaterial = mat;
+        }
+        catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
     }
 
     public void UpdateAccuracy(int index = -1)
@@ -434,7 +446,8 @@ public class Overlay
         if (s.ShowMapTime || requireMusicToMap)
         {
             float time = (float)(scrConductor.instance.addoffset + scrConductor.instance.songposition_minusi);
-            float totalTime = (float)scrLevelMaker.instance.listFloors.Last().entryTime;
+            var floors = scrLevelMaker.instance.listFloors;
+            float totalTime = (float)floors[floors.Count - 1].entryTime;
             if (time < 0) time = 0; else if (time > totalTime) time = totalTime;
             if ((!s.ShowMapTime || LastMapTime == (int)time) && (!requireMusicToMap || LastTime == (int)time)) return;
             bool hourNeed = totalTime >= 3600;
@@ -473,13 +486,11 @@ public class Overlay
         double t = _stopwatch.Elapsed.TotalMilliseconds / 500;
         if (t > 1) { t = 1; _stopwatch.Stop(); }
         ComboText.fontSize = 30 * OutExpoChange(t) + 78;
-        Task.Delay(1).ContinueWith(_ => MainThreadDispatcher.Enqueue(UpdateComboLocation));
-    }
-
-    private void UpdateComboLocation()
-    {
-        try { if (_comboTitleTransform) _comboTitleTransform.anchoredPosition = new Vector2(0, ComboTextTransform.sizeDelta.y / 2); }
-        catch { }
+        if (_comboTitleTransform)
+        {
+            try { _comboTitleTransform.anchoredPosition = new Vector2(0, ComboTextTransform.sizeDelta.y / 2); }
+            catch { }
+        }
     }
 
     private static float OutExpoChange(double t) => (float)(t == 1 ? 0 : Math.Pow(2, -10 * t));

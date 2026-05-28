@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ADOFAI;
@@ -12,6 +11,7 @@ public class PlayCount
 {
     public static Dictionary<Hash, PlayData> Datas;
     private static string FilePath => Path.Combine(Main.Mod.Path, "Plays.dat");
+    private static readonly MD5 Md5 = MD5.Create();
 
     public static float Multiplier => (float)(ADOBase.conductor.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance));
 
@@ -157,14 +157,18 @@ public class PlayCount
             var key = (progress, Multiplier);
             return attempts.ContainsKey(key) ? attempts[key] : 0;
         }
-        public int GetAttempts() => attempts.Values.Sum();
+        public int GetAttempts()
+        {
+            int sum = 0;
+            foreach (var v in attempts.Values) sum += v;
+            return sum;
+        }
         public static implicit operator int(PlayData data) => data.totalAttempts;
     }
 
     public static Hash GetMapHash()
     {
-        using MD5 md5 = MD5.Create();
-        return md5.ComputeHash(ADOBase.isOfficialLevel ? Encoding.UTF8.GetBytes(ADOBase.currentLevel) : GetHash());
+        lock (Md5) { return Md5.ComputeHash(ADOBase.isOfficialLevel ? Encoding.UTF8.GetBytes(ADOBase.currentLevel) : GetHash()); }
     }
 
     private static byte[] GetHash()
@@ -219,14 +223,32 @@ public class PlayCount
         {
             if (data == hash) return true;
             if (data == null || hash == null || data.Length != hash.Length) return false;
-            return !data.Where((t, i) => t != hash[i]).Any();
+            for (int i = 0; i < data.Length; i++)
+                if (data[i] != hash[i]) return false;
+            return true;
         }
-        public override int GetHashCode() => data != null ? ToString().GetHashCode() : 0;
+        public override int GetHashCode()
+        {
+            if (data == null) return 0;
+            int h = 0;
+            for (int i = 0; i < data.Length && i < 16; i++)
+                h = h * 31 + data[i];
+            return h;
+        }
         public static bool operator ==(Hash left, Hash right) => left.Equals(right);
         public static bool operator !=(Hash left, Hash right) => !(left == right);
         public static implicit operator Hash(byte[] hash) => new(hash);
         public static implicit operator byte[](Hash hash) => hash.data;
-        public override string ToString() => string.Concat(data.Select(b => b.ToString("x2")));
+        public override string ToString()
+        {
+            char[] chars = new char[data.Length * 2];
+            for (int i = 0; i < data.Length; i++)
+            {
+                chars[i * 2] = "0123456789abcdef"[data[i] >> 4];
+                chars[i * 2 + 1] = "0123456789abcdef"[data[i] & 0xF];
+            }
+            return new string(chars);
+        }
     }
 }
 

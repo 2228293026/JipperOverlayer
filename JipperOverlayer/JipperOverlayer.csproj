@@ -116,7 +116,6 @@
     <Compile Include="Settings.cs" />
     <Compile Include="UtilExtensions.cs" />
     <Compile Include="Main.cs" />
-    <Compile Include="MainThreadDispatcher.cs" />
     <Compile Include="Overlayer\BundleLoader.cs" />
     <Compile Include="Overlayer\IOverlayTextManager.cs" />
     <Compile Include="Overlayer\Overlay.cs" />

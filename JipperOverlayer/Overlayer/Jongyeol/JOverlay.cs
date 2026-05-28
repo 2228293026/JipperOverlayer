@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using JipperOverlayer.Overlayer;
 using JipperOverlayer.Overlayer.Features;
 using TMPro;
@@ -64,7 +63,7 @@ public class JOverlay : Overlay
         SetupLocationMainText(XAccuracyText, checkAuto && s.ShowXAccuracy, ref y);
         SetupLocationMainText(TimeText, s.ShowMusicTime, ref y);
         SetupLocationMainText(MapTimeText, s.ShowMapTime, ref y);
-        Checkpoints ??= scrLevelMaker.instance.listFloors.FindAll(f => f.GetComponent<ffxCheckpoint>()).Select(f => f.seqID).ToArray();
+        Checkpoints ??= CollectCheckpoints();
         SetupLocationMainText(CheckpointText, checkAuto && s.ShowCheckpoint && Checkpoints.Length > 0, ref y);
         SetupLocationMainText(BestText, checkAuto && s.ShowBest, ref y);
         SetupLocationMainText(StateText, s.ShowState, ref y);
@@ -118,7 +117,8 @@ public class JOverlay : Overlay
         if (s.ShowMapTime || requireMusicToMap)
         {
             float time = (float)(scrConductor.instance.addoffset + scrConductor.instance.songposition_minusi);
-            float totalTime = (float)scrLevelMaker.instance.listFloors.Last().entryTime;
+            var floors = scrLevelMaker.instance.listFloors;
+            float totalTime = (float)floors[floors.Count - 1].entryTime;
             if (time < 0) time = 0;
             else if (time > totalTime) time = totalTime;
             if (!s.ShowMapTime && !requireMusicToMap) return;
@@ -225,7 +225,9 @@ public class JOverlay : Overlay
     {
         if (!Main.Settings.ShowTiming || !GameObject.activeSelf) return;
         _timings.Add(timing);
-        TimingText.text = $"<color=white>Timing |</color> {Math.Round(timing, 5)} ({Math.Round(_timings.Average(), 5)})";
+        float sum = 0;
+        for (int i = 0; i < _timings.Count; i++) sum += _timings[i];
+        TimingText.text = $"<color=white>Timing |</color> {Math.Round(timing, 5)} ({Math.Round(sum / _timings.Count, 5)})";
         TimingText.color = GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
     }
 
