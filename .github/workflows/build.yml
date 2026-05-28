@@ -1,0 +1,88 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PROJECT_PATH: JipperOverlayer/JipperOverlayer.csproj
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build (Release)
+        run: msbuild $env:PROJECT_PATH -restore -p:Configuration=Release
+
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: JipperOverlayer
+          path: JipperOverlayer/bin/Release/JipperOverlayer.dll
+
+  package:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: JipperOverlayer
+
+      - name: Prepare mod package
+        run: |
+          mkdir -p JipperOverlayer/Linux JipperOverlayer/Mac
+
+          # Core mod files
+          mv JipperOverlayer.dll JipperOverlayer/
+          cp Info.json JipperOverlayer/
+
+          # Asset bundles (rename for runtime version detection)
+          cp JipperOverlayer-Unity/Assets/AssetBundles/jipperoverlayerbundle JipperOverlayer/
+          cp JipperOverlayer-Unity/Assets/AssetBundles2022/jipperoverlayerbundle JipperOverlayer/jipperoverlayerbundle2022
+          cp JipperOverlayer-Unity/Assets/AssetBundles6000/jipperoverlayerbundle JipperOverlayer/jipperoverlayerbundle6000
+
+          # Platform variants (same bundles for now)
+          cp JipperOverlayer/jipperoverlayerbundle JipperOverlayer/Linux/
+          cp JipperOverlayer/jipperoverlayerbundle2022 JipperOverlayer/Linux/
+          cp JipperOverlayer/jipperoverlayerbundle6000 JipperOverlayer/Linux/
+          cp JipperOverlayer/jipperoverlayerbundle JipperOverlayer/Mac/
+          cp JipperOverlayer/jipperoverlayerbundle2022 JipperOverlayer/Mac/
+          cp JipperOverlayer/jipperoverlayerbundle6000 JipperOverlayer/Mac/
+
+      - name: Create zip
+        run: |
+          cd JipperOverlayer && zip -r ../JipperOverlayer.zip . && cd ..
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JipperOverlayer-Package
+          path: JipperOverlayer.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: JipperOverlayer-Package
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: JipperOverlayer.zip
+          prerelease: ${{ contains(github.ref, '-') }}
+          generate_release_notes: true
