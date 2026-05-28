@@ -84,16 +84,16 @@ jobs:
         run: |
           $root = "${{ github.workspace }}"
           $tag = "${{ github.ref_name }}"
-          $ver = $tag -replace '^v', ''
           $lines = Get-Content "$root/CHANGELOG.md"
-          $in = $false
-          $out = @()
+          $in = $false; $out = @()
           foreach ($line in $lines) {
-            if ($line -match "^## $ver") { $in = $true; continue }
+            if ($line -match "^## $tag`$") { $in = $true; continue }
             if ($in -and $line -match "^## ") { break }
             if ($in) { $out += $line }
           }
-          $out -join "`n" | Set-Content relnotes.md -Encoding utf8
+          $body = $out -join "`n"
+          if ($body.Trim() -eq "") { $body = "See CHANGELOG.md for details." }
+          $body | Set-Content relnotes.md -Encoding utf8
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
