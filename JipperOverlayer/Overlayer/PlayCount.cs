@@ -13,7 +13,7 @@ public class PlayCount
     private static string FilePath => Path.Combine(Main.Mod.Path, "Plays.dat");
     private static readonly MD5 Md5 = MD5.Create();
 
-    public static float Multiplier => (float)(ADOBase.conductor.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance));
+    public static float Multiplier => (float)(ADOBase.conductor?.song?.pitch ?? 1.0);
 
     public static void Load()
     {
