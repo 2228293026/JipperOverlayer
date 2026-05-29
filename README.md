@@ -76,6 +76,12 @@ This project uses GitHub Actions for automated builds:
 | Tag `v*.*.*` | Build + package + GitHub Release |
 | Tag containing `-` (e.g. `v1.0.0-pre1`) | Prerelease |
 
+## Acknowledgements
+- Key layout and visual style references [JipperResourcePack](https://github.com/Jongye0l/JipperResourcePack).
+
 ## License
 
-MIT © 2026 Jongyeol
+- Primarily **MIT License** — see [LICENSE](./LICENSE.txt).
+
+- Code adapted from [JipperResourcePack](https://github.com/Jongye0l/JipperResourcePack) by Jongyeol is under **BSD 3-Clause** — see [LICENSE-BSD](./LICENSE-BSD).
+
