@@ -332,6 +332,9 @@ public class JOverlay : Overlay
         if (DeathText) DeathText.font = font;
         if (StartText) StartText.font = font;
         if (TimingText) TimingText.font = font;
+        // Re-apply shadow materials (per-font cache)
+        foreach (var t in new[] { FPSText, AuthorText, StateText, DeathText, StartText, TimingText })
+        { if (t) try { SetupShadow(t); } catch { } }
     }
 
     public override void ApplyAlignment()
