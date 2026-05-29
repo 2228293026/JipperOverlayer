@@ -36,7 +36,7 @@ internal static class V141Patches
 
 // ===== BPM =====
 
-[HarmonyPatch(typeof(scrPlayer), "Hit")]
+[HarmonyPatch(typeof(scrPlayer), nameof(scrPlayer.Hit))]
 internal static class ScrPlayerHitBpmPatch
 {
     static void Postfix() { if (Main.Settings.ShowBPM) GameLifecycleHelper.GetOverlay()?.UpdateBPM(); }
@@ -44,7 +44,7 @@ internal static class ScrPlayerHitBpmPatch
 
 // ===== Combo =====
 
-[HarmonyPatch(typeof(scrMarginTracker), "AddHit")]
+[HarmonyPatch(typeof(scrMarginTracker), nameof(scrMarginTracker.AddHit))]
 internal static class ScrMarginAddHitComboPatch
 {
     static void Postfix(HitMargin hit)
@@ -63,13 +63,13 @@ internal static class ScrMarginAddHitComboPatch
 
 // ===== Judgement =====
 
-[HarmonyPatch(typeof(scrMarginTracker), "AddHit")]
+[HarmonyPatch(typeof(scrMarginTracker), nameof(scrMarginTracker.AddHit))]
 internal static class ScrMarginAddHitJudgementPatch
 {
     static void Postfix() { if (Main.Settings.ShowJudgement) GameLifecycleHelper.GetOverlay()?.UpdateJudgement(); }
 }
 
-[HarmonyPatch(typeof(scrMarginTracker), "Reset")]
+[HarmonyPatch(typeof(scrMarginTracker), nameof(scrMarginTracker.Reset))]
 internal static class ScrMarginResetPatch
 {
     static void Postfix() { if (Main.Settings.ShowJudgement) GameLifecycleHelper.GetOverlay()?.UpdateJudgement(); }
@@ -77,7 +77,7 @@ internal static class ScrMarginResetPatch
 
 // ===== Accuracy =====
 
-[HarmonyPatch(typeof(scrMarginTracker), "CalculatePercentAcc")]
+[HarmonyPatch(typeof(scrMarginTracker), nameof(scrMarginTracker.CalculatePercentAcc))]
 internal static class ScrMarginCalcAccPatch
 {
     static void Postfix(scrMarginTracker __instance)
@@ -97,7 +97,7 @@ internal static class ScrMarginCalcAccPatch
 
 // ===== Jongyeol Combo =====
 
-[HarmonyPatch(typeof(scrMarginTracker), "AddHit")]
+[HarmonyPatch(typeof(scrMarginTracker), nameof(scrMarginTracker.AddHit))]
 internal static class ScrMarginAddHitJComboPatch
 {
     static void Postfix(HitMargin hit)

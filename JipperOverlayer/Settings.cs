@@ -31,6 +31,7 @@ public class Settings : UnityModManager.ModSettings
     public int MainAlign = 257, BPMAlign = 260, JudgeAlign = 1026;
     public int ComboAlign = 514, ComboValAlign = 258;
     public int TimingAlign = 1026, AttemptAlign = 1025;
+    public int MainStyle, BPMStyle, JudgeStyle, ComboStyle, ComboValStyle, TimingStyle, AttemptStyle;
     public float MainPX = 0.008f, MainPY = 0.985f;
     public float BPMPX = 0.992f, BPMPY = 0.985f;
     public float JudgePX = 0.5f, JudgePY = 0.005f;
@@ -164,21 +165,21 @@ public class Settings : UnityModManager.ModSettings
         ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);
 
         GUILayout.Space(5);
-        _alignFold = GUILayout.Toggle(_alignFold, Tr.Get(Tr.Key.Alignment), GUILayout.ExpandWidth(false));
+        _alignFold = GUILayout.Toggle(_alignFold, Tr.Get(Tr.Key.TextSettings), GUILayout.ExpandWidth(false));
         if (_alignFold)
         {
-            DrawAlignment(Tr.Get(Tr.Key.AlignMain), ref MainAlign);
-            DrawAlignment(Tr.Get(Tr.Key.AlignBpm), ref BPMAlign);
-            DrawAlignment(Tr.Get(Tr.Key.AlignJudge), ref JudgeAlign);
-            DrawAlignment(Tr.Get(Tr.Key.AlignCombo), ref ComboAlign);
-            DrawAlignment(Tr.Get(Tr.Key.AlignComboVal), ref ComboValAlign);
-            DrawAlignment(Tr.Get(Tr.Key.AlignTiming), ref TimingAlign);
-            DrawAlignment(Tr.Get(Tr.Key.AlignAttempt), ref AttemptAlign);
+            DrawAlignment(Tr.Get(Tr.Key.AlignMain), ref MainAlign, ref MainStyle);
+            DrawAlignment(Tr.Get(Tr.Key.AlignBpm), ref BPMAlign, ref BPMStyle);
+            DrawAlignment(Tr.Get(Tr.Key.AlignJudge), ref JudgeAlign, ref JudgeStyle);
+            DrawAlignment(Tr.Get(Tr.Key.AlignCombo), ref ComboAlign, ref ComboStyle);
+            DrawAlignment(Tr.Get(Tr.Key.AlignComboVal), ref ComboValAlign, ref ComboValStyle);
+            DrawAlignment(Tr.Get(Tr.Key.AlignTiming), ref TimingAlign, ref TimingStyle);
+            DrawAlignment(Tr.Get(Tr.Key.AlignAttempt), ref AttemptAlign, ref AttemptStyle);
             GUILayout.Space(3);
             GUILayout.BeginHorizontal();
             GUILayout.Space(16);
-            if (GUILayout.Button(Tr.Get(Tr.Key.ApplyAlignment))) Overlayer.Overlay.Instance?.ApplyAlignment();
-            if (GUILayout.Button(Tr.Get(Tr.Key.AlignReset), GUILayout.Width(50))) { ResetAlignment(); Overlayer.Overlay.Instance?.ApplyAlignment(); }
+            if (GUILayout.Button(Tr.Get(Tr.Key.ApplyAlignment))) { Overlayer.Overlay.Instance?.ApplyAlignment(); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
+            if (GUILayout.Button(Tr.Get(Tr.Key.AlignReset), GUILayout.Width(50))) { ResetAlignment(); ResetStyle(); Overlayer.Overlay.Instance?.ApplyAlignment(); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
             GUILayout.EndHorizontal();
         }
 
@@ -216,6 +217,11 @@ public class Settings : UnityModManager.ModSettings
         MainAlign = 257; BPMAlign = 260; JudgeAlign = 1026;
         ComboAlign = 514; ComboValAlign = 258;
         TimingAlign = 1026; AttemptAlign = 1025;
+    }
+
+    void ResetStyle()
+    {
+        MainStyle = BPMStyle = JudgeStyle = ComboStyle = ComboValStyle = TimingStyle = AttemptStyle = 0;
     }
 
     static bool Tog(string label, bool v)
@@ -283,7 +289,7 @@ public class Settings : UnityModManager.ModSettings
         return idx >= 0 ? AlignLabels[idx] : "C";
     }
 
-    static void DrawAlignment(string label, ref int align)
+    static void DrawAlignment(string label, ref int align, ref int style)
     {
         bool expanded = _expandedAlign == label;
         GUILayout.BeginHorizontal();
@@ -292,6 +298,14 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.Label(AlignLabel(align), GUILayout.Width(28));
         if (GUILayout.Button(expanded ? "▲" : "▼", GUILayout.Width(20), GUILayout.Height(18)))
             _expandedAlign = expanded ? null : label;
+        // Style toggles: Bold(1) / Italic(2) / Underline(4) / Strikethrough(64) / Highlight(512)
+        (int bit, Tr.Key key)[] styles = [(1, Tr.Key.StyleBold), (2, Tr.Key.StyleItalic), (4, Tr.Key.StyleUnderline), (64, Tr.Key.StyleStrike), (512, Tr.Key.StyleHighlight)];
+        foreach (var st in styles)
+        {
+            bool active = (style & st.bit) != 0;
+            bool now = GUILayout.Toggle(active, Tr.Get(st.key), GUILayout.Width(24), GUILayout.Height(18));
+            if (now != active) { style = now ? (style | st.bit) : (style & ~st.bit); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
+        }
         GUILayout.EndHorizontal();
 
         if (!expanded) return;

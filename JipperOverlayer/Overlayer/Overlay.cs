@@ -344,6 +344,25 @@ public class Overlay
         if (BestText) BestText.alignment = (TextAlignmentOptions)s.MainAlign;
     }
 
+    public virtual void ApplyFontStyle()
+    {
+        var s = Main.Settings;
+        var mainStyle = (FontStyles)s.MainStyle;
+        if (ProgressText) ProgressText.fontStyle = mainStyle;
+        if (AccuracyText) AccuracyText.fontStyle = mainStyle;
+        if (XAccuracyText) XAccuracyText.fontStyle = mainStyle;
+        if (TimeText) TimeText.fontStyle = mainStyle;
+        if (MapTimeText) MapTimeText.fontStyle = mainStyle;
+        if (CheckpointText) CheckpointText.fontStyle = mainStyle;
+        if (BestText) BestText.fontStyle = mainStyle;
+        if (BPMText) BPMText.fontStyle = (FontStyles)s.BPMStyle;
+        if (JudgementText) JudgementText.fontStyle = (FontStyles)s.JudgeStyle;
+        if (ComboTitle) ComboTitle.fontStyle = (FontStyles)s.ComboStyle;
+        if (ComboText) ComboText.fontStyle = (FontStyles)s.ComboValStyle;
+        if (TimingScaleText) TimingScaleText.fontStyle = (FontStyles)s.TimingStyle;
+        if (AttemptText) AttemptText.fontStyle = (FontStyles)s.AttemptStyle;
+    }
+
     public void ApplyPositionOffsets()
     {
         // Reset to default anchored positions
@@ -395,6 +414,7 @@ public class Overlay
         if (GameObject.activeSelf) AdjustBetaWatermark();
         ApplyPositionOffsets();
         ApplyAlignment();
+        ApplyFontStyle();
         RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf);
         RefreshTimeLabels();
     }
@@ -743,6 +763,7 @@ public class Overlay
         if (Main.Settings.ShowAttempt) UpdateAttempts();
         ApplyPositionOffsets();
         ApplyAlignment();
+        ApplyFontStyle();
         Features.GameLifecycleHelper.ComboCount = 0;
         var s2 = Main.Settings;
         RepositionAutoText(s2.ShowProgress || s2.ShowAccuracy || s2.ShowXAccuracy || s2.ShowMusicTime || s2.ShowMapTime || s2.ShowCheckpoint || s2.ShowBest);

@@ -1,6 +1,6 @@
-using System;
-using System.Reflection;
 using HarmonyLib;
+using MonsterLove.StateMachine;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,9 +17,9 @@ internal static class GameLifecyclePatches
             typeof(ScnEditorResetScenePatch),
             typeof(ControllerStartLoadingScenePatch),
             typeof(MistakesManagerSetPlayerCountPatch),
-            typeof(ControllerAwakeRewindPatch)
+            typeof(ControllerAwakeRewindPatch),
+            typeof(ControllerChangeStatePatch)
         );
-        RegisterChangeStatePatch();
 
         PatchManager.RegisterPatches(() => Main.Settings.ShowProgress || Main.Settings.ShowAccuracy ||
               Main.Settings.ShowXAccuracy || Main.Settings.ShowMusicTime || Main.Settings.ShowMapTime ||
@@ -36,34 +36,14 @@ internal static class GameLifecyclePatches
         PatchManager.RegisterPatches(() => true, typeof(BetaWatermarkCapturePatch));
     }
 
-    static void RegisterChangeStatePatch()
-    {
-        var flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
-        MethodInfo target = null;
-        var sbType = AccessTools.TypeByName("StateBehaviour") ?? AccessTools.TypeByName("MonsterLove.StateMachine.StateBehaviour");
-        if (sbType != null) target = sbType.GetMethod("ChangeState", flags);
-        if (target == null) target = typeof(scrController).GetMethod("ChangeState", flags);
-        if (target == null)
-        {
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                foreach (var t in asm.GetTypes())
-                {
-                    if (t.GetMethod("ChangeState", flags, null, [typeof(Enum)], null) != null)
-                    { target = t.GetMethod("ChangeState", flags, null, [typeof(Enum)], null); break; }
-                }
-                if (target != null) break;
-            }
-        }
-        if (target != null)
-        {
-            var postfix = SymbolExtensions.GetMethodInfo((Enum newState) => OnChangeState(newState));
-            PatchManager.RegisterManualPatch(target, postfix, () => true, "ChangeState");
-        }
-        else Main.Mod.Logger.Warning("ChangeState not found — death/clear disabled");
-    }
+}
 
-    static void OnChangeState(Enum newState)
+// ========== Lifecycle ==========
+
+[HarmonyPatch(typeof(StateBehaviour), nameof(StateBehaviour.ChangeState))]
+internal static class ControllerChangeStatePatch
+{
+    static void Postfix(Enum newState)
     {
         switch ((States)newState)
         {
@@ -73,9 +53,7 @@ internal static class GameLifecyclePatches
     }
 }
 
-// ========== Lifecycle ==========
-
-[HarmonyPatch(typeof(scnGame), "Play")]
+[HarmonyPatch(typeof(scnGame), nameof(scnGame.Play))]
 internal static class ScnGamePlayPatch
 {
     static void Postfix(int seqID)
@@ -85,7 +63,7 @@ internal static class ScnGamePlayPatch
     }
 }
 
-[HarmonyPatch(typeof(scrPressToStart), "ShowText")]
+[HarmonyPatch(typeof(scrPressToStart), nameof(scrPressToStart.ShowText))]
 internal static class PressToStartShowTextPatch
 {
     static void Postfix()
@@ -95,7 +73,7 @@ internal static class PressToStartShowTextPatch
     }
 }
 
-[HarmonyPatch(typeof(scrUIController), "WipeToBlack")]
+[HarmonyPatch(typeof(scrUIController), nameof(scrUIController.WipeToBlack))]
 internal static class UIControllerWipeToBlackPatch
 {
     static void Postfix() => GameLifecycleHelper.GetOverlay()?.Hide();
@@ -107,19 +85,19 @@ internal static class ScnEditorResetScenePatch
     static void Postfix() => GameLifecycleHelper.GetOverlay()?.Hide();
 }
 
-[HarmonyPatch(typeof(scrController), "StartLoadingScene")]
+[HarmonyPatch(typeof(scrController), nameof(scrController.StartLoadingScene))]
 internal static class ControllerStartLoadingScenePatch
 {
     static void Postfix() => GameLifecycleHelper.GetOverlay()?.Hide();
 }
 
-[HarmonyPatch(typeof(scrMistakesManager), "SetPlayerCount")]
+[HarmonyPatch(typeof(scrMistakesManager), nameof(scrMistakesManager.SetPlayerCount))]
 internal static class MistakesManagerSetPlayerCountPatch
 {
     static void Postfix() => GameLifecycleHelper.GetOverlay()?.OnChangePlayers();
 }
 
-[HarmonyPatch(typeof(scrController), "Awake_Rewind")]
+[HarmonyPatch(typeof(scrController), nameof(scrController.Awake_Rewind))]
 internal static class ControllerAwakeRewindPatch
 {
     static void Postfix(Text ___txtLevelName)
@@ -192,7 +170,7 @@ internal static class RdcSetAutoPatch
     }
 }
 
-[HarmonyPatch(typeof(scrMisc), "GetHitMargin")]
+[HarmonyPatch(typeof(scrMisc), nameof(scrMisc.GetHitMargin))]
 internal static class ScrMiscGetHitMarginPatch
 {
     static void Postfix(float hitangle, float refangle, bool isCW, float bpmTimesSpeed, float conductorPitch)
