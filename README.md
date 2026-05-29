@@ -76,9 +76,6 @@ This project uses GitHub Actions for automated builds:
 | Tag `v*.*.*` | Build + package + GitHub Release |
 | Tag containing `-` (e.g. `v1.0.0-pre1`) | Prerelease |
 
-## Acknowledgements
-- Key layout and visual style references [JipperResourcePack](https://github.com/Jongye0l/JipperResourcePack).
-
 ## License
 
 - Primarily **MIT License** — see [LICENSE](./LICENSE.txt).
