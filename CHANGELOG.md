@@ -14,6 +14,17 @@
 - Combo "Perfect" text animation restored after ContentSizeFitter removal
 - RefreshPatches empty catches now log warnings
 - PatchManager.ApplyAll skips already-applied patches (no double-patch)
+  Fix Combo title-value spacing: restore ContentSizeFitter with Unconstrained width
+
+- horizontalFit = Unconstrained (keep 300px width for alignment)
+- verticalFit = PreferredSize (auto-height, proper title-to-value spacing)
+- OverlayMono.ComboAnim reverted to sizeDelta.y (not preferredHeight)
+
+  Remove planet speed from PlayCount Multiplier
+
+  Multiplier no longer includes VersionSafe.GetPlanetSpeed (which changes
+  mid-level with BPM events), only song.pitch (constant per level).
+  Fixes attempt count key mismatch when speed changes during gameplay.
 
 ### Refactors
 - RegisterChangeStatePatch: 30-line reflection search replaced with direct [HarmonyPatch]
