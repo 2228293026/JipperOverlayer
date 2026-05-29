@@ -40,7 +40,7 @@ internal static class GameLifecyclePatches
 
 // ========== Lifecycle ==========
 
-[HarmonyPatch(typeof(StateBehaviour), nameof(StateBehaviour.ChangeState))]
+[HarmonyPatch(typeof(StateBehaviour), nameof(StateBehaviour.ChangeState), [typeof(Enum)])]
 internal static class ControllerChangeStatePatch
 {
     static void Postfix(Enum newState)
