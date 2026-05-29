@@ -215,15 +215,13 @@ public class Overlay
         t.SetParent(ComboTransform);
         t.anchorMin = t.anchorMax = new Vector2(0.5f, 0.45f);
         t.pivot = new Vector2(0.5f, 0);
+        t.sizeDelta = new Vector2(300, 50);
         _comboTitleTransform = t;
         ComboTitle = title.AddComponent<TextMeshProUGUI>();
         ComboTitle.font = BundleLoader.FontAsset;
         ComboTitle.fontSize = 40;
         ComboTitle.text = "Perfect";
         ComboTitle.alignment = TextAlignmentOptions.Center;
-        var fitter = title.AddComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SetupDarkShadow(ComboTitle);
 
         var val = new GameObject("ComboValue");
@@ -231,14 +229,12 @@ public class Overlay
         t.SetParent(ComboTransform);
         t.anchorMin = t.anchorMax = new Vector2(0.5f, 0.45f);
         t.anchoredPosition = Vector2.zero;
+        t.sizeDelta = new Vector2(300, 120);
         ComboTextTransform = t;
         ComboText = val.AddComponent<TextMeshProUGUI>();
         ComboText.font = BundleLoader.FontAsset;
         ComboText.fontSize = 108;
         ComboText.alignment = TextAlignmentOptions.Top;
-        fitter = val.AddComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SetupDarkShadow(ComboText);
         _comboObject = go;
     }
@@ -330,6 +326,24 @@ public class Overlay
         if (ComboText) try { SetupDarkShadow(ComboText); } catch { }
     }
 
+    public virtual void ApplyAlignment()
+    {
+        var s = Main.Settings;
+        if (BPMText) BPMText.alignment = (TextAlignmentOptions)s.BPMAlign;
+        if (JudgementText) JudgementText.alignment = (TextAlignmentOptions)s.JudgeAlign;
+        if (ComboTitle) ComboTitle.alignment = (TextAlignmentOptions)s.ComboAlign;
+        if (ComboText) ComboText.alignment = (TextAlignmentOptions)s.ComboValAlign;
+        if (TimingScaleText) TimingScaleText.alignment = (TextAlignmentOptions)s.TimingAlign;
+        if (AttemptText) AttemptText.alignment = (TextAlignmentOptions)s.AttemptAlign;
+        if (ProgressText) ProgressText.alignment = (TextAlignmentOptions)s.MainAlign;
+        if (AccuracyText) AccuracyText.alignment = (TextAlignmentOptions)s.MainAlign;
+        if (XAccuracyText) XAccuracyText.alignment = (TextAlignmentOptions)s.MainAlign;
+        if (TimeText) TimeText.alignment = (TextAlignmentOptions)s.MainAlign;
+        if (MapTimeText) MapTimeText.alignment = (TextAlignmentOptions)s.MainAlign;
+        if (CheckpointText) CheckpointText.alignment = (TextAlignmentOptions)s.MainAlign;
+        if (BestText) BestText.alignment = (TextAlignmentOptions)s.MainAlign;
+    }
+
     public void ApplyPositionOffsets()
     {
         // Reset to default anchored positions
@@ -380,6 +394,7 @@ public class Overlay
         if (GameObject.activeSelf) SetupLocationMain();
         if (GameObject.activeSelf) AdjustBetaWatermark();
         ApplyPositionOffsets();
+        ApplyAlignment();
         RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf);
         RefreshTimeLabels();
     }
@@ -727,6 +742,7 @@ public class Overlay
         if (Main.Settings.ShowTimingScale) UpdateTimingScale();
         if (Main.Settings.ShowAttempt) UpdateAttempts();
         ApplyPositionOffsets();
+        ApplyAlignment();
         Features.GameLifecycleHelper.ComboCount = 0;
         var s2 = Main.Settings;
         RepositionAutoText(s2.ShowProgress || s2.ShowAccuracy || s2.ShowXAccuracy || s2.ShowMusicTime || s2.ShowMapTime || s2.ShowCheckpoint || s2.ShowBest);

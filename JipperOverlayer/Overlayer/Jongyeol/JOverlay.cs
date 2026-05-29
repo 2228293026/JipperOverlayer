@@ -334,6 +334,18 @@ public class JOverlay : Overlay
         if (TimingText) TimingText.font = font;
     }
 
+    public override void ApplyAlignment()
+    {
+        base.ApplyAlignment();
+        var align = (TextAlignmentOptions)Main.Settings.MainAlign;
+        if (FPSText) FPSText.alignment = align;
+        if (AuthorText) AuthorText.alignment = align;
+        if (StateText) StateText.alignment = align;
+        if (DeathText) DeathText.alignment = align;
+        if (StartText) StartText.alignment = align;
+        if (TimingText) TimingText.alignment = align;
+    }
+
     public override void Show(int floor)
     {
         _perToCom = false; _purePerfect = true; _pseudoFloor = -1;

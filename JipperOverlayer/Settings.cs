@@ -28,6 +28,9 @@ public class Settings : UnityModManager.ModSettings
     public int FontIndex;
     public string FontName;
     public bool CustomPositionsEnabled;
+    public int MainAlign = 257, BPMAlign = 260, JudgeAlign = 1026;
+    public int ComboAlign = 514, ComboValAlign = 258;
+    public int TimingAlign = 1026, AttemptAlign = 1025;
     public float MainPX = 0.008f, MainPY = 0.985f;
     public float BPMPX = 0.992f, BPMPY = 0.985f;
     public float JudgePX = 0.5f, JudgePY = 0.005f;
@@ -160,6 +163,25 @@ public class Settings : UnityModManager.ModSettings
         ShowAttempt = Tog(Tr.Get(Tr.Key.ShowAttempt), ShowAttempt);
         ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);
 
+        GUILayout.Space(5);
+        _alignFold = GUILayout.Toggle(_alignFold, Tr.Get(Tr.Key.Alignment), GUILayout.ExpandWidth(false));
+        if (_alignFold)
+        {
+            DrawAlignment(Tr.Get(Tr.Key.AlignMain), ref MainAlign);
+            DrawAlignment(Tr.Get(Tr.Key.AlignBpm), ref BPMAlign);
+            DrawAlignment(Tr.Get(Tr.Key.AlignJudge), ref JudgeAlign);
+            DrawAlignment(Tr.Get(Tr.Key.AlignCombo), ref ComboAlign);
+            DrawAlignment(Tr.Get(Tr.Key.AlignComboVal), ref ComboValAlign);
+            DrawAlignment(Tr.Get(Tr.Key.AlignTiming), ref TimingAlign);
+            DrawAlignment(Tr.Get(Tr.Key.AlignAttempt), ref AttemptAlign);
+            GUILayout.Space(3);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(16);
+            if (GUILayout.Button(Tr.Get(Tr.Key.ApplyAlignment))) Overlayer.Overlay.Instance?.ApplyAlignment();
+            if (GUILayout.Button(Tr.Get(Tr.Key.AlignReset), GUILayout.Width(50))) { ResetAlignment(); Overlayer.Overlay.Instance?.ApplyAlignment(); }
+            GUILayout.EndHorizontal();
+        }
+
         bool prevJongyeol = JongyeolMode;
         JongyeolMode = Tog(Tr.Get(Tr.Key.JongyeolMode), JongyeolMode);
         if (JongyeolMode != prevJongyeol) { Main.RecreateOverlay(); PatchManager.RefreshPatches(); }
@@ -187,6 +209,13 @@ public class Settings : UnityModManager.ModSettings
         TimingPX = 0.5f; TimingPY = 0.12f; AttmptPX = 0.661f; AttmptPY = 0.032f;
         ProgBarPX = 0.5f; ProgBarPY = 0.991f;
         Overlayer.Overlay.Instance?.ApplyPositionOffsets();
+    }
+
+    void ResetAlignment()
+    {
+        MainAlign = 257; BPMAlign = 260; JudgeAlign = 1026;
+        ComboAlign = 514; ComboValAlign = 258;
+        TimingAlign = 1026; AttemptAlign = 1025;
     }
 
     static bool Tog(string label, bool v)
@@ -240,9 +269,40 @@ public class Settings : UnityModManager.ModSettings
     }
 
     static readonly Dictionary<string, string> _slideFields = new();
-    private static bool _fontFold;
+    private static bool _fontFold, _alignFold;
+    private static string _expandedAlign;
 
     static Action ColorChanged(Action updateOverlay) => () => updateOverlay?.Invoke();
+
+    static readonly int[] AlignValues = [257, 258, 260, 513, 514, 516, 1025, 1026, 1028];
+    static readonly string[] AlignLabels = ["TL", "T", "TR", "L", "C", "R", "BL", "B", "BR"];
+
+    static string AlignLabel(int v)
+    {
+        int idx = Array.IndexOf(AlignValues, v);
+        return idx >= 0 ? AlignLabels[idx] : "C";
+    }
+
+    static void DrawAlignment(string label, ref int align)
+    {
+        bool expanded = _expandedAlign == label;
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        GUILayout.Label(label, GUILayout.ExpandWidth(true));
+        GUILayout.Label(AlignLabel(align), GUILayout.Width(28));
+        if (GUILayout.Button(expanded ? "▲" : "▼", GUILayout.Width(20), GUILayout.Height(18)))
+            _expandedAlign = expanded ? null : label;
+        GUILayout.EndHorizontal();
+
+        if (!expanded) return;
+        int idx = Array.IndexOf(AlignValues, align);
+        if (idx < 0) idx = 4;
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(24);
+        int newIdx = GUILayout.SelectionGrid(idx, AlignLabels, 3, GUILayout.Height(60));
+        GUILayout.EndHorizontal();
+        if (newIdx != idx) { align = AlignValues[newIdx]; Overlayer.Overlay.Instance?.ApplyAlignment(); }
+    }
 
     public void OnSaveGUI(UnityModManager.ModEntry modEntry) { Save(modEntry); Colors?.Save(modEntry); }
     public override void Save(UnityModManager.ModEntry modEntry) { UnityModManagerNet.UnityModManager.ModSettings.Save<Settings>(this, modEntry); }
