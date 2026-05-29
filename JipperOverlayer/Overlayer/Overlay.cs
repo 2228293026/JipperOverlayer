@@ -215,13 +215,16 @@ public class Overlay
         t.SetParent(ComboTransform);
         t.anchorMin = t.anchorMax = new Vector2(0.5f, 0.45f);
         t.pivot = new Vector2(0.5f, 0);
-        t.sizeDelta = new Vector2(300, 50);
+        t.sizeDelta = new Vector2(300, 0);
         _comboTitleTransform = t;
         ComboTitle = title.AddComponent<TextMeshProUGUI>();
         ComboTitle.font = BundleLoader.FontAsset;
         ComboTitle.fontSize = 40;
         ComboTitle.text = "Perfect";
         ComboTitle.alignment = TextAlignmentOptions.Center;
+        var fitter = title.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SetupDarkShadow(ComboTitle);
 
         var val = new GameObject("ComboValue");
@@ -229,12 +232,15 @@ public class Overlay
         t.SetParent(ComboTransform);
         t.anchorMin = t.anchorMax = new Vector2(0.5f, 0.45f);
         t.anchoredPosition = Vector2.zero;
-        t.sizeDelta = new Vector2(300, 120);
+        t.sizeDelta = new Vector2(300, 0);
         ComboTextTransform = t;
         ComboText = val.AddComponent<TextMeshProUGUI>();
         ComboText.font = BundleLoader.FontAsset;
         ComboText.fontSize = 108;
         ComboText.alignment = TextAlignmentOptions.Top;
+        fitter = val.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SetupDarkShadow(ComboText);
         _comboObject = go;
     }

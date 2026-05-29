@@ -36,7 +36,7 @@ public class OverlayMono : MonoBehaviour
             Overlay.ComboText.fontSize = (int)(30 * OutExpoChange(t) + 78);
             if (Overlay._comboTitleTransform)
             {
-                try { Overlay._comboTitleTransform.anchoredPosition = new Vector2(0, Overlay.ComboText.preferredHeight / 2); }
+                try { Overlay._comboTitleTransform.anchoredPosition = new Vector2(0, Overlay.ComboTextTransform.sizeDelta.y / 2); }
                 catch { }
             }
             yield return null;
