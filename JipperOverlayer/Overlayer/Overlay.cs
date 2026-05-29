@@ -416,8 +416,8 @@ public class Overlay
         if (_timingScaleObject) _timingScaleObject.SetActive(s.ShowTimingScale);
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
         if (_progressBarObject) _progressBarObject.SetActive(s.ShowProgressBar);
-        if (GameObject.activeSelf) SetupLocationMain();
-        if (GameObject.activeSelf) AdjustBetaWatermark();
+        if (GameObject != null && GameObject.activeSelf) SetupLocationMain();
+        if (GameObject != null && GameObject.activeSelf) AdjustBetaWatermark();
         ApplyPositionOffsets();
         ApplyAlignment();
         ApplyFontStyle();
