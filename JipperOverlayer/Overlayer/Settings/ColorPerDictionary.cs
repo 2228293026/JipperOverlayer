@@ -87,7 +87,7 @@ public class ColorPerDictionary {
         GUILayout.Space(16);
         GUILayout.BeginVertical();
 
-        if (GUILayout.Button(Tr.Get("add_color_stop"))) {
+        if (GUILayout.Button(Tr.Get(Tr.Key.AddColorStop))) {
             List.Add(new ProgressColorCache(UnityEngine.Random.value, new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value)));
             SortList();
             onChanged?.Invoke(); changed = true;
@@ -118,7 +118,7 @@ public class ColorPerDictionary {
 
             // Percent slider
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Tr.Get("percent"), GUILayout.Width(50));
+            GUILayout.Label(Tr.Get(Tr.Key.Percent), GUILayout.Width(50));
             float oldP = cache.Progress;
             float p = GUILayout.HorizontalSlider(cache.Progress, 0, 1);
             if (Math.Abs(p - oldP) > 0.001f) {
@@ -135,7 +135,7 @@ public class ColorPerDictionary {
             }
 
             bool deleted = false;
-            if (GUILayout.Button(Tr.Get("delete"))) {
+            if (GUILayout.Button(Tr.Get(Tr.Key.Delete))) {
                 List.RemoveAt(i);
                 i--;
                 onChanged?.Invoke(); changed = true; deleted = true;

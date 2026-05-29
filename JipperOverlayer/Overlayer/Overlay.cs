@@ -303,6 +303,70 @@ public class Overlay
         if (ComboTransform) ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * size);
     }
 
+    public virtual void ApplyFontToAll()
+    {
+        var font = FontManager.GetFont(Main.Settings.FontIndex);
+        if (font == null) return;
+        // Clear shadow cache so per-font materials are rebuilt
+        ShadowMaterialCache.Clear();
+        if (ProgressText) ProgressText.font = font;
+        if (AccuracyText) AccuracyText.font = font;
+        if (XAccuracyText) XAccuracyText.font = font;
+        if (TimeText) TimeText.font = font;
+        if (MapTimeText) MapTimeText.font = font;
+        if (CheckpointText) CheckpointText.font = font;
+        if (BestText) BestText.font = font;
+        if (BPMText) BPMText.font = font;
+        if (JudgementText) JudgementText.font = font;
+        if (ComboTitle) ComboTitle.font = font;
+        if (ComboText) ComboText.font = font;
+        if (TimingScaleText) TimingScaleText.font = font;
+        if (AttemptText) AttemptText.font = font;
+        // Re-apply shadow materials (per-font cache)
+        foreach (var t in new[] { ProgressText, AccuracyText, XAccuracyText, TimeText, MapTimeText, CheckpointText, BestText,
+            BPMText, JudgementText, TimingScaleText, AttemptText })
+        { if (t) try { ApplyShadowMaterial(t, 0.5f); } catch { } }
+        if (ComboTitle) try { SetupDarkShadow(ComboTitle); } catch { }
+        if (ComboText) try { SetupDarkShadow(ComboText); } catch { }
+    }
+
+    public void ApplyPositionOffsets()
+    {
+        // Reset to default anchored positions
+        if (_mainContainer)
+            _mainContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(16, -16);
+        if (_bpmObject)
+            _bpmObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-16, -16);
+        if (_judgementObject)
+            JudgementText.rectTransform.anchoredPosition = new Vector2(0, Main.Settings.JudgementLocationUp ? 85 : 5);
+        if (ComboTransform)
+            ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * Main.Settings.Size);
+        if (_timingScaleObject)
+            TimingScaleText.rectTransform.anchoredPosition = new Vector2(0, 90 + 40 * Main.Settings.Size);
+        if (_attemptObject)
+            _attemptObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(310, 35);
+        if (_progressBarObject)
+            _progressBarObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -10);
+
+        if (!Main.Settings.CustomPositionsEnabled) return;
+        var o = Main.Settings;
+        float sw = Screen.width, sh = Screen.height;
+        if (_mainContainer)
+            _mainContainer.GetComponent<RectTransform>().position = new Vector3(o.MainPX * sw, o.MainPY * sh, 0);
+        if (_bpmObject)
+            _bpmObject.GetComponent<RectTransform>().position = new Vector3(o.BPMPX * sw, o.BPMPY * sh, 0);
+        if (_judgementObject)
+            JudgementText.rectTransform.position = new Vector3(o.JudgePX * sw, o.JudgePY * sh, 0);
+        if (ComboTransform)
+            ComboTransform.position = new Vector3(o.ComboPX * sw, o.ComboPY * sh, 0);
+        if (_timingScaleObject)
+            TimingScaleText.rectTransform.position = new Vector3(o.TimingPX * sw, o.TimingPY * sh, 0);
+        if (_attemptObject)
+            _attemptObject.GetComponent<RectTransform>().position = new Vector3(o.AttmptPX * sw, o.AttmptPY * sh, 0);
+        if (_progressBarObject)
+            _progressBarObject.GetComponent<RectTransform>().position = new Vector3(o.ProgBarPX * sw, o.ProgBarPY * sh, 0);
+    }
+
     public void RefreshVisibility()
     {
         var s = Main.Settings;
@@ -315,6 +379,7 @@ public class Overlay
         if (_progressBarObject) _progressBarObject.SetActive(s.ShowProgressBar);
         if (GameObject.activeSelf) SetupLocationMain();
         if (GameObject.activeSelf) AdjustBetaWatermark();
+        ApplyPositionOffsets();
         RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf);
         RefreshTimeLabels();
     }
@@ -355,39 +420,73 @@ public class Overlay
     protected void SetupShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.5f);
     protected void SetupDarkShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.7f);
 
-    private static readonly Dictionary<float, Material> ShadowMaterialCache = new();
-
-    private static readonly int OutlineColorId = ShaderUtilities.ID_OutlineColor;
-    private static readonly int OutlineWidthId = ShaderUtilities.ID_OutlineWidth;
-    private static readonly int UnderlayColorId = ShaderUtilities.ID_UnderlayColor;
-    private static readonly int UnderlayOffsetXId = ShaderUtilities.ID_UnderlayOffsetX;
-    private static readonly int UnderlayOffsetYId = ShaderUtilities.ID_UnderlayOffsetY;
-    private static readonly int UnderlayDilateId = ShaderUtilities.ID_UnderlayDilate;
-    private static readonly int UnderlaySoftnessId = ShaderUtilities.ID_UnderlaySoftness;
+    private static readonly Dictionary<TMP_FontAsset, Material> ShadowMaterialCache = new();
 
     private void ApplyShadowMaterial(TextMeshProUGUI text, float a)
     {
         try
         {
-            if (!ShadowMaterialCache.TryGetValue(a, out var mat))
+            var font = text.font;
+            if (font == null) return;
+            if (!ShadowMaterialCache.TryGetValue(font, out var mat))
             {
-                var baseMat = text.fontSharedMaterial ?? text.fontMaterial;
-                mat = new Material(baseMat);
+                var fontMat = GetFontMaterial(font);
+                if (fontMat == null)
+                {
+                    Main.Mod.Logger.Warning($"Shadow: Cannot get material from font '{font.name}', skipping");
+                    return;
+                }
+                mat = new Material(fontMat);
                 if (ShaderRef) mat.shader = ShaderRef;
                 mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-                mat.SetColor(OutlineColorId, Color.black);
-                mat.SetFloat(OutlineWidthId, 0.01f);
+                mat.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
+                mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.01f);
                 mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-                mat.SetColor(UnderlayColorId, new Color(0, 0, 0, a));
-                mat.SetFloat(UnderlayOffsetXId, 1f);
-                mat.SetFloat(UnderlayOffsetYId, -1f);
-                mat.SetFloat(UnderlayDilateId, 0f);
-                mat.SetFloat(UnderlaySoftnessId, 0f);
-                ShadowMaterialCache[a] = mat;
+                mat.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0, 0, 0, a));
+                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 1f);
+                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -1f);
+                mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
+                mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+                ShadowMaterialCache[font] = mat;
             }
             text.fontSharedMaterial = mat;
         }
         catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
+    }
+
+    private static System.Reflection.MemberInfo _cachedMaterialMember;
+    private static bool _cachedMaterialLogged;
+
+    private static Material GetFontMaterial(TMP_FontAsset font)
+    {
+        if (_cachedMaterialMember == null)
+        {
+            var t = font.GetType();
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+            _cachedMaterialMember = (System.Reflection.MemberInfo)t.GetProperty("material", flags) ?? t.GetField("material", flags);
+        }
+
+        Material result = null;
+        if (_cachedMaterialMember is System.Reflection.PropertyInfo pi)
+        {
+            var val = pi.GetValue(font);
+            if (val != null) result = (Material)val;
+        }
+        else if (_cachedMaterialMember is System.Reflection.FieldInfo fi)
+        {
+            var val = fi.GetValue(font);
+            if (val != null) result = (Material)val;
+        }
+
+        if (!_cachedMaterialLogged)
+        {
+            _cachedMaterialLogged = true;
+            string foundBy = _cachedMaterialMember != null
+                ? $"{_cachedMaterialMember.MemberType} \"{_cachedMaterialMember.Name}\""
+                : "none";
+            Main.Mod.Logger.Log($"Overlay: Font material resolved via {foundBy}");
+        }
+        return result;
     }
 
     public void UpdateAccuracy(int index = -1)
@@ -613,6 +712,7 @@ public class Overlay
         LastMultiplier = (float)(ADOBase.conductor.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance));
         if (!AutoOnceEnabled) PlayCount.AddAttempts(LastHash, StartProgress);
         SetupTextManager();
+        ApplyFontToAll();
         GameObject.SetActive(true);
         var mono = GameObject.GetComponent<OverlayMono>();
         if (mono) mono.enabled = true;
@@ -626,6 +726,7 @@ public class Overlay
         AdjustBetaWatermark();
         if (Main.Settings.ShowTimingScale) UpdateTimingScale();
         if (Main.Settings.ShowAttempt) UpdateAttempts();
+        ApplyPositionOffsets();
         Features.GameLifecycleHelper.ComboCount = 0;
         var s2 = Main.Settings;
         RepositionAutoText(s2.ShowProgress || s2.ShowAccuracy || s2.ShowXAccuracy || s2.ShowMusicTime || s2.ShowMapTime || s2.ShowCheckpoint || s2.ShowBest);

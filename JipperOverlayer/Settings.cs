@@ -4,6 +4,7 @@ using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityModManagerNet;
+using JipperOverlayer.Overlayer;
 using JipperOverlayer.Overlayer.Localization;
 using JipperOverlayer.Overlayer.Settings;
 
@@ -24,17 +25,27 @@ public class Settings : UnityModManager.ModSettings
     public bool HideDebugText = true, ShowDeath = true, ShowStart = true, ShowTiming = true;
     public bool RemoveNotRequireInAuto = true, CheckPseudo = true, YellowCombo = true;
     public Language CurrentLanguage;
+    public int FontIndex;
+    public string FontName;
+    public bool CustomPositionsEnabled;
+    public float MainPX = 0.008f, MainPY = 0.985f;
+    public float BPMPX = 0.992f, BPMPY = 0.985f;
+    public float JudgePX = 0.5f, JudgePY = 0.005f;
+    public float ComboPX = 0.5f, ComboPY = 0.947f;
+    public float TimingPX = 0.5f, TimingPY = 0.12f;
+    public float AttmptPX = 0.661f, AttmptPY = 0.032f;
+    public float ProgBarPX = 0.5f, ProgBarPY = 0.991f;
 
     [JsonIgnore] public ColorConfig Colors;
 
     public void OnGUI(UnityModManager.ModEntry modEntry)
     {
-        Size = Slide(Tr.Get("size"), Size, 0, 2, () => Overlayer.Overlay.Instance?.UpdateSize());
+        Size = Slide(Tr.Get(Tr.Key.Size), Size, 0, 2, () => Overlayer.Overlay.Instance?.UpdateSize());
 
         // Language selector
         GUILayout.BeginHorizontal();
-        GUILayout.Label(Tr.Get("lang_label"), GUILayout.Width(100));
-        var langs = new[] { "English", "Korean", "Chinese" };
+        GUILayout.Label(Tr.Get(Tr.Key.LangLabel), GUILayout.Width(100));
+        var langs = new[] { "English", "한국어", "中文" };
         int langIdx = (int)CurrentLanguage;
         int newLang = GUILayout.SelectionGrid(langIdx, langs, 3);
         if (newLang != langIdx) { CurrentLanguage = (Overlayer.Localization.Language)newLang; Overlayer.Overlay.Instance?.RefreshVisibility(); }
@@ -42,102 +53,140 @@ public class Settings : UnityModManager.ModSettings
 
         GUILayout.Space(5);
 
-        // ===== Status section (matches original ResourcePack layout) =====
-        ShowProgress = Tog(Tr.Get("show_progress"), ShowProgress);
-        if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get("progress_color"),
+        // ===== Font foldout =====
+        _fontFold = GUILayout.Toggle(_fontFold, Tr.Get(Tr.Key.Font), GUILayout.ExpandWidth(false));
+        if (_fontFold && FontManager.FontNames != null)
+        {
+            for (int i = 0; i < FontManager.FontNames.Length; i++)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(20);
+                bool sel = FontIndex == i;
+                bool now = GUILayout.Toggle(sel, GUIContent.none, GUILayout.ExpandWidth(false));
+                GUILayout.Label(FontManager.FontNames[i], GUILayout.ExpandWidth(true));
+                GUILayout.EndHorizontal();
+                if (now && !sel) { FontIndex = i; FontName = FontManager.FontNames[i]; Overlayer.Overlay.Instance?.ApplyFontToAll(); }
+            }
+        }
+
+        // ===== Custom Positions =====
+        CustomPositionsEnabled = Tog(Tr.Get(Tr.Key.CustomPositions), CustomPositionsEnabled);
+        if (CustomPositionsEnabled)
+        {
+            PosSlide("  Main X", ref MainPX, 0, 1);
+            PosSlide("  Main Y", ref MainPY, 0, 1);
+            PosSlide("  BPM X", ref BPMPX, 0, 1);
+            PosSlide("  BPM Y", ref BPMPY, 0, 1);
+            PosSlide("  Judge X", ref JudgePX, 0, 1);
+            PosSlide("  Judge Y", ref JudgePY, 0, 1);
+            PosSlide("  Combo X", ref ComboPX, 0, 1);
+            PosSlide("  Combo Y", ref ComboPY, 0, 1);
+            PosSlide("  Timing X", ref TimingPX, 0, 1);
+            PosSlide("  Timing Y", ref TimingPY, 0, 1);
+            PosSlide("  Attmpt X", ref AttmptPX, 0, 1);
+            PosSlide("  Attmpt Y", ref AttmptPY, 0, 1);
+            PosSlide("  ProgBarX", ref ProgBarPX, 0, 1);
+            PosSlide("  ProgBarY", ref ProgBarPY, 0, 1);
+
+            if (GUILayout.Button(Tr.Get(Tr.Key.ResetPositions), GUILayout.ExpandWidth(false)))
+                ResetCustomPos();
+        }
+
+        GUILayout.Space(5);
+
+        // ===== Status section =====
+        ShowProgress = Tog(Tr.Get(Tr.Key.ShowProgress), ShowProgress);
+        if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.ProgressColor),
             () => { Colors.Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
 
-        ShowAccuracy = Tog(Tr.Get("show_accuracy"), ShowAccuracy);
-        if (ShowAccuracy) Colors.Accuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get("accuracy_color"),
+        ShowAccuracy = Tog(Tr.Get(Tr.Key.ShowAccuracy), ShowAccuracy);
+        if (ShowAccuracy) Colors.Accuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.AccuracyColor),
             () => { Colors.Accuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
 
-        ShowXAccuracy = Tog(Tr.Get("show_xaccuracy"), ShowXAccuracy);
-        if (ShowXAccuracy) Colors.XAccuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get("xaccuracy_color"),
+        ShowXAccuracy = Tog(Tr.Get(Tr.Key.ShowXAccuracy), ShowXAccuracy);
+        if (ShowXAccuracy) Colors.XAccuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.XaccuracyColor),
             () => { Colors.XAccuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
 
-        ShowMusicTime = Tog(Tr.Get("show_music_time"), ShowMusicTime);
-        if (ShowMusicTime) Colors.MusicTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get("music_time_color"),
+        ShowMusicTime = Tog(Tr.Get(Tr.Key.ShowMusicTime), ShowMusicTime);
+        if (ShowMusicTime) Colors.MusicTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MusicTimeColor),
             () => { Colors.MusicTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
 
-        ShowMapTime = Tog(Tr.Get("show_map_time"), ShowMapTime);
-        if (ShowMapTime) Colors.MapTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get("map_time_color"),
+        ShowMapTime = Tog(Tr.Get(Tr.Key.ShowMapTime), ShowMapTime);
+        if (ShowMapTime) Colors.MapTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MapTimeColor),
             () => { Colors.MapTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
 
-        ShowMapTimeIfNotMusic = Tog(Tr.Get("show_map_if_no"), ShowMapTimeIfNotMusic);
+        ShowMapTimeIfNotMusic = Tog(Tr.Get(Tr.Key.ShowMapIfNo), ShowMapTimeIfNotMusic);
 
-        // TimeTextType enum selector
         GUILayout.BeginHorizontal();
-        GUILayout.Label(Tr.Get("time_text_type"), GUILayout.Width(100));
-        string[] timeTypes = ["Korean", "English"];
+        GUILayout.Label(Tr.Get(Tr.Key.TimeTextType), GUILayout.Width(100));
+        string[] timeTypes = [Tr.Get(Tr.Key.TimeTextKorean), Tr.Get(Tr.Key.TimeTextEnglish)];
         int newTtt = GUILayout.SelectionGrid(TimeTextTypeValue, timeTypes, 2);
         if (newTtt != TimeTextTypeValue) { TimeTextTypeValue = newTtt; Overlayer.Overlay.Instance?.UpdateTime(); }
         GUILayout.EndHorizontal();
 
-        ShowCheckpoint = Tog(Tr.Get("show_checkpoint"), ShowCheckpoint);
-        ShowBest = Tog(Tr.Get("show_best"), ShowBest);
-        if (ShowBest) Colors.Best.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get("best_color"),
+        ShowCheckpoint = Tog(Tr.Get(Tr.Key.ShowCheckpoint), ShowCheckpoint);
+        ShowBest = Tog(Tr.Get(Tr.Key.ShowBest), ShowBest);
+        if (ShowBest) Colors.Best.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.BestColor),
             () => { Colors.Best = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
 
-        ShowProgressBar = Tog(Tr.Get("show_progress_bar"), ShowProgressBar);
+        ShowProgressBar = Tog(Tr.Get(Tr.Key.ShowProgressBar), ShowProgressBar);
         if (ShowProgressBar)
         {
-            Colors.ProgressBar.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get("progress_bar_color"),
+            Colors.ProgressBar.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarColor),
                 () => { Colors.ProgressBar = new([(1f, new Color(0.9216f, 0.8039f, 0.9765f))]); Colors.Save(Main.Mod); });
-            Colors.ProgressBarBackground.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get("progress_bar_bg_color"),
+            Colors.ProgressBarBackground.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBgColor),
                 () => { Colors.ProgressBarBackground = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
-            Colors.ProgressBarBorder.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get("progress_bar_border_color"),
+            Colors.ProgressBarBorder.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBorderColor),
                 () => { Colors.ProgressBarBorder = new([(1f, Color.black)]); Colors.Save(Main.Mod); });
         }
 
         GUILayout.Space(10);
-
-        // ===== Combo (matches original Combo.cs layout) =====
-        ShowCombo = Tog(Tr.Get("show_combo"), ShowCombo);
+        ShowCombo = Tog(Tr.Get(Tr.Key.ShowCombo), ShowCombo);
         if (ShowCombo)
         {
-            EnableAutoCombo = Tog(Tr.Get("enable_auto_combo"), EnableAutoCombo);
-            ComboColorMax = (int)Slide(Tr.Get("combo_color_max"), ComboColorMax, 1, 5000, () => { });
-            Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get("combo_color"));
+            EnableAutoCombo = Tog(Tr.Get(Tr.Key.EnableAutoCombo), EnableAutoCombo);
+            ComboColorMax = (int)Slide(Tr.Get(Tr.Key.ComboColorMax), ComboColorMax, 1, 5000, () => { });
+            Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.ComboColor));
         }
-
-        // ===== BPM (matches original BPM.cs layout) =====
-        ShowBPM = Tog(Tr.Get("show_bpm"), ShowBPM);
+        ShowBPM = Tog(Tr.Get(Tr.Key.ShowBpm), ShowBPM);
         if (ShowBPM)
         {
-            BpmColorMax = Slide(Tr.Get("bpm_color_max"), BpmColorMax, 100, 20000, () => { });
-            Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get("bpm_color"));
+            BpmColorMax = Slide(Tr.Get(Tr.Key.BpmColorMax), BpmColorMax, 100, 20000, () => { });
+            Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor));
         }
-
-        // ===== Judgement =====
-        ShowJudgement = Tog(Tr.Get("show_judgement"), ShowJudgement);
-        if (ShowJudgement) JudgementLocationUp = Tog(Tr.Get("judgement_up"), JudgementLocationUp);
-
-        // ===== Timing Scale =====
-        ShowTimingScale = Tog(Tr.Get("show_timing_scale"), ShowTimingScale);
-
-        // ===== Attempt (matches original Attempt.cs layout) =====
-        ShowAttempt = Tog(Tr.Get("show_attempt"), ShowAttempt);
-        ShowFullAttempt = Tog(Tr.Get("show_full_attempt"), ShowFullAttempt);
+        ShowJudgement = Tog(Tr.Get(Tr.Key.ShowJudgement), ShowJudgement);
+        if (ShowJudgement) JudgementLocationUp = Tog(Tr.Get(Tr.Key.JudgementUp), JudgementLocationUp);
+        ShowTimingScale = Tog(Tr.Get(Tr.Key.ShowTimingScale), ShowTimingScale);
+        ShowAttempt = Tog(Tr.Get(Tr.Key.ShowAttempt), ShowAttempt);
+        ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);
 
         bool prevJongyeol = JongyeolMode;
-        JongyeolMode = Tog(Tr.Get("jongyeol_mode"), JongyeolMode);
+        JongyeolMode = Tog(Tr.Get(Tr.Key.JongyeolMode), JongyeolMode);
         if (JongyeolMode != prevJongyeol) { Main.RecreateOverlay(); PatchManager.RefreshPatches(); }
         if (JongyeolMode)
         {
-            ShowFPS = Tog(Tr.Get("show_fps"), ShowFPS);
-            ShowAuthor = Tog(Tr.Get("show_author"), ShowAuthor);
-            ShowState = Tog(Tr.Get("show_state"), ShowState);
-            ShowDeath = Tog(Tr.Get("show_death"), ShowDeath);
-            ShowStart = Tog(Tr.Get("show_start"), ShowStart);
-            ShowTiming = Tog(Tr.Get("show_timing"), ShowTiming);
-            HideDebugText = Tog(Tr.Get("hide_debug_text"), HideDebugText);
-            RemoveNotRequireInAuto = Tog(Tr.Get("remove_auto_req"), RemoveNotRequireInAuto);
-            CheckPseudo = Tog(Tr.Get("check_pseudo"), CheckPseudo);
-            YellowCombo = Tog(Tr.Get("yellow_combo"), YellowCombo);
+            ShowFPS = Tog(Tr.Get(Tr.Key.ShowFps), ShowFPS);
+            ShowAuthor = Tog(Tr.Get(Tr.Key.ShowAuthor), ShowAuthor);
+            ShowState = Tog(Tr.Get(Tr.Key.ShowState), ShowState);
+            ShowDeath = Tog(Tr.Get(Tr.Key.ShowDeath), ShowDeath);
+            ShowStart = Tog(Tr.Get(Tr.Key.ShowStart), ShowStart);
+            ShowTiming = Tog(Tr.Get(Tr.Key.ShowTiming), ShowTiming);
+            HideDebugText = Tog(Tr.Get(Tr.Key.HideDebugText), HideDebugText);
+            RemoveNotRequireInAuto = Tog(Tr.Get(Tr.Key.RemoveAutoReq), RemoveNotRequireInAuto);
+            CheckPseudo = Tog(Tr.Get(Tr.Key.CheckPseudo), CheckPseudo);
+            YellowCombo = Tog(Tr.Get(Tr.Key.YellowCombo), YellowCombo);
         }
 
-        // Apply toggle changes to overlay
         Overlayer.Overlay.Instance?.RefreshVisibility();
+    }
+
+    void ResetCustomPos()
+    {
+        MainPX = 0.008f; MainPY = 0.985f; BPMPX = 0.992f; BPMPY = 0.985f;
+        JudgePX = 0.5f; JudgePY = 0.005f; ComboPX = 0.5f; ComboPY = 0.947f;
+        TimingPX = 0.5f; TimingPY = 0.12f; AttmptPX = 0.661f; AttmptPY = 0.032f;
+        ProgBarPX = 0.5f; ProgBarPY = 0.991f;
+        Overlayer.Overlay.Instance?.ApplyPositionOffsets();
     }
 
     static bool Tog(string label, bool v)
@@ -154,7 +203,6 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.BeginHorizontal();
         GUILayout.Label(label, GUILayout.Width(120));
         float nv = GUILayout.HorizontalSlider(v, min, max);
-        // Text input, defaults to F2 when not focused
         if (!_slideFields.TryGetValue(label, out var text))
             _slideFields[label] = text = v.ToString("F2");
         string newText = GUILayout.TextField(text, GUILayout.Width(55));
@@ -165,17 +213,35 @@ public class Settings : UnityModManager.ModSettings
                 nv = Mathf.Clamp(parsed, min, max);
         }
         else if (newText == text && Math.Abs(nv - v) > 0.001f)
-        {
             _slideFields[label] = nv.ToString("F2");
-        }
         GUILayout.EndHorizontal();
         if (Math.Abs(nv - v) > 0.001f) { onChange?.Invoke(); return nv; }
         return v;
     }
 
-    static readonly Dictionary<string, string> _slideFields = new();
+    void PosSlide(string label, ref float v, float min, float max)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(label, GUILayout.Width(70));
+        float nv = GUILayout.HorizontalSlider(v, min, max, GUILayout.ExpandWidth(true));
+        if (!_slideFields.TryGetValue(label, out var text))
+            _slideFields[label] = text = v.ToString("F3");
+        string newText = GUILayout.TextField(text, GUILayout.Width(50));
+        if (newText != text)
+        {
+            _slideFields[label] = newText;
+            if (float.TryParse(newText, out float parsed))
+                nv = Mathf.Clamp(parsed, min, max);
+        }
+        else if (newText == text && Math.Abs(nv - v) > 0.001f)
+            _slideFields[label] = nv.ToString("F3");
+        GUILayout.EndHorizontal();
+        if (Math.Abs(nv - v) > 0.001f) { v = nv; Overlayer.Overlay.Instance?.ApplyPositionOffsets(); }
+    }
 
-    // Color change callback: update overlay only (saving handled by OnSaveGUI, layout refresh at end of OnGUI)
+    static readonly Dictionary<string, string> _slideFields = new();
+    private static bool _fontFold;
+
     static Action ColorChanged(Action updateOverlay) => () => updateOverlay?.Invoke();
 
     public void OnSaveGUI(UnityModManager.ModEntry modEntry) { Save(modEntry); Colors?.Save(modEntry); }

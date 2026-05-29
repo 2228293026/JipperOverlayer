@@ -48,9 +48,9 @@ public class PlayCount
         Datas = null;
     }
 
-    public static void AddAttempts(Hash hash, float progress) => GetData(hash).AddAttempts(progress, Multiplier);
-    public static void RemoveAttempts(Hash hash, float progress) => GetData(hash).RemoveAttempts(progress, Multiplier);
-    public static void SetBest(Hash hash, float start, float cur, float multiplier) => GetData(hash).SetBest(start, cur, multiplier);
+    public static void AddAttempts(Hash hash, float progress) { var d = GetData(hash); if (d != null) d.AddAttempts(progress, Multiplier); }
+    public static void RemoveAttempts(Hash hash, float progress) { var d = GetData(hash); if (d != null) d.RemoveAttempts(progress, Multiplier); }
+    public static void SetBest(Hash hash, float start, float cur, float multiplier) { var d = GetData(hash); if (d != null) d.SetBest(start, cur, multiplier); }
 
     public static void Save()
     {
@@ -63,10 +63,13 @@ public class PlayCount
             using (MemoryStream ms = new())
             {
                 ms.WriteByte(1);
-                ms.WriteInt(Datas.Count);
+                int count = 0;
+                foreach (var pair in Datas)
+                    if (pair.Key.data != null && pair.Value != null) count++;
+                ms.WriteInt(count);
                 foreach (var pair in Datas)
                 {
-                    if (pair.Value == null) continue;
+                    if (pair.Key.data == null || pair.Value == null) continue;
                     ms.Write(pair.Key.data, 0, pair.Key.data.Length);
                     pair.Value.Write(ms);
                 }
@@ -81,6 +84,7 @@ public class PlayCount
 
     public static PlayData GetData(Hash hash)
     {
+        if (hash.data == null) return null;
         if (!Datas.ContainsKey(hash)) Datas[hash] = new PlayData();
         return Datas[hash];
     }

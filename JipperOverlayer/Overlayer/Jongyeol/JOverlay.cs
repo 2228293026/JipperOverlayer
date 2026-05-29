@@ -321,6 +321,19 @@ public class JOverlay : Overlay
 
     private static bool Check90(double angle) => Math.Abs(angle - 1.57079642638564) < 1e-14;
 
+    public override void ApplyFontToAll()
+    {
+        base.ApplyFontToAll();
+        var font = FontManager.GetFont(Main.Settings.FontIndex);
+        if (font == null) return;
+        if (FPSText) FPSText.font = font;
+        if (AuthorText) AuthorText.font = font;
+        if (StateText) StateText.font = font;
+        if (DeathText) DeathText.font = font;
+        if (StartText) StartText.font = font;
+        if (TimingText) TimingText.font = font;
+    }
+
     public override void Show(int floor)
     {
         _perToCom = false; _purePerfect = true; _pseudoFloor = -1;

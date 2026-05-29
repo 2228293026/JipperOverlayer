@@ -117,6 +117,7 @@
     <Compile Include="UtilExtensions.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Overlayer\BundleLoader.cs" />
+    <Compile Include="Overlayer\FontManager.cs" />
     <Compile Include="Overlayer\IOverlayTextManager.cs" />
     <Compile Include="Overlayer\Overlay.cs" />
     <Compile Include="Overlayer\OverlayMono.cs" />

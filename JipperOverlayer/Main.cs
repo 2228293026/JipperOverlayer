@@ -45,6 +45,7 @@ public static class Main
             RegisterFeatures();
 
             BundleLoader.LoadBundle();
+            FontManager.ScanFonts();
             PlayCount.Load();
 
             // Create persistent GameObject for scene tracking
