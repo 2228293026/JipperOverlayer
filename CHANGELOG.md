@@ -1,6 +1,26 @@
 # Changelog
 
-## v1.0.1 — 2026-05-29
+## v1.0.2 — 2026-05-29
+
+### Features
+- Configurable text alignment: per-element 3x3 alignment grid (TL/T/TR/L/C/R/BL/B/BR)
+- Font style toggles: Bold, Italic, Underline, Strikethrough, Highlight per element
+
+### Fixes
+- Custom fonts: shadow material cache keyed by font asset (not alpha), GetFontMaterial
+  reflection for cross-Unity-version compatibility, font selection persisted by name
+- Font list no longer polluted by other mods' file-loaded fonts (path-name filter)
+- PlayCount.Save: null-data Hash keys no longer cause NRE
+- Combo "Perfect" text animation restored after ContentSizeFitter removal
+- RefreshPatches empty catches now log warnings
+- PatchManager.ApplyAll skips already-applied patches (no double-patch)
+
+### Refactors
+- RegisterChangeStatePatch: 30-line reflection search replaced with direct [HarmonyPatch]
+- Game API method targets use nameof() where compile-accessible
+- Tr.cs: removed obsolete Get(string) overload and _keyMap dictionary
+- All settings labels unified through Tr.Get(Key) (no hardcoded strings)
+- RegisterPatchesSafe removed (dead duplicate)
 
 ### Architecture & Performance
 - OverlayMono MonoBehaviour: per-frame update moved out of UMM OnUpdate
