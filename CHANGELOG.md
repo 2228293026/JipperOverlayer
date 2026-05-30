@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.4.2-preview — 2026-05-30
+
+- Fix Chinese translations
+- Fix value update issues when toggling settings
+
 ## v1.0.4.1-preview — 2026-05-30
 
 Same as v1.0.4, preview release for testing.
