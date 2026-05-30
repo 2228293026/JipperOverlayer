@@ -78,6 +78,12 @@ internal static class ScrMarginResetPatch
     static void Postfix() { if (Main.Settings.ShowJudgement) GameLifecycleHelper.GetOverlay()?.UpdateJudgement(); }
 }
 
+[HarmonyPatch(typeof(scrMistakesManager), nameof(scrMistakesManager.SetPlayerCount))]
+internal static class MistakesManagerSetPlayerCountPatch
+{
+    static void Postfix() => GameLifecycleHelper.GetOverlay()?.OnChangePlayers();
+}
+
 // ===== Accuracy =====
 
 [HarmonyPatch(typeof(scrMarginTracker), nameof(scrMarginTracker.CalculatePercentAcc))]

@@ -90,12 +90,6 @@ internal static class ControllerStartLoadingScenePatch
     static void Postfix() => GameLifecycleHelper.GetOverlay()?.Hide();
 }
 
-[HarmonyPatch(typeof(scrMistakesManager), nameof(scrMistakesManager.SetPlayerCount))]
-internal static class MistakesManagerSetPlayerCountPatch
-{
-    static void Postfix() => GameLifecycleHelper.GetOverlay()?.OnChangePlayers();
-}
-
 [HarmonyPatch(typeof(scrController), nameof(scrController.Awake_Rewind))]
 internal static class ControllerAwakeRewindPatch
 {
