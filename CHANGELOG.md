@@ -6,12 +6,18 @@
 - Replaced JOverlay inheritance with JongyeolModule composition (-405 lines)
   - Deleted JOverlay.cs, JOverlayTextManagerNormal.cs, JOverlayTextManagerCoop.cs, IJOverlayTextManager.cs
   - Created JongyeolModule.cs as composable module
-  - Overlay fields changed from protected to internal for module access
+  - Overlay fields changed from protected to internal for JongyeolModule access
   - PurePerfectColor changed to public static readonly
 - Removed all unused virtual keywords (Overlay 13, OverlayTextManagerCoop 4, OverlayTextManagerNormal 3)
 - Removed redundant Jbpm.BpmColorMax wrapper; callers use Main.Settings.BpmColorMax directly
 - Renamed YellowCombo → AllowELCombo for accurate naming (EL = Early/Late judgment)
 - Removed redundant UpdateState() call in RdcSetAutoPatch
+
+### Bug Fixes
+- PlanetMoveToNextFloorPatch: include Jongyeol settings in registration condition so State/Death/Start/Timing update when all standard settings are off
+- JCombo patches: require ShowCombo to prevent combo updating when disabled
+- Show(): call SetupLocationMain when Jongyeol is active regardless of standard settings
+- RefreshVisibility: actively refresh BPM/Combo/Judgement/TimingScale/ProgressBar when toggled on
 
 ## v1.0.2 — 2026-05-29
 
