@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.0.4 — 2026-05-30
+
+### Refactors
+- Replaced JOverlay inheritance with JongyeolModule composition (-405 lines)
+  - Deleted JOverlay.cs, JOverlayTextManagerNormal.cs, JOverlayTextManagerCoop.cs, IJOverlayTextManager.cs
+  - Created JongyeolModule.cs as composable module
+  - Overlay fields changed from protected to internal for module access
+  - PurePerfectColor changed to public static readonly
+- Removed all unused virtual keywords (Overlay 13, OverlayTextManagerCoop 4, OverlayTextManagerNormal 3)
+- Removed redundant Jbpm.BpmColorMax wrapper; callers use Main.Settings.BpmColorMax directly
+- Renamed YellowCombo → AllowELCombo for accurate naming (EL = Early/Late judgment)
+- Removed redundant UpdateState() call in RdcSetAutoPatch
+
 ## v1.0.2 — 2026-05-29
 
 ### Features
