@@ -4,6 +4,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using JipperOverlayer.Overlayer.Util;
 using Object = UnityEngine.Object;
 
 namespace JipperOverlayer.Overlayer;
@@ -40,7 +41,6 @@ public class Overlay
     private GameObject _timingScaleObject;
     private GameObject _attemptObject;
     private GameObject _progressBarObject;
-    public static readonly Shader ShaderRef = (Shader)typeof(ShaderUtilities).GetProperty("ShaderRef_MobileSDF", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null);
     internal static scrEnableIfBeta BetaWatermark;
     internal static Vector2? BetaWatermarkOriginalPos;
     protected int LastTime = -1;
@@ -61,8 +61,10 @@ public class Overlay
     public float LastMultiplier = 1f;
     private string _musicTimeLabel;
     private string _mapTimeLabel;
-    private static readonly char[] HexChars = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'];
     internal static readonly StringBuilder _textSb = new(256);
+
+    private static readonly IReadOnlyList<TextMeshProUGUI> _emptyTexts = Array.Empty<TextMeshProUGUI>();
+    protected virtual IReadOnlyList<TextMeshProUGUI> ExtraTexts => _emptyTexts;
 
     public Overlay()
     {
@@ -133,7 +135,7 @@ public class Overlay
         text = go.AddComponent<TextMeshProUGUI>();
         text.font = BundleLoader.FontAsset;
         text.fontSize = 25;
-        SetupShadow(text);
+        ShadowManager.ApplyShadow(text);
     }
 
     public virtual void SetupLocationMain()
@@ -180,7 +182,7 @@ public class Overlay
         BPMText.alignment = TextAlignmentOptions.TopRight;
         BPMText.lineSpacing = 30;
         BPMText.fontSize = 25;
-        SetupShadow(BPMText);
+        ShadowManager.ApplyShadow(BPMText);
         _bpmObject = go;
     }
 
@@ -197,7 +199,7 @@ public class Overlay
         JudgementText.fontSize = 25;
         JudgementText.alignment = TextAlignmentOptions.Bottom;
         JudgementText.color = new Color(0.8509804f, 0.345098f, 1);
-        SetupShadow(JudgementText);
+        ShadowManager.ApplyShadow(JudgementText);
         _judgementObject = go;
     }
 
@@ -225,7 +227,7 @@ public class Overlay
         var fitter = title.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        SetupDarkShadow(ComboTitle);
+        ShadowManager.ApplyDarkShadow(ComboTitle);
 
         var val = new GameObject("ComboValue");
         t = val.AddComponent<RectTransform>();
@@ -241,7 +243,7 @@ public class Overlay
         fitter = val.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        SetupDarkShadow(ComboText);
+        ShadowManager.ApplyDarkShadow(ComboText);
         _comboObject = go;
     }
 
@@ -269,7 +271,7 @@ public class Overlay
         TimingScaleText.font = BundleLoader.FontAsset;
         TimingScaleText.fontSize = 20;
         TimingScaleText.alignment = TextAlignmentOptions.Bottom;
-        SetupShadow(TimingScaleText);
+        ShadowManager.ApplyShadow(TimingScaleText);
         _timingScaleObject = go;
     }
 
@@ -285,7 +287,7 @@ public class Overlay
         AttemptText.font = BundleLoader.FontAsset;
         AttemptText.fontSize = 25;
         AttemptText.alignment = TextAlignmentOptions.BottomLeft;
-        SetupShadow(AttemptText);
+        ShadowManager.ApplyShadow(AttemptText);
         _attemptObject = go;
     }
 
@@ -309,8 +311,7 @@ public class Overlay
     {
         var font = FontManager.GetFont(Main.Settings.FontIndex);
         if (font == null) return;
-        // Clear shadow cache so per-font materials are rebuilt
-        ShadowMaterialCache.Clear();
+        ShadowManager.ClearCache();
         if (ProgressText) ProgressText.font = font;
         if (AccuracyText) AccuracyText.font = font;
         if (XAccuracyText) XAccuracyText.font = font;
@@ -324,30 +325,36 @@ public class Overlay
         if (ComboText) ComboText.font = font;
         if (TimingScaleText) TimingScaleText.font = font;
         if (AttemptText) AttemptText.font = font;
-        // Re-apply shadow materials (per-font cache)
+        foreach (var t in ExtraTexts)
+            if (t) t.font = font;
         foreach (var t in new[] { ProgressText, AccuracyText, XAccuracyText, TimeText, MapTimeText, CheckpointText, BestText,
             BPMText, JudgementText, TimingScaleText, AttemptText })
-        { if (t) try { ApplyShadowMaterial(t, 0.5f); } catch { } }
-        if (ComboTitle) try { SetupDarkShadow(ComboTitle); } catch { }
-        if (ComboText) try { SetupDarkShadow(ComboText); } catch { }
+        { if (t) try { ShadowManager.ApplyShadow(t); } catch { } }
+        foreach (var t in ExtraTexts)
+        { if (t) try { ShadowManager.ApplyShadow(t); } catch { } }
+        if (ComboTitle) try { ShadowManager.ApplyDarkShadow(ComboTitle); } catch { }
+        if (ComboText) try { ShadowManager.ApplyDarkShadow(ComboText); } catch { }
     }
 
     public virtual void ApplyAlignment()
     {
         var s = Main.Settings;
+        var mainAlign = (TextAlignmentOptions)s.MainAlign;
         if (BPMText) BPMText.alignment = (TextAlignmentOptions)s.BPMAlign;
         if (JudgementText) JudgementText.alignment = (TextAlignmentOptions)s.JudgeAlign;
         if (ComboTitle) ComboTitle.alignment = (TextAlignmentOptions)s.ComboAlign;
         if (ComboText) ComboText.alignment = (TextAlignmentOptions)s.ComboValAlign;
         if (TimingScaleText) TimingScaleText.alignment = (TextAlignmentOptions)s.TimingAlign;
         if (AttemptText) AttemptText.alignment = (TextAlignmentOptions)s.AttemptAlign;
-        if (ProgressText) ProgressText.alignment = (TextAlignmentOptions)s.MainAlign;
-        if (AccuracyText) AccuracyText.alignment = (TextAlignmentOptions)s.MainAlign;
-        if (XAccuracyText) XAccuracyText.alignment = (TextAlignmentOptions)s.MainAlign;
-        if (TimeText) TimeText.alignment = (TextAlignmentOptions)s.MainAlign;
-        if (MapTimeText) MapTimeText.alignment = (TextAlignmentOptions)s.MainAlign;
-        if (CheckpointText) CheckpointText.alignment = (TextAlignmentOptions)s.MainAlign;
-        if (BestText) BestText.alignment = (TextAlignmentOptions)s.MainAlign;
+        if (ProgressText) ProgressText.alignment = mainAlign;
+        if (AccuracyText) AccuracyText.alignment = mainAlign;
+        if (XAccuracyText) XAccuracyText.alignment = mainAlign;
+        if (TimeText) TimeText.alignment = mainAlign;
+        if (MapTimeText) MapTimeText.alignment = mainAlign;
+        if (CheckpointText) CheckpointText.alignment = mainAlign;
+        if (BestText) BestText.alignment = mainAlign;
+        foreach (var t in ExtraTexts)
+            if (t) t.alignment = mainAlign;
     }
 
     public virtual void ApplyFontStyle()
@@ -367,6 +374,8 @@ public class Overlay
         if (ComboText) ComboText.fontStyle = (FontStyles)s.ComboValStyle;
         if (TimingScaleText) TimingScaleText.fontStyle = (FontStyles)s.TimingStyle;
         if (AttemptText) AttemptText.fontStyle = (FontStyles)s.AttemptStyle;
+        foreach (var t in ExtraTexts)
+            if (t) t.fontStyle = mainStyle;
     }
 
     public void ApplyPositionOffsets()
@@ -458,77 +467,6 @@ public class Overlay
         return result;
     }
 
-    protected void SetupShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.5f);
-    protected void SetupDarkShadow(TextMeshProUGUI text) => ApplyShadowMaterial(text, 0.7f);
-
-    private static readonly Dictionary<TMP_FontAsset, Material> ShadowMaterialCache = new();
-
-    private void ApplyShadowMaterial(TextMeshProUGUI text, float a)
-    {
-        try
-        {
-            var font = text.font;
-            if (font == null) return;
-            if (!ShadowMaterialCache.TryGetValue(font, out var mat))
-            {
-                var fontMat = GetFontMaterial(font);
-                if (fontMat == null)
-                {
-                    Main.Mod.Logger.Warning($"Shadow: Cannot get material from font '{font.name}', skipping");
-                    return;
-                }
-                mat = new Material(fontMat);
-                if (ShaderRef) mat.shader = ShaderRef;
-                mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-                mat.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
-                mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.01f);
-                mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-                mat.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0, 0, 0, a));
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 1f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -1f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
-                ShadowMaterialCache[font] = mat;
-            }
-            text.fontSharedMaterial = mat;
-        }
-        catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
-    }
-
-    private static System.Reflection.MemberInfo _cachedMaterialMember;
-    private static bool _cachedMaterialLogged;
-
-    private static Material GetFontMaterial(TMP_FontAsset font)
-    {
-        if (_cachedMaterialMember == null)
-        {
-            var t = font.GetType();
-            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
-            _cachedMaterialMember = (System.Reflection.MemberInfo)t.GetProperty("material", flags) ?? t.GetField("material", flags);
-        }
-
-        Material result = null;
-        if (_cachedMaterialMember is System.Reflection.PropertyInfo pi)
-        {
-            var val = pi.GetValue(font);
-            if (val != null) result = (Material)val;
-        }
-        else if (_cachedMaterialMember is System.Reflection.FieldInfo fi)
-        {
-            var val = fi.GetValue(font);
-            if (val != null) result = (Material)val;
-        }
-
-        if (!_cachedMaterialLogged)
-        {
-            _cachedMaterialLogged = true;
-            string foundBy = _cachedMaterialMember != null
-                ? $"{_cachedMaterialMember.MemberType} \"{_cachedMaterialMember.Name}\""
-                : "none";
-            Main.Mod.Logger.Log($"Overlay: Font material resolved via {foundBy}");
-        }
-        return result;
-    }
 
     public void UpdateAccuracy(int index = -1)
     {
@@ -608,11 +546,11 @@ public class Overlay
                 float totalTime = song.clip?.length ?? 0;
                 if (LastTime == (int)time) return;
                 bool hourNeed = totalTime >= 3600;
-                MusicTimeCache ??= GetTimeString(totalTime, hourNeed);
+                MusicTimeCache ??= TimeFormatter.Format(totalTime, hourNeed);
                 string timeStr;
                 if (time == 0 && SongPlaying) timeStr = MusicTimeCache;
-                else if (time > 0) { SongPlaying = true; timeStr = GetTimeString(time, hourNeed); }
-                else timeStr = GetTimeString(time, hourNeed);
+                else if (time > 0) { SongPlaying = true; timeStr = TimeFormatter.Format(time, hourNeed); }
+                else timeStr = TimeFormatter.Format(time, hourNeed);
                 TimeText.text = $"{_musicTimeLabel} {timeStr}~{MusicTimeCache}";
                 LastTime = (int)time;
                 TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
@@ -626,19 +564,14 @@ public class Overlay
             if (time < 0) time = 0; else if (time > totalTime) time = totalTime;
             if ((!s.ShowMapTime || LastMapTime == (int)time) && (!requireMusicToMap || LastTime == (int)time)) return;
             bool hourNeed = totalTime >= 3600;
-            MapTimeCache ??= GetTimeString(totalTime, hourNeed);
-            string tStr = time == totalTime ? MapTimeCache : GetTimeString(time, hourNeed);
+            MapTimeCache ??= TimeFormatter.Format(totalTime, hourNeed);
+            string tStr = time == totalTime ? MapTimeCache : TimeFormatter.Format(time, hourNeed);
             string txt = $"{_mapTimeLabel} {tStr}~{MapTimeCache}";
             if (s.ShowMapTime) { MapTimeText.text = txt; LastMapTime = (int)time; MapTimeText.color = s.Colors.GetMapTimeColor(time / totalTime); }
             if (requireMusicToMap) { TimeText.text = txt; LastTime = (int)time; TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime); }
         }
     }
 
-    private static string GetTimeString(float time, bool hour)
-    {
-        int t = (int)time;
-        return hour ? $"{t / 3600}:{t % 3600 / 60:00}:{t % 60:00}" : $"{t / 60}:{t % 60:00}";
-    }
 
     public void UpdateCombo(int combo, bool bump)
     {
@@ -662,24 +595,21 @@ public class Overlay
         if (!GameObject.activeSelf) return;
         var floor = scrController.instance.currFloor ?? scrController.instance.firstFloor;
         if (floor == null) return;
-        var conductor = scrConductor.instance;
-        float bpm = (float)(conductor.bpm * conductor.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance));
-        float cbpm = floor.nextfloor ? (float)(60.0 / (floor.nextfloor.entryTime - floor.entryTime) * conductor.song.pitch) : bpm;
-        float kps = cbpm / 60;
-        if (LastTileBpm == bpm && LastCurBpm == cbpm) return;
-        string hex = ColorToHex(Main.Settings.Colors.GetBpmColor(bpm / Main.Settings.BpmColorMax));
+        var bpm = BpmCalculator.Calculate(floor, (float)(scrConductor.instance.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance)));
+        if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm) return;
+        string hex = BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(bpm.TileBpm / Main.Settings.BpmColorMax));
         _textSb.Clear();
         _textSb.Append("<color=white>TBPM | <color=#");
         _textSb.Append(hex);
         _textSb.Append('>');
-        _textSb.Append(Math.Round(bpm, 2));
+        _textSb.Append(Math.Round(bpm.TileBpm, 2));
         _textSb.Append("</color>\nCBPM |</color> ");
-        _textSb.Append(Math.Round(cbpm, 2));
+        _textSb.Append(Math.Round(bpm.CurrentBpm, 2));
         _textSb.Append("\n<color=white>KPS |</color> ");
-        _textSb.Append(Math.Round(kps, 2));
+        _textSb.Append(Math.Round(bpm.Kps, 2));
         BPMText.text = _textSb.ToString();
-        if (LastCurBpm != cbpm) BPMText.color = Main.Settings.Colors.GetBpmColor(cbpm / Main.Settings.BpmColorMax);
-        LastTileBpm = bpm; LastCurBpm = cbpm;
+        if (LastCurBpm != bpm.CurrentBpm) BPMText.color = Main.Settings.Colors.GetBpmColor(bpm.CurrentBpm / Main.Settings.BpmColorMax);
+        LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;
     }
 
     private void RefreshTimeLabels()
@@ -715,20 +645,6 @@ public class Overlay
         rt.anchoredPosition = pos;
     }
 
-    protected static string ColorToHex(Color c)
-    {
-        int r = Mathf.RoundToInt(c.r * 255);
-        int g = Mathf.RoundToInt(c.g * 255);
-        int b = Mathf.RoundToInt(c.b * 255);
-        int a = c.a == 1 ? -1 : Mathf.RoundToInt(c.a * 255);
-        int len = a >= 0 ? 8 : 6;
-        char[] chars = new char[len];
-        chars[0] = HexChars[r >> 4]; chars[1] = HexChars[r & 0xF];
-        chars[2] = HexChars[g >> 4]; chars[3] = HexChars[g & 0xF];
-        chars[4] = HexChars[b >> 4]; chars[5] = HexChars[b & 0xF];
-        if (a >= 0) { chars[6] = HexChars[a >> 4]; chars[7] = HexChars[a & 0xF]; }
-        return new string(chars);
-    }
 
     public void UpdateTimingScale()
     {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using JipperOverlayer.Overlayer;
 using JipperOverlayer.Overlayer.Features;
+using JipperOverlayer.Overlayer.Util;
 using TMPro;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ public class JOverlay : Overlay
     public TextMeshProUGUI StartText;
     public TextMeshProUGUI TimingText;
 
+    private readonly List<TextMeshProUGUI> _extraTexts = new();
     private System.Collections.Generic.List<float> _timings;
     private bool _purePerfect;
     private int _deathCount;
@@ -30,6 +32,8 @@ public class JOverlay : Overlay
     private float _timingsSum;
 
     public JOverlay() { Instance = this; }
+
+    protected override IReadOnlyList<TextMeshProUGUI> ExtraTexts => _extraTexts;
 
     protected override void SetupTextManager()
     {
@@ -47,6 +51,7 @@ public class JOverlay : Overlay
         SetupMainText("Death", ref DeathText);
         SetupMainText("Start", ref StartText);
         SetupMainText("Timing", ref TimingText);
+        _extraTexts.AddRange([FPSText, AuthorText, StateText, DeathText, StartText, TimingText]);
     }
 
     public override void SetupLocationMain()
@@ -110,8 +115,8 @@ public class JOverlay : Overlay
                 if (time > 0) SongPlaying = true;
                 else if (time == 0 && SongPlaying) time = totalTime;
                 bool hourNeed = totalTime >= 3600;
-                MusicTimeCache ??= GetTimeString2(totalTime, hourNeed);
-                string timeStr = time == 0 && SongPlaying ? MusicTimeCache : GetTimeString2(time, hourNeed);
+                MusicTimeCache ??= TimeFormatter.FormatWithDecimals(totalTime, hourNeed);
+                string timeStr = time == 0 && SongPlaying ? MusicTimeCache : TimeFormatter.FormatWithDecimals(time, hourNeed);
                 TimeText.text = $"<color=white>{(s.TimeTextTypeValue == 0 ? "음악 시간" : "Music Time")} |</color> {timeStr}~{MusicTimeCache}";
                 TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
             }
@@ -125,18 +130,12 @@ public class JOverlay : Overlay
             else if (time > totalTime) time = totalTime;
             if (!s.ShowMapTime && !requireMusicToMap) return;
             bool hourNeed = totalTime >= 3600;
-            MapTimeCache ??= GetTimeString2(totalTime, hourNeed);
-            string timeStr = time == totalTime ? MapTimeCache : GetTimeString2(time, hourNeed);
+            MapTimeCache ??= TimeFormatter.FormatWithDecimals(totalTime, hourNeed);
+            string timeStr = time == totalTime ? MapTimeCache : TimeFormatter.FormatWithDecimals(time, hourNeed);
             string text = $"<color=white>{(s.TimeTextTypeValue == 0 ? "맵 시간" : "Map Time")} |</color> {timeStr}~{MapTimeCache}";
             if (s.ShowMapTime) { MapTimeText.text = text; MapTimeText.color = s.Colors.GetMapTimeColor(time / totalTime); }
             if (requireMusicToMap) { TimeText.text = text; TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime); }
         }
-    }
-
-    private static string GetTimeString2(float time, bool hour)
-    {
-        int t = (int)time;
-        return hour ? $"{t / 3600}:{t % 3600 / 60:00}:{time % 60:00.0}" : $"{t / 60}:{time % 60:00.0}";
     }
 
     public override Color UpdateComboColor(int combo)
@@ -245,21 +244,19 @@ public class JOverlay : Overlay
         if (!GameObject.activeSelf) return;
         scrFloor floor = scrController.instance.currFloor ?? scrController.instance.firstFloor;
         if (floor == null || floor.seqID <= _pseudoFloor) return;
-        var conductor = scrConductor.instance;
-        float bpm = (float)(conductor.bpm * conductor.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance));
+        var bpm = BpmCalculator.Calculate(floor, (float)(scrConductor.instance.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance)));
         bool checkPseudo = Jbpm.CheckPseudo;
         float cbpm = 0;
         int count = 0;
-        bool isPseudo = checkPseudo && CheckPseudo(floor, bpm, out cbpm, out count);
-        if (!isPseudo)
-            cbpm = floor.nextfloor ? (float)(60.0 / (floor.nextfloor.entryTime - floor.entryTime) * conductor.song.pitch) : bpm;
+        bool isPseudo = checkPseudo && CheckPseudo(floor, bpm.TileBpm, out cbpm, out count);
+        if (!isPseudo) cbpm = bpm.CurrentBpm;
         float kps = cbpm / 60;
         if (isPseudo) kps *= count;
-        if (LastTileBpm == bpm && LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
-        string colorHex = ColorToHex(Main.Settings.Colors.GetBpmColor(bpm / Jbpm.BpmColorMax));
-        BPMText.text = $"<color=white>TBPM | <color=#{colorHex}>{Math.Round(bpm, 2)}</color>\nCBPM |</color> {Math.Round(cbpm, 2)}\n<color=white>KPS |</color> {(isPseudo ? $"<color=#{ColorToHex(Main.Settings.Colors.GetBpmColor(cbpm * count / Jbpm.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
+        if (LastTileBpm == bpm.TileBpm && LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
+        string colorHex = BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(bpm.TileBpm / Jbpm.BpmColorMax));
+        BPMText.text = $"<color=white>TBPM | <color=#{colorHex}>{Math.Round(bpm.TileBpm, 2)}</color>\nCBPM |</color> {Math.Round(cbpm, 2)}\n<color=white>KPS |</color> {(isPseudo ? $"<color=#{BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(cbpm * count / Jbpm.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
         if (LastCurBpm != cbpm) BPMText.color = Main.Settings.Colors.GetBpmColor(cbpm / Jbpm.BpmColorMax);
-        LastTileBpm = bpm; LastCurBpm = cbpm; _lastCurKps = kps;
+        LastTileBpm = bpm.TileBpm; LastCurBpm = cbpm; _lastCurKps = kps;
     }
 
     public void PerfectToCombo()
@@ -320,46 +317,6 @@ public class JOverlay : Overlay
     }
 
     private static bool Check90(double angle) => Math.Abs(angle - 1.57079642638564) < 1e-14;
-
-    public override void ApplyFontToAll()
-    {
-        base.ApplyFontToAll();
-        var font = FontManager.GetFont(Main.Settings.FontIndex);
-        if (font == null) return;
-        if (FPSText) FPSText.font = font;
-        if (AuthorText) AuthorText.font = font;
-        if (StateText) StateText.font = font;
-        if (DeathText) DeathText.font = font;
-        if (StartText) StartText.font = font;
-        if (TimingText) TimingText.font = font;
-        // Re-apply shadow materials (per-font cache)
-        foreach (var t in new[] { FPSText, AuthorText, StateText, DeathText, StartText, TimingText })
-        { if (t) try { SetupShadow(t); } catch { } }
-    }
-
-    public override void ApplyAlignment()
-    {
-        base.ApplyAlignment();
-        var align = (TextAlignmentOptions)Main.Settings.MainAlign;
-        if (FPSText) FPSText.alignment = align;
-        if (AuthorText) AuthorText.alignment = align;
-        if (StateText) StateText.alignment = align;
-        if (DeathText) DeathText.alignment = align;
-        if (StartText) StartText.alignment = align;
-        if (TimingText) TimingText.alignment = align;
-    }
-
-    public override void ApplyFontStyle()
-    {
-        base.ApplyFontStyle();
-        var style = (FontStyles)Main.Settings.MainStyle;
-        if (FPSText) FPSText.fontStyle = style;
-        if (AuthorText) AuthorText.fontStyle = style;
-        if (StateText) StateText.fontStyle = style;
-        if (DeathText) DeathText.fontStyle = style;
-        if (StartText) StartText.fontStyle = style;
-        if (TimingText) TimingText.fontStyle = style;
-    }
 
     public override void Show(int floor)
     {

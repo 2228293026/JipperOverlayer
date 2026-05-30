@@ -120,6 +120,9 @@
     <Compile Include="Overlayer\FontManager.cs" />
     <Compile Include="Overlayer\IOverlayTextManager.cs" />
     <Compile Include="Overlayer\Overlay.cs" />
+    <Compile Include="Overlayer\Util\ShadowManager.cs" />
+    <Compile Include="Overlayer\Util\TimeFormatter.cs" />
+    <Compile Include="Overlayer\Util\BpmCalculator.cs" />
     <Compile Include="Overlayer\OverlayMono.cs" />
     <Compile Include="Overlayer\OverlayTextManagerNormal.cs" />
     <Compile Include="Overlayer\OverlayTextManagerCoop.cs" />
@@ -127,9 +130,11 @@
     <Compile Include="Overlayer\ProgressBar.cs" />
     <Compile Include="Overlayer\TimeTextType.cs" />
     <Compile Include="Overlayer\VersionSafe.cs" />
+    <Compile Include="Overlayer\Settings\ColorConfig.cs" />
     <Compile Include="Overlayer\Settings\ColorCache.cs" />
     <Compile Include="Overlayer\Settings\ProgressColorCache.cs" />
     <Compile Include="Overlayer\Settings\ColorPerDictionary.cs" />
+    <Compile Include="Overlayer\Features\PatchLogic.cs" />
     <Compile Include="Overlayer\Features\GameLifecyclePatches.cs" />
     <Compile Include="Overlayer\Features\V141Patches.cs" />
     <Compile Include="Overlayer\Features\V136Patches.cs" />

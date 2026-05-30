@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityModManagerNet;
@@ -44,9 +43,17 @@ public class Settings : UnityModManager.ModSettings
 
     public void OnGUI(UnityModManager.ModEntry modEntry)
     {
+        DrawGeneralSettings();
+        DrawStatusSection();
+        DrawTextSettings();
+        DrawJongyeolSection();
+        Overlay.Instance?.RefreshVisibility();
+    }
+
+    void DrawGeneralSettings()
+    {
         Size = Slide(Tr.Get(Tr.Key.Size), Size, 0, 2, () => Overlayer.Overlay.Instance?.UpdateSize());
 
-        // Language selector
         GUILayout.BeginHorizontal();
         GUILayout.Label(Tr.Get(Tr.Key.LangLabel), GUILayout.Width(100));
         var langs = new[] { "English", "한국어", "中文" };
@@ -57,7 +64,6 @@ public class Settings : UnityModManager.ModSettings
 
         GUILayout.Space(5);
 
-        // ===== Font foldout =====
         _fontFold = GUILayout.Toggle(_fontFold, Tr.Get(Tr.Key.Font), GUILayout.ExpandWidth(false));
         if (_fontFold && FontManager.FontNames != null)
         {
@@ -73,7 +79,6 @@ public class Settings : UnityModManager.ModSettings
             }
         }
 
-        // ===== Custom Positions =====
         CustomPositionsEnabled = Tog(Tr.Get(Tr.Key.CustomPositions), CustomPositionsEnabled);
         if (CustomPositionsEnabled)
         {
@@ -91,14 +96,15 @@ public class Settings : UnityModManager.ModSettings
             PosSlide("  Attmpt Y", ref AttmptPY, 0, 1);
             PosSlide("  ProgBarX", ref ProgBarPX, 0, 1);
             PosSlide("  ProgBarY", ref ProgBarPY, 0, 1);
-
             if (GUILayout.Button(Tr.Get(Tr.Key.ResetPositions), GUILayout.ExpandWidth(false)))
                 ResetCustomPos();
         }
 
         GUILayout.Space(5);
+    }
 
-        // ===== Status section =====
+    void DrawStatusSection()
+    {
         ShowProgress = Tog(Tr.Get(Tr.Key.ShowProgress), ShowProgress);
         if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.ProgressColor),
             () => { Colors.Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
@@ -165,6 +171,10 @@ public class Settings : UnityModManager.ModSettings
         ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);
 
         GUILayout.Space(5);
+    }
+
+    void DrawTextSettings()
+    {
         _alignFold = GUILayout.Toggle(_alignFold, Tr.Get(Tr.Key.TextSettings), GUILayout.ExpandWidth(false));
         if (_alignFold)
         {
@@ -182,7 +192,10 @@ public class Settings : UnityModManager.ModSettings
             if (GUILayout.Button(Tr.Get(Tr.Key.AlignReset), GUILayout.Width(50))) { ResetAlignment(); ResetStyle(); Overlayer.Overlay.Instance?.ApplyAlignment(); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
             GUILayout.EndHorizontal();
         }
+    }
 
+    void DrawJongyeolSection()
+    {
         bool prevJongyeol = JongyeolMode;
         JongyeolMode = Tog(Tr.Get(Tr.Key.JongyeolMode), JongyeolMode);
         if (JongyeolMode != prevJongyeol) { Main.RecreateOverlay(); PatchManager.RefreshPatches(); }
@@ -199,8 +212,6 @@ public class Settings : UnityModManager.ModSettings
             CheckPseudo = Tog(Tr.Get(Tr.Key.CheckPseudo), CheckPseudo);
             YellowCombo = Tog(Tr.Get(Tr.Key.YellowCombo), YellowCombo);
         }
-
-        Overlayer.Overlay.Instance?.RefreshVisibility();
     }
 
     void ResetCustomPos()
@@ -298,7 +309,6 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.Label(AlignLabel(align), GUILayout.Width(28));
         if (GUILayout.Button(expanded ? "▲" : "▼", GUILayout.Width(20), GUILayout.Height(18)))
             _expandedAlign = expanded ? null : label;
-        // Style toggles: Bold(1) / Italic(2) / Underline(4) / Strikethrough(64) / Highlight(512)
         (int bit, Tr.Key key)[] styles = [(1, Tr.Key.StyleBold), (2, Tr.Key.StyleItalic), (4, Tr.Key.StyleUnderline), (64, Tr.Key.StyleStrike), (512, Tr.Key.StyleHighlight)];
         foreach (var st in styles)
         {
@@ -325,58 +335,5 @@ public class Settings : UnityModManager.ModSettings
         var s = UnityModManagerNet.UnityModManager.ModSettings.Load<Settings>(modEntry);
         s.Colors = ColorConfig.Load(modEntry);
         return s;
-    }
-}
-
-public class ColorConfig
-{
-    public ColorPerDictionary Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]);
-    public ColorPerDictionary Accuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0));
-    public ColorPerDictionary XAccuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0));
-    public ColorPerDictionary MusicTime = new([(1f, Color.white)]);
-    public ColorPerDictionary MapTime = new([(1f, Color.white)]);
-    public ColorPerDictionary Best = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]);
-    public ColorPerDictionary Bpm = new([(0f, Color.white), (1f, Color.magenta)]);
-    public ColorPerDictionary Combo = new([(0f, new Color(0.8745f, 0.7098f, 1f)), (1f, new Color(0.7176f, 0.3490f, 1f))]);
-    public ColorPerDictionary ProgressBar = new([(1f, new Color(0.9216f, 0.8039f, 0.9765f))]);
-    public ColorPerDictionary ProgressBarBackground = new([(1f, Color.white)]);
-    public ColorPerDictionary ProgressBarBorder = new([(1f, Color.black)]);
-
-    public Color GetProgressColor(float t) { return Progress.GetColor(t); }
-    public void EnsureSorted() {
-        Progress.EnsureSorted(); Accuracy.EnsureSorted(); XAccuracy.EnsureSorted();
-        MusicTime.EnsureSorted(); MapTime.EnsureSorted(); Best.EnsureSorted();
-        Bpm.EnsureSorted(); Combo.EnsureSorted(); ProgressBar.EnsureSorted();
-        ProgressBarBackground.EnsureSorted(); ProgressBarBorder.EnsureSorted();
-    }
-    public Color GetAccuracyColor(float t, bool perfect) { return perfect ? new Color(1, 0.8549f, 0) : Accuracy.GetColor(t); }
-    public Color GetXAccuracyColor(float t, bool perfect) { return perfect ? new Color(1, 0.8549f, 0) : XAccuracy.GetColor(t); }
-    public Color GetMusicTimeColor(float t) { return MusicTime.GetColor(t); }
-    public Color GetMapTimeColor(float t) { return MapTime.GetColor(t); }
-    public Color GetBestColor(float t) { return Best.GetColor(t); }
-    public Color GetBpmColor(float t) { return Bpm.GetColor(t); }
-    public Color GetComboColor(float t) { return Combo.GetColor(t); }
-    public Color GetProgressBarColor(float t) { return ProgressBar.GetColor(t); }
-    public Color GetProgressBarBackgroundColor(float t) { return ProgressBarBackground.GetColor(t); }
-    public Color GetProgressBarBorderColor(float t) { return ProgressBarBorder.GetColor(t); }
-
-    public void Save(UnityModManager.ModEntry entry)
-    {
-        try { File.WriteAllText(Path.Combine(entry.Path, "colors.json"), JsonConvert.SerializeObject(this, Formatting.Indented)); }
-        catch (Exception e) { Main.Mod?.Logger.Warning($"Save colors failed: {e.Message}"); }
-    }
-
-    public static ColorConfig Load(UnityModManager.ModEntry entry)
-    {
-        try {
-            string p = Path.Combine(entry.Path, "colors.json");
-            if (File.Exists(p)) {
-                var jsonSettings = new JsonSerializerSettings { ObjectCreationHandling = ObjectCreationHandling.Replace };
-                var cc = JsonConvert.DeserializeObject<ColorConfig>(File.ReadAllText(p), jsonSettings);
-                if (cc != null) { cc.EnsureSorted(); return cc; }
-            }
-        }
-        catch (Exception e) { Main.Mod?.Logger.Warning($"Load colors failed: {e.Message}"); }
-        return new ColorConfig();
     }
 }
