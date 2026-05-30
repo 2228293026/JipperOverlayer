@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.6 — 2026-05-30
+
+### Bug Fixes
+- Fix version detection for game API changes: detect v141+ via scrMarginTracker and ADOBase.playerManager instead of removed scrController.playerManager
+- Fix percentAcc/percentXAcc delegate bindings: use ADOBase.playerManager (static) instead of scrController.instance.playerManager (removed property)
+
 ## v1.0.5 — 2026-05-30
 
 ### Features
