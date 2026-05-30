@@ -178,8 +178,8 @@ public class Overlay
 
     public void SetupLocationJudgement()
     {
-        bool coop = VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1;
-        int count = coop ? Math.Min(scrPlayerManager.playerCount, 4) : 1;
+        bool coop = VersionSafe.IsCoopMode();
+        int count = coop ? Math.Min(VersionSafe.GetPlayerCount(), 4) : 1;
         for (int i = 0; i < 4; i++)
         {
             if (JudgementTexts[i] == null) continue;
@@ -436,7 +436,7 @@ public class Overlay
         if (_timingScaleObject)
             TimingScaleText.rectTransform.anchoredPosition = new Vector2(0, 90 + 40 * s.Size);
         if (_attemptObject)
-            _attemptObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1 ? 550 : 310, 35);
+            _attemptObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(VersionSafe.IsCoopMode() && VersionSafe.GetPlayerCount() > 1 ? 550 : 310, 35);
         if (_progressBarObject)
             _progressBarObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -10);
 
@@ -449,7 +449,7 @@ public class Overlay
         for (int i = 0; i < 4; i++)
         {
             if (!_judgementObjects[i]) continue;
-            bool coop = VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1;
+            bool coop = VersionSafe.IsCoopMode() && VersionSafe.GetPlayerCount() > 1;
             float ox, oy;
             if (i == 0 && !coop) { ox = o.JudgeOffsetX; oy = o.JudgeOffsetY; }
             else { ox = i == 0 ? o.P1JudgeOffsetX : i == 1 ? o.P2JudgeOffsetX : i == 2 ? o.P3JudgeOffsetX : o.P4JudgeOffsetX;
@@ -462,7 +462,7 @@ public class Overlay
             TimingScaleText.rectTransform.position += new Vector3(o.TimingOffsetX, o.TimingOffsetY, 0);
         if (_attemptObject)
         {
-            bool coop = VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1;
+            bool coop = VersionSafe.IsCoopMode() && VersionSafe.GetPlayerCount() > 1;
             _attemptObject.GetComponent<RectTransform>().position += new Vector3(coop ? o.AttemptCoopOffsetX : o.AttemptOffsetX, coop ? o.AttemptCoopOffsetY : o.AttemptOffsetY, 0);
         }
         if (_progressBarObject)
@@ -474,7 +474,7 @@ public class Overlay
         var s = Main.Settings;
         if (_mainContainer) _mainContainer.SetActive(s.ShowProgress || s.ShowAccuracy || s.ShowXAccuracy || s.ShowMusicTime || s.ShowMapTime || s.ShowCheckpoint || s.ShowBest);
         if (_bpmObject) { _bpmObject.SetActive(s.ShowBPM); if (s.ShowBPM && GameObject.activeSelf) UpdateBPM(); }
-        for (int i = 0; i < 4; i++) if (_judgementObjects[i]) _judgementObjects[i].SetActive(s.ShowJudgement && i < (VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1 ? Math.Min(scrPlayerManager.playerCount, 4) : 1)); if (s.ShowJudgement) { SetupLocationJudgement(); if (GameObject.activeSelf) UpdateJudgement(); }
+        for (int i = 0; i < 4; i++) if (_judgementObjects[i]) _judgementObjects[i].SetActive(s.ShowJudgement && i < (VersionSafe.IsCoopMode() && VersionSafe.GetPlayerCount() > 1 ? Math.Min(VersionSafe.GetPlayerCount(), 4) : 1)); if (s.ShowJudgement) { SetupLocationJudgement(); if (GameObject.activeSelf) UpdateJudgement(); }
         if (_comboObject) { _comboObject.SetActive(s.ShowCombo); if (s.ShowCombo && GameObject.activeSelf) UpdateCombo(Features.GameLifecycleHelper.ComboCount, false); }
         if (_timingScaleObject) { _timingScaleObject.SetActive(s.ShowTimingScale); if (s.ShowTimingScale && GameObject.activeSelf) UpdateTimingScale(); }
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
@@ -571,15 +571,17 @@ public class Overlay
     public void UpdateJudgement()
     {
         if (!GameObject.activeSelf || Hit == null) return;
-        if (VersionSafe.IsCoopMode() && scrMistakesManager.marginTrackers != null)
+        bool isCoop = VersionSafe.IsCoopMode();
+        int playerCount = VersionSafe.GetPlayerCount();
+        if (isCoop && playerCount > 1)
         {
-            int count = Math.Min(Math.Min(scrPlayerManager.playerCount, scrMistakesManager.marginTrackers.Length), 4);
+            int count = Math.Min(playerCount, 4);
             for (int p = 0; p < count; p++)
             {
                 if (JudgementTexts[p] == null) continue;
                 _textSb.Clear();
-                var h = scrMistakesManager.marginTrackers[p].hitMarginsCount;
-                string hex = ColorUtility.ToHtmlStringRGB(scrPlayerManager.playerColors[p].ToRealColor());
+                var h = VersionSafe.GetHitMarginsCountForPlayer(p);
+                string hex = VersionSafe.GetPlayerColorHex(p);
                 _textSb.Append($"<color=#{hex}>P{p + 1}</color> ");
                 AppendJudgementLine(_textSb, h);
                 _textSb.Append($" <color=#{hex}>P{p + 1}</color>");

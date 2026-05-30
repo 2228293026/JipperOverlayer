@@ -110,17 +110,21 @@ public class Settings : UnityModManager.ModSettings
             PosGroup(Tr.Get(Tr.Key.PosJudge), () =>
             {
                 PosSlide2(Tr.Get(Tr.Key.PosJudge), ref JudgeOffsetX, ref JudgeOffsetY);
-                PosSlide2(Tr.Get(Tr.Key.PosP1), ref P1JudgeOffsetX, ref P1JudgeOffsetY);
-                PosSlide2(Tr.Get(Tr.Key.PosP2), ref P2JudgeOffsetX, ref P2JudgeOffsetY);
-                PosSlide2(Tr.Get(Tr.Key.PosP3), ref P3JudgeOffsetX, ref P3JudgeOffsetY);
-                PosSlide2(Tr.Get(Tr.Key.PosP4), ref P4JudgeOffsetX, ref P4JudgeOffsetY);
+                if (VersionSafe.IsV141OrLater)
+                {
+                    PosSlide2(Tr.Get(Tr.Key.PosP1), ref P1JudgeOffsetX, ref P1JudgeOffsetY);
+                    PosSlide2(Tr.Get(Tr.Key.PosP2), ref P2JudgeOffsetX, ref P2JudgeOffsetY);
+                    PosSlide2(Tr.Get(Tr.Key.PosP3), ref P3JudgeOffsetX, ref P3JudgeOffsetY);
+                    PosSlide2(Tr.Get(Tr.Key.PosP4), ref P4JudgeOffsetX, ref P4JudgeOffsetY);
+                }
             });
             PosGroup(Tr.Get(Tr.Key.JudgementOther), () =>
             {
                 PosSlide2(Tr.Get(Tr.Key.PosCombo), ref ComboOffsetX, ref ComboOffsetY);
                 PosSlide2(Tr.Get(Tr.Key.PosTiming), ref TimingOffsetX, ref TimingOffsetY);
                 PosSlide2(Tr.Get(Tr.Key.PosAttempt), ref AttemptOffsetX, ref AttemptOffsetY);
-                PosSlide2($"{Tr.Get(Tr.Key.PosAttempt)}\n{Tr.Get(Tr.Key.Coop)}", ref AttemptCoopOffsetX, ref AttemptCoopOffsetY);
+                if (VersionSafe.IsV141OrLater)
+                    PosSlide2($"{Tr.Get(Tr.Key.PosAttempt)}\n{Tr.Get(Tr.Key.Coop)}", ref AttemptCoopOffsetX, ref AttemptCoopOffsetY);
                 PosSlide2(Tr.Get(Tr.Key.PosProgBar), ref ProgBarOffsetX, ref ProgBarOffsetY);
             });
             if (GUILayout.Button(Tr.Get(Tr.Key.ResetPositions), GUILayout.ExpandWidth(false)))

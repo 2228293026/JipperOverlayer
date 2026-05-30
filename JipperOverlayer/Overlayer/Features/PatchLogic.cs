@@ -14,15 +14,7 @@ internal static class PatchLogic
 
     public static void AccuracyPostfixV141(scrMarginTracker __instance)
     {
-        int index = 0;
-        if (scrController.coopMode)
-        {
-            for (int i = 0; i < scrPlayerManager.playerCount; i++)
-            {
-                if (scrMistakesManager.marginTrackers[i] != __instance) continue;
-                index = i; break;
-            }
-        }
+        int index = VersionSafe.GetPlayerIndex(__instance);
         GameLifecycleHelper.GetOverlay()?.UpdateAccuracy(index);
     }
 

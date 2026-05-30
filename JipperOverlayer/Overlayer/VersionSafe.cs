@@ -1,6 +1,7 @@
+using HarmonyLib;
 using System;
 using System.Reflection;
-using HarmonyLib;
+using UnityEngine;
 
 namespace JipperOverlayer.Overlayer;
 
@@ -17,6 +18,10 @@ public static class VersionSafe
     private static Func<float> _getPercentXAcc;
     private static Func<bool> _isCoopMode;
     private static Func<scrShowIfDebug, bool> _getHideWithNoAuto;
+    private static Func<int> _getPlayerCount;
+    private static Func<object, int> _getPlayerIndex;
+    private static Func<int, int[]> _getHitMarginsCountForPlayer;
+    private static Func<int, string> _getPlayerColorHex;
 
     public static void Setup()
     {
@@ -66,12 +71,39 @@ public static class VersionSafe
 
         _getPercentAcc = () => ADOBase.playerManager?.mistakesManager?.percentAcc ?? 1f;
         _getPercentXAcc = () => ADOBase.playerManager?.mistakesManager?.percentXAcc ?? 1f;
-        _isCoopMode = () => scrPlayerManager.playerCount > 1;
+        _isCoopMode = () => GetPlayerCount() > 1;
         _getHideWithNoAuto = instance => instance.hideWithNoAuto;
+
+        _getPlayerCount = () => scrMistakesManager.marginTrackers?.Length ?? 1;
+
+        _getPlayerIndex = tracker =>
+        {
+            if (tracker == null || scrMistakesManager.marginTrackers == null)
+                return 0;
+            var trackers = scrMistakesManager.marginTrackers;
+            for (int i = 0; i < trackers.Length; i++)
+            {
+                if (trackers[i] == tracker)
+                    return i;
+            }
+            return 0;
+        };
+        _getHitMarginsCountForPlayer = (playerIdx) =>
+        {
+            if (scrMistakesManager.marginTrackers == null || playerIdx >= scrMistakesManager.marginTrackers.Length)
+                return new int[11];
+            return scrMistakesManager.marginTrackers[playerIdx]?.hitMarginsCount ?? new int[11];
+        };
+
+        _getPlayerColorHex = (playerIdx) =>
+        {
+            if (scrPlayerManager.playerColors == null || playerIdx >= scrPlayerManager.playerColors.Length)
+                return "FFFFFF";
+            return ColorUtility.ToHtmlStringRGB(scrPlayerManager.playerColors[playerIdx].ToRealColor());
+        };
     }
 
-    // ===== v136 — full reflection (no direct member access to avoid JIT resolution) =====
-
+    // ===== v136 — full reflection, no direct member access =====
     private static void BindV136Delegates()
     {
         var mmType = typeof(scrMistakesManager);
@@ -82,10 +114,10 @@ public static class VersionSafe
         var speedField = typeof(scrController).GetField("speed", BindingFlags.Public | BindingFlags.Instance);
         _getPlanetSpeed = ctrl => { var v = speedField?.GetValue(ctrl); return v is double d ? d : v is float f ? f : 1.0; };
 
-        // Resolve mistakenManager via FieldInfo.GetValue — avoids JIT MissingMethodException
+        // Resolve mistakesManager via FieldInfo.GetValue
         var mmField = typeof(scrController).GetField("mistakesManager", BindingFlags.Public | BindingFlags.Instance);
-        var _instanceField = typeof(scrController).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
-        object GetMM() => mmField?.GetValue(_instanceField?.GetValue(null));
+        var instanceField = typeof(scrController).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
+        object GetMM() => mmField?.GetValue(instanceField?.GetValue(null));
 
         var calcAcc = mmType.GetMethod("CalculatePercentAcc", BindingFlags.Public | BindingFlags.Instance);
         _calculatePercentAcc = () => calcAcc?.Invoke(GetMM(), null);
@@ -98,24 +130,24 @@ public static class VersionSafe
 
         _isCoopMode = () => false;
         _getHideWithNoAuto = _ => true;
+        _getPlayerCount = () => 1;
+        _getPlayerIndex = _ => 0;
+        _getHitMarginsCountForPlayer = (_) => GetHitMarginsCount();
+        _getPlayerColorHex = (_) => "";
     }
 
-    // ========== Public API (delegate-forwarded, zero reflection) ==========
-
+    // ========== Public API ==========
     public static int[] GetHitMarginsCount() => _getHitMarginsCount?.Invoke() ?? new int[11];
     public static double GetPlanetSpeed(scrController ctrl) => _getPlanetSpeed?.Invoke(ctrl) ?? 1.0;
     public static void CalculatePercentAcc() => _calculatePercentAcc?.Invoke();
     public static float GetPercentAcc() => _getPercentAcc?.Invoke() ?? 1f;
     public static float GetPercentXAcc() => _getPercentXAcc?.Invoke() ?? 1f;
     public static bool IsCoopMode() => _isCoopMode?.Invoke() ?? false;
-    public static int GetPlayerIndex(object tracker)
-    {
-        if (!IsV141OrLater || scrMistakesManager.marginTrackers == null) return 0;
-        for (int i = 0; i < scrPlayerManager.playerCount; i++)
-        {
-            if ((object)scrMistakesManager.marginTrackers[i] == tracker) return i;
-        }
-        return 0;
-    }
     public static bool GetHideWithNoAuto(scrShowIfDebug instance) => _getHideWithNoAuto?.Invoke(instance) ?? true;
+
+    public static int GetPlayerCount() => _getPlayerCount?.Invoke() ?? 1;
+
+    public static int GetPlayerIndex(object tracker) => _getPlayerIndex?.Invoke(tracker) ?? 0;
+    public static int[] GetHitMarginsCountForPlayer(int playerIdx) => _getHitMarginsCountForPlayer?.Invoke(playerIdx) ?? GetHitMarginsCount();
+    public static string GetPlayerColorHex(int playerIdx) => _getPlayerColorHex?.Invoke(playerIdx) ?? "";
 }
