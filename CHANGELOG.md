@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.4.1-preview — 2026-05-30
+
+Same as v1.0.4, preview release for testing.
+
 ## v1.0.4 — 2026-05-30
 
 ### Refactors
