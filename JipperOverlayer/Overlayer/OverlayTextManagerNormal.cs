@@ -21,30 +21,32 @@ public class OverlayTextManagerNormal : IOverlayTextManager
     {
         float xacc = VersionSafe.GetPercentXAcc();
         if (float.IsNaN(xacc)) xacc = 1;
+        var labels = Main.Settings.Labels;
         if (Main.Settings.ShowAccuracy)
         {
             float acc = VersionSafe.GetPercentAcc();
             float maxAcc = 1 + (scrController.instance.currentSeqID - overlay.NoCheckStartTile + 1) * 0.0001f;
-            overlay.AccuracyText.text = $"<color=white>Accuracy |</color> {Math.Round(acc * 100, DecimalPrecision)}%";
+            overlay.AccuracyText.text = $"<color=white>{labels.Accuracy} |</color> {Math.Round(acc * 100, DecimalPrecision)}%";
             overlay.AccuracyText.color = Main.Settings.Colors.GetAccuracyColor(xacc == 1 ? 1 : acc / maxAcc, xacc == 1);
         }
         if (Main.Settings.ShowXAccuracy)
         {
-            overlay.XAccuracyText.text = $"<color=white>{(Main.Settings.JongyeolMode ? "X-Accuracy" : "XAccuracy")} |</color> {Math.Round(xacc * 100, DecimalPrecision)}%";
+            overlay.XAccuracyText.text = $"<color=white>{labels.XAccuracy} |</color> {Math.Round(xacc * 100, DecimalPrecision)}%";
             overlay.XAccuracyText.color = Main.Settings.Colors.GetAccuracyColor(xacc, xacc == 1);
         }
     }
 
     public void UpdateProgress(Overlay overlay)
     {
+        var labels = Main.Settings.Labels;
         if (Main.Settings.JongyeolMode)
         {
             int cur = scrController.instance.currentSeqID;
             int last = ADOBase.lm.listFloors.Count - 1;
-            overlay.ProgressText.text = $"<color=white>Progress |</color> {cur} / {last}{(cur == last ? "" : $" [-{last - cur}]")} ({Math.Round(Progress * 100, 5)}%)";
+            overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {cur} / {last}{(cur == last ? "" : $" [-{last - cur}]")} ({Math.Round(Progress * 100, 5)}%)";
         }
         else
-            overlay.ProgressText.text = $"<color=white>Progress |</color> {Math.Round(Progress * 100, DecimalPrecision)}%";
+            overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {Math.Round(Progress * 100, DecimalPrecision)}%";
         overlay.ProgressText.color = Main.Settings.Colors.GetProgressColor(Progress);
     }
 
@@ -65,7 +67,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             CurCheck++; updated = true;
         }
         if (LastCheckpoint == scrController.checkpointsUsed && !updated) return;
-        overlay.CheckpointText.text = $"<color=white>CheckPoint |</color> {scrController.checkpointsUsed} ({CurCheck}/{overlay.Checkpoints.Length})";
+        overlay.CheckpointText.text = $"<color=white>{Main.Settings.Labels.Checkpoint} |</color> {scrController.checkpointsUsed} ({CurCheck}/{overlay.Checkpoints.Length})";
         LastCheckpoint = scrController.checkpointsUsed;
     }
 
@@ -84,7 +86,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
     {
         float best = CurBest > Progress || overlay.AutoOnceEnabled ? CurBest : Progress;
         int precision = Main.Settings.JongyeolMode ? 5 : 2;
-        overlay.BestText.text = $"<color=white>Best |</color> {Math.Round(best * 100, precision)}%";
+        overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, precision)}%";
         overlay.BestText.color = Main.Settings.Colors.GetBestColor(best);
     }
 }

@@ -22,6 +22,11 @@ public static class Tr
         MusicTimeColor, MapTimeColor, BestColor,
         ProgressBarColor, ProgressBarBgColor, ProgressBarBorderColor,
         ComboColor, BpmColor, AddColorStop, Delete, Percent,
+        CustomLabels,
+        General, Display, ProgressAccuracy, TimeSection,
+        ProgressBarBest, ComboSection, BpmSection, JudgementOther,
+        DisplayOptions, BehaviorOptions,
+        FPSRefreshRate,
         Count
     }
 
@@ -44,7 +49,10 @@ public static class Tr
             "Progress Color", "Accuracy Color", "XAccuracy Color",
             "Music Time Color", "Map Time Color", "Best Color",
             "Progress Bar Color", "Progress Bar Background Color", "Progress Bar Border Color",
-            "Combo Color", "BPM Color", "Add Color Stop", "Delete", "Percent" ],
+            "Combo Color", "BPM Color", "Add Color Stop", "Delete", "Percent", "Custom Labels",
+            "General", "Display", "Progress && Accuracy", "Time",
+            "Progress Bar && Best", "Combo", "BPM", "Judgement && Other",
+            "Display Options", "Behavior Options", "FPS Refresh Rate" ],
 
         /* 1  Korean */ [ "크기", "진행도 표시", "정확도 표시", "X정확도 표시",
             "음악 시간 표시", "맵 시간 표시", "음악 없을 때 맵 시간",
@@ -63,7 +71,10 @@ public static class Tr
             "진행도 색상", "정확도 색상", "X정확도 색상",
             "음악 시간 색상", "맵 시간 색상", "최고 기록 색상",
             "진행 바 색상", "진행 바 배경 색상", "진행 바 테두리 색상",
-            "콤보 색상", "BPM 색상", "색상 포인트 추가", "삭제", "퍼센트" ],
+            "콤보 색상", "BPM 색상", "색상 포인트 추가", "삭제", "퍼센트", "사용자 레이블",
+            "일반", "디스플레이", "진행 및 정확도", "시간",
+            "진행 바 및 최고 기록", "콤보", "BPM", "판정 및 기타",
+            "표시 옵션", "동작 옵션", "FPS 새로고침 속도" ],
 
         /* 2  Chinese */ [ "大小", "显示进度", "显示准确率", "显示X准确率",
             "显示音乐时间", "显示地图时间", "无音乐时显示地图时间",
@@ -71,7 +82,7 @@ public static class Tr
             "显示检查点", "显示最佳",
             "显示进度条", "显示连击", "启用自动方块连击", "连击颜色最大值",
             "显示BPM", "BPM颜色最大值", "显示判定", "判定位置上移",
-            "显示时机缩放", "显示尝试次数", "显示总尝试次数",
+            "显示判定区间", "显示尝试次数", "显示总尝试次数",
             "Jongyeol模式", "显示FPS", "显示作者", "显示状态",
             "显示死亡", "显示开始", "显示时机",
             "隐藏调试文本", "自动模式简化显示", "检测伪BPM", "允许EL判定连击",
@@ -82,7 +93,10 @@ public static class Tr
             "进度颜色", "准确率颜色", "X准确率颜色",
             "音乐时间颜色", "地图时间颜色", "最佳颜色",
             "进度条颜色", "进度条背景颜色", "进度条边框颜色",
-            "连击颜色", "BPM颜色", "添加颜色点", "删除", "百分比" ],
+            "连击颜色", "BPM颜色", "添加颜色点", "删除", "百分比", "自定义标签",
+            "通用", "显示", "进度与准确率", "时间",
+            "进度条与最佳", "连击", "BPM", "判定与其他",
+            "显示选项", "行为选项", "FPS刷新率" ],
     ];
 
     public static string Get(Key key)

@@ -13,7 +13,7 @@ public class ColorPerDictionary {
     [JsonIgnore] public ProgressColorCache ExpandedCache;
     private static readonly GUIStyle _foldoutStyle = new()
     {
-        fixedWidth = 12f, normal = new GUIStyleState { textColor = Color.white }, fontSize = 14, margin = new RectOffset(4, 2, 4, 4)
+        fixedWidth = 18f, normal = new GUIStyleState { textColor = Color.white }, fontSize = 14, margin = new RectOffset(4, 2, 4, 4)
     };
 
     public ColorPerDictionary() { }
@@ -75,7 +75,7 @@ public class ColorPerDictionary {
 
     public bool SettingGUI(Action onChanged, string text, Action onReset = null) {
         GUILayout.BeginHorizontal();
-        Expanded = GUILayout.Toggle(Expanded, Expanded ? "◢" : "▶", _foldoutStyle);
+        Expanded = GUILayout.Toggle(Expanded, Expanded ? "▼" : "▷", _foldoutStyle);
         if (GUILayout.Button(text, GUI.skin.label)) Expanded = !Expanded;
         GUILayout.FlexibleSpace();
         if (onReset != null && GUILayout.Button("R", GUILayout.Width(20))) { onReset(); onChanged?.Invoke(); }
@@ -98,7 +98,7 @@ public class ColorPerDictionary {
 
             GUILayout.BeginHorizontal();
             bool exp = ExpandedCache == cache;
-            exp = GUILayout.Toggle(exp, exp ? "◢" : "▶", _foldoutStyle);
+            exp = GUILayout.Toggle(exp, exp ? "▼" : "▷", _foldoutStyle);
             // Color swatch (solid color)
             var swatchRect = GUILayoutUtility.GetRect(16, 14);
             var prevSwatchColor = GUI.color;

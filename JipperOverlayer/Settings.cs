@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityModManagerNet;
 using JipperOverlayer.Overlayer;
+using JipperOverlayer.Overlayer.Features;
 using JipperOverlayer.Overlayer.Localization;
 using JipperOverlayer.Overlayer.Settings;
 
@@ -19,8 +20,9 @@ public class Settings : UnityModManager.ModSettings
     public float Size = 1f;
     public bool JudgementLocationUp, EnableAutoCombo = true;
     public float BpmColorMax = 8000f;
-    public int ComboColorMax = 1000, TimeTextTypeValue;
+    public int ComboColorMax = 1000;
     public bool JongyeolMode, ShowFPS = true, ShowAuthor = true, ShowState = true;
+    public float FPSRefreshRate = 0.2f;
     public bool HideDebugText = true, ShowDeath = true, ShowStart = true, ShowTiming = true;
     public bool RemoveNotRequireInAuto = true, CheckPseudo = true, AllowELCombo = true;
     public Language CurrentLanguage;
@@ -40,18 +42,24 @@ public class Settings : UnityModManager.ModSettings
     public float ProgBarPX = 0.5f, ProgBarPY = 0.991f;
 
     [JsonIgnore] public ColorConfig Colors;
+    [JsonIgnore] public LabelConfig Labels;
 
     public void OnGUI(UnityModManager.ModEntry modEntry)
     {
-        DrawGeneralSettings();
-        DrawStatusSection();
-        DrawTextSettings();
+        DrawGeneralSection();
+        DrawDisplaySection();
         DrawJongyeolSection();
+        DrawTextSettings();
+        DrawLabelsSection();
         Overlay.Instance?.RefreshVisibility();
     }
 
-    void DrawGeneralSettings()
+    void DrawGeneralSection()
     {
+        if (GUILayout.Button($"{( _generalFold ? "▼" : "▷")} {Tr.Get(Tr.Key.General)}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _generalFold = !_generalFold;
+        if (!_generalFold) return;
+
         Size = Slide(Tr.Get(Tr.Key.Size), Size, 0, 2, () => Overlayer.Overlay.Instance?.UpdateSize());
 
         GUILayout.BeginHorizontal();
@@ -64,7 +72,8 @@ public class Settings : UnityModManager.ModSettings
 
         GUILayout.Space(5);
 
-        _fontFold = GUILayout.Toggle(_fontFold, Tr.Get(Tr.Key.Font), GUILayout.ExpandWidth(false));
+        if (GUILayout.Button($"{( _fontFold ? "▼" : "▷")} {Tr.Get(Tr.Key.Font)}", GUI.skin.label, GUILayout.ExpandWidth(false)))
+            _fontFold = !_fontFold;
         if (_fontFold && FontManager.FontNames != null)
         {
             for (int i = 0; i < FontManager.FontNames.Length; i++)
@@ -103,95 +112,130 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.Space(5);
     }
 
-    void DrawStatusSection()
+    void DrawDisplaySection()
     {
-        ShowProgress = Tog(Tr.Get(Tr.Key.ShowProgress), ShowProgress);
-        if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.ProgressColor),
-            () => { Colors.Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
+        if (GUILayout.Button($"{( _displayFold ? "▼" : "▷")} {Tr.Get(Tr.Key.Display)}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _displayFold = !_displayFold;
+        if (!_displayFold) return;
 
-        ShowAccuracy = Tog(Tr.Get(Tr.Key.ShowAccuracy), ShowAccuracy);
-        if (ShowAccuracy) Colors.Accuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.AccuracyColor),
-            () => { Colors.Accuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
-
-        ShowXAccuracy = Tog(Tr.Get(Tr.Key.ShowXAccuracy), ShowXAccuracy);
-        if (ShowXAccuracy) Colors.XAccuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.XaccuracyColor),
-            () => { Colors.XAccuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
-
-        ShowMusicTime = Tog(Tr.Get(Tr.Key.ShowMusicTime), ShowMusicTime);
-        if (ShowMusicTime) Colors.MusicTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MusicTimeColor),
-            () => { Colors.MusicTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
-
-        ShowMapTime = Tog(Tr.Get(Tr.Key.ShowMapTime), ShowMapTime);
-        if (ShowMapTime) Colors.MapTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MapTimeColor),
-            () => { Colors.MapTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
-
-        ShowMapTimeIfNotMusic = Tog(Tr.Get(Tr.Key.ShowMapIfNo), ShowMapTimeIfNotMusic);
-
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(Tr.Get(Tr.Key.TimeTextType), GUILayout.Width(100));
-        string[] timeTypes = [Tr.Get(Tr.Key.TimeTextKorean), Tr.Get(Tr.Key.TimeTextEnglish)];
-        int newTtt = GUILayout.SelectionGrid(TimeTextTypeValue, timeTypes, 2);
-        if (newTtt != TimeTextTypeValue) { TimeTextTypeValue = newTtt; Overlayer.Overlay.Instance?.UpdateTime(); }
-        GUILayout.EndHorizontal();
-
-        ShowCheckpoint = Tog(Tr.Get(Tr.Key.ShowCheckpoint), ShowCheckpoint);
-        ShowBest = Tog(Tr.Get(Tr.Key.ShowBest), ShowBest);
-        if (ShowBest) Colors.Best.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.BestColor),
-            () => { Colors.Best = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
-
-        ShowProgressBar = Tog(Tr.Get(Tr.Key.ShowProgressBar), ShowProgressBar);
-        if (ShowProgressBar)
+        DrawDisplaySub("progress", Tr.Get(Tr.Key.ProgressAccuracy), () =>
         {
-            Colors.ProgressBar.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarColor),
-                () => { Colors.ProgressBar = new([(1f, new Color(0.9216f, 0.8039f, 0.9765f))]); Colors.Save(Main.Mod); });
-            Colors.ProgressBarBackground.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBgColor),
-                () => { Colors.ProgressBarBackground = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
-            Colors.ProgressBarBorder.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBorderColor),
-                () => { Colors.ProgressBarBorder = new([(1f, Color.black)]); Colors.Save(Main.Mod); });
-        }
+            ShowProgress = Tog(Tr.Get(Tr.Key.ShowProgress), ShowProgress);
+            if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.ProgressColor),
+                () => { Colors.Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
 
-        GUILayout.Space(10);
-        ShowCombo = Tog(Tr.Get(Tr.Key.ShowCombo), ShowCombo);
-        if (ShowCombo)
+            ShowAccuracy = Tog(Tr.Get(Tr.Key.ShowAccuracy), ShowAccuracy);
+            if (ShowAccuracy) Colors.Accuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.AccuracyColor),
+                () => { Colors.Accuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
+
+            ShowXAccuracy = Tog(Tr.Get(Tr.Key.ShowXAccuracy), ShowXAccuracy);
+            if (ShowXAccuracy) Colors.XAccuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.XaccuracyColor),
+                () => { Colors.XAccuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
+        });
+
+        DrawDisplaySub("time", Tr.Get(Tr.Key.TimeSection), () =>
         {
-            EnableAutoCombo = Tog(Tr.Get(Tr.Key.EnableAutoCombo), EnableAutoCombo);
-            ComboColorMax = (int)Slide(Tr.Get(Tr.Key.ComboColorMax), ComboColorMax, 1, 5000, () => { });
-            Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.ComboColor));
-        }
-        ShowBPM = Tog(Tr.Get(Tr.Key.ShowBpm), ShowBPM);
-        if (ShowBPM)
+            ShowMusicTime = Tog(Tr.Get(Tr.Key.ShowMusicTime), ShowMusicTime);
+            if (ShowMusicTime) Colors.MusicTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MusicTimeColor),
+                () => { Colors.MusicTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
+
+            ShowMapTime = Tog(Tr.Get(Tr.Key.ShowMapTime), ShowMapTime);
+            if (ShowMapTime) Colors.MapTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MapTimeColor),
+                () => { Colors.MapTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
+
+            ShowMapTimeIfNotMusic = Tog(Tr.Get(Tr.Key.ShowMapIfNo), ShowMapTimeIfNotMusic);
+        });
+
+        DrawDisplaySub("progbar", Tr.Get(Tr.Key.ProgressBarBest), () =>
         {
-            BpmColorMax = Slide(Tr.Get(Tr.Key.BpmColorMax), BpmColorMax, 100, 20000, () => { });
-            Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor));
-        }
-        ShowJudgement = Tog(Tr.Get(Tr.Key.ShowJudgement), ShowJudgement);
-        if (ShowJudgement) JudgementLocationUp = Tog(Tr.Get(Tr.Key.JudgementUp), JudgementLocationUp);
-        ShowTimingScale = Tog(Tr.Get(Tr.Key.ShowTimingScale), ShowTimingScale);
-        ShowAttempt = Tog(Tr.Get(Tr.Key.ShowAttempt), ShowAttempt);
-        ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);
+            ShowCheckpoint = Tog(Tr.Get(Tr.Key.ShowCheckpoint), ShowCheckpoint);
+            ShowBest = Tog(Tr.Get(Tr.Key.ShowBest), ShowBest);
+            if (ShowBest) Colors.Best.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.BestColor),
+                () => { Colors.Best = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
+
+            ShowProgressBar = Tog(Tr.Get(Tr.Key.ShowProgressBar), ShowProgressBar);
+            if (ShowProgressBar)
+            {
+                Colors.ProgressBar.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarColor),
+                    () => { Colors.ProgressBar = new([(1f, new Color(0.9216f, 0.8039f, 0.9765f))]); Colors.Save(Main.Mod); });
+                Colors.ProgressBarBackground.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBgColor),
+                    () => { Colors.ProgressBarBackground = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
+                Colors.ProgressBarBorder.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBorderColor),
+                    () => { Colors.ProgressBarBorder = new([(1f, Color.black)]); Colors.Save(Main.Mod); });
+            }
+        });
+
+        DrawDisplaySub("combo", Tr.Get(Tr.Key.ComboSection), () =>
+        {
+            ShowCombo = Tog(Tr.Get(Tr.Key.ShowCombo), ShowCombo);
+            if (ShowCombo)
+            {
+                EnableAutoCombo = Tog(Tr.Get(Tr.Key.EnableAutoCombo), EnableAutoCombo);
+                ComboColorMax = (int)Slide(Tr.Get(Tr.Key.ComboColorMax), ComboColorMax, 1, 5000, () => { });
+                Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.ComboColor));
+            }
+        });
+
+        DrawDisplaySub("bpm", Tr.Get(Tr.Key.BpmSection), () =>
+        {
+            ShowBPM = Tog(Tr.Get(Tr.Key.ShowBpm), ShowBPM);
+            if (ShowBPM)
+            {
+                BpmColorMax = Slide(Tr.Get(Tr.Key.BpmColorMax), BpmColorMax, 100, 20000, () => { });
+                Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor));
+            }
+        });
+
+        DrawDisplaySub("judge", Tr.Get(Tr.Key.JudgementOther), () =>
+        {
+            ShowJudgement = Tog(Tr.Get(Tr.Key.ShowJudgement), ShowJudgement);
+            if (ShowJudgement) JudgementLocationUp = Tog(Tr.Get(Tr.Key.JudgementUp), JudgementLocationUp);
+            ShowTimingScale = Tog(Tr.Get(Tr.Key.ShowTimingScale), ShowTimingScale);
+            ShowAttempt = Tog(Tr.Get(Tr.Key.ShowAttempt), ShowAttempt);
+            ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);
+        });
 
         GUILayout.Space(5);
     }
 
-    void DrawTextSettings()
+    void DrawDisplaySub(string key, string label, Action content)
     {
-        _alignFold = GUILayout.Toggle(_alignFold, Tr.Get(Tr.Key.TextSettings), GUILayout.ExpandWidth(false));
-        if (_alignFold)
+        bool expanded = _expandedDisplaySub == key;
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        if (GUILayout.Button($"{(expanded ? "▼" : "▷")} {label}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _expandedDisplaySub = expanded ? null : key;
+        GUILayout.EndHorizontal();
+        if (expanded)
         {
-            DrawAlignment(Tr.Get(Tr.Key.AlignMain), ref MainAlign, ref MainStyle);
-            DrawAlignment(Tr.Get(Tr.Key.AlignBpm), ref BPMAlign, ref BPMStyle);
-            DrawAlignment(Tr.Get(Tr.Key.AlignJudge), ref JudgeAlign, ref JudgeStyle);
-            DrawAlignment(Tr.Get(Tr.Key.AlignCombo), ref ComboAlign, ref ComboStyle);
-            DrawAlignment(Tr.Get(Tr.Key.AlignComboVal), ref ComboValAlign, ref ComboValStyle);
-            DrawAlignment(Tr.Get(Tr.Key.AlignTiming), ref TimingAlign, ref TimingStyle);
-            DrawAlignment(Tr.Get(Tr.Key.AlignAttempt), ref AttemptAlign, ref AttemptStyle);
             GUILayout.Space(3);
             GUILayout.BeginHorizontal();
-            GUILayout.Space(16);
-            if (GUILayout.Button(Tr.Get(Tr.Key.ApplyAlignment))) { Overlayer.Overlay.Instance?.ApplyAlignment(); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
-            if (GUILayout.Button(Tr.Get(Tr.Key.AlignReset), GUILayout.Width(50))) { ResetAlignment(); ResetStyle(); Overlayer.Overlay.Instance?.ApplyAlignment(); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
+            GUILayout.Space(36);
+            GUILayout.BeginVertical();
+            content();
+            GUILayout.EndVertical();
             GUILayout.EndHorizontal();
         }
+    }
+
+    void DrawTextSettings()
+    {
+        if (GUILayout.Button($"{( _alignFold ? "▼" : "▷")} {Tr.Get(Tr.Key.TextSettings)}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _alignFold = !_alignFold;
+        if (!_alignFold) return;
+        DrawAlignment(Tr.Get(Tr.Key.AlignMain), ref MainAlign, ref MainStyle);
+        DrawAlignment(Tr.Get(Tr.Key.AlignBpm), ref BPMAlign, ref BPMStyle);
+        DrawAlignment(Tr.Get(Tr.Key.AlignJudge), ref JudgeAlign, ref JudgeStyle);
+        DrawAlignment(Tr.Get(Tr.Key.AlignCombo), ref ComboAlign, ref ComboStyle);
+        DrawAlignment(Tr.Get(Tr.Key.AlignComboVal), ref ComboValAlign, ref ComboValStyle);
+        DrawAlignment(Tr.Get(Tr.Key.AlignTiming), ref TimingAlign, ref TimingStyle);
+        DrawAlignment(Tr.Get(Tr.Key.AlignAttempt), ref AttemptAlign, ref AttemptStyle);
+        GUILayout.Space(3);
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        if (GUILayout.Button(Tr.Get(Tr.Key.ApplyAlignment))) { Overlayer.Overlay.Instance?.ApplyAlignment(); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
+        if (GUILayout.Button(Tr.Get(Tr.Key.AlignReset), GUILayout.Width(50))) { ResetAlignment(); ResetStyle(); Overlayer.Overlay.Instance?.ApplyAlignment(); Overlayer.Overlay.Instance?.ApplyFontStyle(); }
+        GUILayout.EndHorizontal();
     }
 
     void DrawJongyeolSection()
@@ -199,19 +243,26 @@ public class Settings : UnityModManager.ModSettings
         bool prevJongyeol = JongyeolMode;
         JongyeolMode = Tog(Tr.Get(Tr.Key.JongyeolMode), JongyeolMode);
         if (JongyeolMode != prevJongyeol) { Main.RecreateOverlay(); PatchManager.RefreshPatches(); }
-        if (JongyeolMode)
+        if (!JongyeolMode) return;
+
+        DrawDisplaySub("jDisplay", Tr.Get(Tr.Key.DisplayOptions), () =>
         {
             ShowFPS = Tog(Tr.Get(Tr.Key.ShowFps), ShowFPS);
+            FPSRefreshRate = Slide(Tr.Get(Tr.Key.FPSRefreshRate), FPSRefreshRate, 0.05f, 1f, () => { });
             ShowAuthor = Tog(Tr.Get(Tr.Key.ShowAuthor), ShowAuthor);
             ShowState = Tog(Tr.Get(Tr.Key.ShowState), ShowState);
             ShowDeath = Tog(Tr.Get(Tr.Key.ShowDeath), ShowDeath);
             ShowStart = Tog(Tr.Get(Tr.Key.ShowStart), ShowStart);
             ShowTiming = Tog(Tr.Get(Tr.Key.ShowTiming), ShowTiming);
+        });
+
+        DrawDisplaySub("jBehavior", Tr.Get(Tr.Key.BehaviorOptions), () =>
+        {
             HideDebugText = Tog(Tr.Get(Tr.Key.HideDebugText), HideDebugText);
             RemoveNotRequireInAuto = Tog(Tr.Get(Tr.Key.RemoveAutoReq), RemoveNotRequireInAuto);
             CheckPseudo = Tog(Tr.Get(Tr.Key.CheckPseudo), CheckPseudo);
             AllowELCombo = Tog(Tr.Get(Tr.Key.AllowELCombo), AllowELCombo);
-        }
+        });
     }
 
     void ResetCustomPos()
@@ -286,8 +337,95 @@ public class Settings : UnityModManager.ModSettings
     }
 
     static readonly Dictionary<string, string> _slideFields = new();
-    private static bool _fontFold, _alignFold;
-    private static string _expandedAlign;
+    private static bool _generalFold, _displayFold, _fontFold, _alignFold;
+    private static string _expandedAlign, _expandedDisplaySub;
+    private static bool _labelsFold;
+
+    void DrawLabelsSection()
+    {
+        if (GUILayout.Button($"{( _labelsFold ? "▼" : "▷")} {Tr.Get(Tr.Key.CustomLabels)}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _labelsFold = !_labelsFold;
+        if (!_labelsFold) return;
+        GUI.changed = false;
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        if (GUILayout.Button("English Preset", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.English); Labels.Save(Main.Mod); }
+        if (GUILayout.Button("한국어", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Korean); Labels.Save(Main.Mod); }
+        if (GUILayout.Button("中文", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Chinese); Labels.Save(Main.Mod); }
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(5);
+
+        GUILayout.Label("  -- Standard --");
+        DrawLabelField("Progress", ref Labels.Progress);
+        DrawLabelField("Accuracy", ref Labels.Accuracy);
+        DrawLabelField("XAccuracy", ref Labels.XAccuracy);
+        DrawLabelField("Music Time", ref Labels.MusicTime);
+        DrawLabelField("Map Time", ref Labels.MapTime);
+        DrawLabelField("CheckPoint", ref Labels.Checkpoint);
+        DrawLabelField("Best", ref Labels.Best);
+        DrawLabelField("TBPM", ref Labels.TBPM);
+        DrawLabelField("CBPM", ref Labels.CBPM);
+        DrawLabelField("KPS", ref Labels.KPS);
+        DrawLabelField("Attempt", ref Labels.Attempt);
+        DrawLabelField("Full Attempt", ref Labels.FullAttempt);
+        DrawLabelField("Timing Scale", ref Labels.TimingScale);
+        DrawLabelField("Combo Title", ref Labels.ComboTitle);
+        DrawLabelField("Combo Title Alt", ref Labels.ComboTitleAlt);
+
+        GUILayout.Space(3);
+        GUILayout.Label("  -- Jongyeol --");
+        DrawLabelField("FPS", ref Labels.FPS);
+        DrawLabelField("Author", ref Labels.Author);
+        DrawLabelField("State", ref Labels.State);
+        DrawLabelField("Death", ref Labels.Death);
+        DrawLabelField("Start", ref Labels.Start);
+        DrawLabelField("Timing", ref Labels.Timing);
+
+        GUILayout.Space(3);
+        GUILayout.Label("  -- State Texts --");
+        DrawLabelField("Waiting", ref Labels.StateWaiting);
+        DrawLabelField("Auto Tile", ref Labels.StateAutoTile);
+        DrawLabelField("Auto", ref Labels.StateAuto);
+        DrawLabelField("Perfect Play", ref Labels.StatePerfectPlay);
+        DrawLabelField("Completed", ref Labels.StateComplete);
+        DrawLabelField("Clear", ref Labels.StateClear);
+        DrawLabelField("No Miss", ref Labels.StateNoMiss);
+        DrawLabelField("Perfectionist", ref Labels.StatePerfectionist);
+        DrawLabelField("Suffix", ref Labels.StateSuffix);
+        DrawLabelField("Mid Start", ref Labels.StateMidStart);
+
+        if (GUI.changed)
+        {
+            var o = Overlay.Instance;
+            if (o != null && o.GameObject.activeSelf)
+            {
+                o.ComboTitle.text = Main.Settings.Labels.ComboTitle;
+                o.RefreshTimeLabels();
+                o.UpdateProgress();
+                o.UpdateTime();
+                o.UpdateAccuracy();
+                o.UpdateBPM();
+                o.UpdateJudgement();
+                o.UpdateCombo(GameLifecycleHelper.ComboCount, false);
+                o.UpdateTimingScale();
+                o.UpdateAttempts();
+                if (Main.Settings.ShowBest) o.OverlayTextManager?.UpdateBest(o);
+                if (Main.Settings.ShowCheckpoint) o.UpdateCheckPointText();
+                if (Main.Settings.ShowProgressBar) o.UpdateProgressBar();
+            }
+        }
+    }
+
+    static void DrawLabelField(string label, ref string value)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(20);
+        GUILayout.Label(label, GUILayout.Width(100));
+        value = GUILayout.TextField(value, GUILayout.ExpandWidth(true));
+        GUILayout.EndHorizontal();
+    }
 
     static Action ColorChanged(Action updateOverlay) => () => updateOverlay?.Invoke();
 
@@ -328,12 +466,13 @@ public class Settings : UnityModManager.ModSettings
         if (newIdx != idx) { align = AlignValues[newIdx]; Overlayer.Overlay.Instance?.ApplyAlignment(); }
     }
 
-    public void OnSaveGUI(UnityModManager.ModEntry modEntry) { Save(modEntry); Colors?.Save(modEntry); }
+    public void OnSaveGUI(UnityModManager.ModEntry modEntry) { Save(modEntry); Colors?.Save(modEntry); Labels?.Save(modEntry); }
     public override void Save(UnityModManager.ModEntry modEntry) { UnityModManagerNet.UnityModManager.ModSettings.Save<Settings>(this, modEntry); }
     public static Settings Load(UnityModManager.ModEntry modEntry)
     {
         var s = UnityModManagerNet.UnityModManager.ModSettings.Load<Settings>(modEntry);
         s.Colors = ColorConfig.Load(modEntry);
+        s.Labels = LabelConfig.Load(modEntry);
         return s;
     }
 }

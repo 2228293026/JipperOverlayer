@@ -58,7 +58,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
                     SetAccuracy(ref PlayerDatas[i], overlay.NoCheckStartTile, i);
             else SetAccuracy(ref PlayerDatas[index], overlay.NoCheckStartTile, index);
 
-            _accStrings[0] = "Accuracy";
+            _accStrings[0] = Main.Settings.Labels.Accuracy;
             for (int i = 0; i < PlayerDatas.Length; i++) _accStrings[i + 1] = PlayerDatas[i].AccuracyString;
             overlay.AccuracyText.text = string.Concat(_accStrings);
         }
@@ -69,7 +69,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
                     SetXAccuracy(ref PlayerDatas[i], i);
             else SetXAccuracy(ref PlayerDatas[index], index);
 
-            _xaccStrings[0] = "XAccuracy";
+            _xaccStrings[0] = Main.Settings.Labels.XAccuracy;
             for (int i = 0; i < PlayerDatas.Length; i++) _xaccStrings[i + 1] = PlayerDatas[i].XAccuracyString;
             overlay.XAccuracyText.text = string.Concat(_xaccStrings);
         }
@@ -94,7 +94,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
     public void UpdateProgress(Overlay overlay)
     {
         var strings = new string[PlayerDatas.Length + 1];
-        strings[0] = "Progress";
+        strings[0] = Main.Settings.Labels.Progress;
         for (int i = 0; i < PlayerDatas.Length; i++) strings[i + 1] = PlayerDatas[i].ProgressString;
         overlay.ProgressText.text = string.Concat(strings);
     }
@@ -116,7 +116,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
             CurCheck++; updated = true;
         }
         if (LastCheckpoint == scrController.checkpointsUsed && !updated) return;
-        overlay.CheckpointText.text = $"<color=white>CheckPoint |</color> {scrController.checkpointsUsed} ({CurCheck}/{overlay.Checkpoints.Length})";
+        overlay.CheckpointText.text = $"<color=white>{Main.Settings.Labels.Checkpoint} |</color> {scrController.checkpointsUsed} ({CurCheck}/{overlay.Checkpoints.Length})";
         LastCheckpoint = scrController.checkpointsUsed;
     }
 
@@ -135,7 +135,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
     {
         float best = CurBest > MaxProgress || overlay.AutoOnceEnabled ? CurBest : MaxProgress;
         int precision = Main.Settings.JongyeolMode ? 5 : 2;
-        overlay.BestText.text = $"<color=white>Best |</color> {Math.Round(best * 100, precision)}%";
+        overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, precision)}%";
         overlay.BestText.color = Main.Settings.Colors.GetBestColor(best);
     }
 

@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.0.5 — 2026-05-30
+
+### Features
+- Customizable text labels: all overlay labels can be customized via Custom Labels settings panel
+- Label presets: English / Korean / Chinese one-click presets
+- FPS refresh rate slider (0.05~1.0s) for Jongyeol mode
+- Settings UI reorganized with collapsible panels (General/Display/Jongyeol/Alignment/Labels)
+
+### Refactors
+- Replaced JOverlay inheritance with JongyeolModule composition (-405 lines)
+- Removed all unused virtual keywords (Overlay 13, OverlayTextManagerCoop 4, OverlayTextManagerNormal 3)
+- Renamed YellowCombo → AllowELCombo for accurate naming (EL = Early/Late judgment)
+- Settings.OnGUI split into 5 collapsible sections with sub-folders
+
+### Bug Fixes
+- PlanetMoveToNextFloorPatch: include Jongyeol settings in registration condition
+- JCombo patches: require ShowCombo guard
+- Show(): call SetupLocationMain when Jongyeol is active regardless of standard settings
+- RefreshVisibility: actively refresh BPM/Combo/Judgement/TimingScale/ProgressBar when toggled on
+- Fix UpdateDeath division-by-zero when currentSeqID == StartTile
+- Fix GUI.changed false-positive triggering unnecessary overlay updates
+- Fix time label cache not refreshing when edited in Custom Labels panel
+
 ## v1.0.4.2-preview — 2026-05-30
 
 - Fix Chinese translations

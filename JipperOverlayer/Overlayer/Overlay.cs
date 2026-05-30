@@ -60,8 +60,8 @@ public class Overlay
     public PlayCount.Hash LastHash;
     private float _lastSavedStartProgress = -1;
     public float LastMultiplier = 1f;
-    private string _musicTimeLabel;
-    private string _mapTimeLabel;
+    internal string _musicTimeLabel;
+    internal string _mapTimeLabel;
     public JongyeolModule Jongyeol;
     internal static readonly StringBuilder _textSb = new(256);
 
@@ -232,7 +232,7 @@ public class Overlay
         ComboTitle = title.AddComponent<TextMeshProUGUI>();
         ComboTitle.font = BundleLoader.FontAsset;
         ComboTitle.fontSize = 40;
-        ComboTitle.text = "Perfect";
+        ComboTitle.text = Main.Settings.Labels.ComboTitle;
         ComboTitle.alignment = TextAlignmentOptions.Center;
         var fitter = title.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
@@ -512,12 +512,13 @@ public class Overlay
 
     public void UpdateAttempts()
     {
+        var labels = Main.Settings.Labels;
         string v0 = "", v1 = "";
         int count = 0;
         if (Main.Settings.ShowAttempt)
-            v0 = count++ == 0 ? $"Attempt {PlayCount.GetData(LastHash)?.GetAttempts(StartProgress) ?? 0}" : "";
+            v0 = count++ == 0 ? $"{labels.Attempt} {PlayCount.GetData(LastHash)?.GetAttempts(StartProgress) ?? 0}" : "";
         if (Main.Settings.ShowFullAttempt)
-            v1 = count++ <= 1 ? $"Full Attempt {PlayCount.GetData(LastHash)?.GetAttempts() ?? 0}" : "";
+            v1 = count++ <= 1 ? $"{labels.FullAttempt} {PlayCount.GetData(LastHash)?.GetAttempts() ?? 0}" : "";
         AttemptText.text = count switch { 0 => "", 1 => v0 + v1, _ => $"{v0}\n{v1}" };
     }
 
@@ -616,23 +617,30 @@ public class Overlay
         if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm) return;
         string hex = BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(bpm.TileBpm / Main.Settings.BpmColorMax));
         _textSb.Clear();
-        _textSb.Append("<color=white>TBPM | <color=#");
+        var labels = Main.Settings.Labels;
+        _textSb.Append("<color=white>");
+        _textSb.Append(labels.TBPM);
+        _textSb.Append(" | <color=#");
         _textSb.Append(hex);
         _textSb.Append('>');
         _textSb.Append(Math.Round(bpm.TileBpm, 2));
-        _textSb.Append("</color>\nCBPM |</color> ");
+        _textSb.Append("</color>\n");
+        _textSb.Append(labels.CBPM);
+        _textSb.Append(" |</color> ");
         _textSb.Append(Math.Round(bpm.CurrentBpm, 2));
-        _textSb.Append("\n<color=white>KPS |</color> ");
+        _textSb.Append("\n<color=white>");
+        _textSb.Append(labels.KPS);
+        _textSb.Append(" |</color> ");
         _textSb.Append(Math.Round(bpm.Kps, 2));
         BPMText.text = _textSb.ToString();
         if (LastCurBpm != bpm.CurrentBpm) BPMText.color = Main.Settings.Colors.GetBpmColor(bpm.CurrentBpm / Main.Settings.BpmColorMax);
         LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;
     }
 
-    private void RefreshTimeLabels()
+    internal void RefreshTimeLabels()
     {
-        _musicTimeLabel = $"<color=white>{(Main.Settings.TimeTextTypeValue == 0 ? "음악 시간" : "Music Time")} |</color>";
-        _mapTimeLabel = $"<color=white>{(Main.Settings.TimeTextTypeValue == 0 ? "맵 시간" : "Map Time")} |</color>";
+        _musicTimeLabel = $"<color=white>{Main.Settings.Labels.MusicTime} |</color>";
+        _mapTimeLabel = $"<color=white>{Main.Settings.Labels.MapTime} |</color>";
     }
 
     private static scrShowIfDebug _autoText;
@@ -666,7 +674,7 @@ public class Overlay
     public void UpdateTimingScale()
     {
         if (!GameObject.activeSelf || scrController.instance?.currFloor == null) return;
-        TimingScaleText.text = $"Timing Scale - {Math.Round(scrController.instance.currFloor.marginScale * 100, 2)}%";
+        TimingScaleText.text = $"{Main.Settings.Labels.TimingScale} - {Math.Round(scrController.instance.currFloor.marginScale * 100, 2)}%";
     }
 
     public void Show(int floor)

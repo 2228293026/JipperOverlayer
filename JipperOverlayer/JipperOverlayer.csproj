@@ -128,9 +128,9 @@
     <Compile Include="Overlayer\OverlayTextManagerCoop.cs" />
     <Compile Include="Overlayer\PlayCount.cs" />
     <Compile Include="Overlayer\ProgressBar.cs" />
-    <Compile Include="Overlayer\TimeTextType.cs" />
     <Compile Include="Overlayer\VersionSafe.cs" />
     <Compile Include="Overlayer\Settings\ColorConfig.cs" />
+    <Compile Include="Overlayer\Settings\LabelConfig.cs" />
     <Compile Include="Overlayer\Settings\ColorCache.cs" />
     <Compile Include="Overlayer\Settings\ProgressColorCache.cs" />
     <Compile Include="Overlayer\Settings\ColorPerDictionary.cs" />

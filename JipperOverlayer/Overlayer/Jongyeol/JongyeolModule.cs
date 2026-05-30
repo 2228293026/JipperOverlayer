@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using JipperOverlayer.Overlayer.Features;
 using JipperOverlayer.Overlayer.Util;
 using TMPro;
 using UnityEngine;
@@ -86,10 +85,11 @@ public class JongyeolModule
 
     public void UpdateFPS(float deltaTime)
     {
-        if (!Main.Settings.ShowFPS || !_overlay.GameObject.activeSelf || (_fpsTime += deltaTime) < 0.01f) return;
-        _fpsTime %= 0.01f;
+        if (!Main.Settings.ShowFPS || !_overlay.GameObject.activeSelf || (_fpsTime += deltaTime) < Main.Settings.FPSRefreshRate) return;
+        _fpsTime %= Main.Settings.FPSRefreshRate;
         Overlay._textSb.Clear();
-        Overlay._textSb.Append("FPS | ");
+        Overlay._textSb.Append(Main.Settings.Labels.FPS);
+        Overlay._textSb.Append(" | ");
         Overlay._textSb.Append((1f / deltaTime).ToString("F4"));
         FPSText.text = Overlay._textSb.ToString();
     }
@@ -99,33 +99,34 @@ public class JongyeolModule
         if (!Main.Settings.ShowAuthor || !_overlay.GameObject.activeSelf) return;
         var ld = scnGame.instance?.levelData;
         string author = ld?.GetType().GetProperty("author")?.GetValue(ld) as string ?? "";
-        AuthorText.text = $"Author | {author}";
+        AuthorText.text = $"{Main.Settings.Labels.Author} | {author}";
     }
 
     public void UpdateState()
     {
         if (!Main.Settings.ShowState || !_overlay.GameObject.activeSelf) return;
         string s;
+        var labels = Main.Settings.Labels;
         StateText.color = Color.white;
-        if (scrController.instance.currentSeqID == _overlay.StartTile) s = "대기";
+        if (scrController.instance.currentSeqID == _overlay.StartTile) s = labels.StateWaiting;
         else if (scrController.instance.currFloor?.nextfloor is { auto: true })
         {
-            s = "자동 플레이 타일";
+            s = labels.StateAutoTile;
             StateText.color = new Color(1, 0.5f, 0);
         }
-        else if (RDC.auto) { s = "자동 플레이"; StateText.color = new Color(0.1058824f, 1, 0); }
-        else if (_purePerfect) { s = "완벽한 플레이"; StateText.color = Overlay.PurePerfectColor; }
+        else if (RDC.auto) { s = labels.StateAuto; StateText.color = new Color(0.1058824f, 1, 0); }
+        else if (_purePerfect) { s = labels.StatePerfectPlay; StateText.color = Overlay.PurePerfectColor; }
         else
         {
             int[] hits = _overlay.Hit;
-            if (_deathCount != 0) s = "완주";
-            else if (hits[0] != 0) s = "클리어";
-            else if (hits[1] != 0 || hits[5] != 0) s = "노미스";
-            else s = "완벽주의";
+            if (_deathCount != 0) s = labels.StateComplete;
+            else if (hits[0] != 0) s = labels.StateClear;
+            else if (hits[1] != 0 || hits[5] != 0) s = labels.StateNoMiss;
+            else s = labels.StatePerfectionist;
         }
-        if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count) s += " 중";
-        if (_overlay.StartTile != 0) s += "(중간에서 시작)";
-        StateText.text = $"<color=white>State |</color> {s}";
+        if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count) s += labels.StateSuffix;
+        if (_overlay.StartTile != 0) s += labels.StateMidStart;
+        StateText.text = $"<color=white>{labels.State} |</color> {s}";
     }
 
     public void CheckPurePerfect()
@@ -144,17 +145,18 @@ public class JongyeolModule
         int[] hits = _overlay.Hit;
         if (_lastDeath != (_deathCount = hits[8] + hits[9]))
         {
-            DeathText.text = $"<color=white>Death |</color> {_deathCount}";
+            DeathText.text = $"<color=white>{Main.Settings.Labels.Death} |</color> {_deathCount}";
             _lastDeath = _deathCount;
         }
         float max = (scrController.instance.currentSeqID - _overlay.StartTile) * 0.05f;
+        if (max < 0.001f) return;
         DeathText.color = GetColor(1 - Math.Min(_deathCount, max) / max);
     }
 
     public void UpdateStart()
     {
         if (!Main.Settings.ShowStart || !_overlay.GameObject.activeSelf || _overlay.StartTile != scrController.instance.currentSeqID) return;
-        StartText.text = $"Start | {_overlay.StartTile} ({Math.Round(_overlay.OverlayTextManager.GetProgress() * 100, 5)}%)";
+        StartText.text = $"{Main.Settings.Labels.Start} | {_overlay.StartTile} ({Math.Round(_overlay.OverlayTextManager.GetProgress() * 100, 5)}%)";
     }
 
     public void UpdateTiming(float timing)
@@ -167,7 +169,7 @@ public class JongyeolModule
         }
         _timings.Add(timing);
         _timingsSum += timing;
-        TimingText.text = $"<color=white>Timing |</color> {Math.Round(timing, 5)} ({Math.Round(_timingsSum / _timings.Count, 5)})";
+        TimingText.text = $"<color=white>{Main.Settings.Labels.Timing} |</color> {Math.Round(timing, 5)} ({Math.Round(_timingsSum / _timings.Count, 5)})";
         TimingText.color = GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
     }
 
@@ -191,7 +193,7 @@ public class JongyeolModule
                 bool hourNeed = totalTime >= 3600;
                 _overlay.MusicTimeCache ??= TimeFormatter.FormatWithDecimals(totalTime, hourNeed);
                 string timeStr = time == 0 && _overlay.SongPlaying ? _overlay.MusicTimeCache : TimeFormatter.FormatWithDecimals(time, hourNeed);
-                _overlay.TimeText.text = $"<color=white>{(s.TimeTextTypeValue == 0 ? "음악 시간" : "Music Time")} |</color> {timeStr}~{_overlay.MusicTimeCache}";
+                _overlay.TimeText.text = $"{_overlay._musicTimeLabel} {timeStr}~{_overlay.MusicTimeCache}";
                 _overlay.TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
             }
         }
@@ -206,7 +208,7 @@ public class JongyeolModule
             bool hourNeed = totalTime >= 3600;
             _overlay.MapTimeCache ??= TimeFormatter.FormatWithDecimals(totalTime, hourNeed);
             string timeStr = time == totalTime ? _overlay.MapTimeCache : TimeFormatter.FormatWithDecimals(time, hourNeed);
-            string text = $"<color=white>{(s.TimeTextTypeValue == 0 ? "맵 시간" : "Map Time")} |</color> {timeStr}~{_overlay.MapTimeCache}";
+            string text = $"{_overlay._mapTimeLabel} {timeStr}~{_overlay.MapTimeCache}";
             if (s.ShowMapTime) { _overlay.MapTimeText.text = text; _overlay.MapTimeText.color = s.Colors.GetMapTimeColor(time / totalTime); }
             if (requireMusicToMap) { _overlay.TimeText.text = text; _overlay.TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime); }
         }
@@ -227,7 +229,8 @@ public class JongyeolModule
         if (isPseudo) kps *= count;
         if (_overlay.LastTileBpm == bpm.TileBpm && _overlay.LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
         string colorHex = BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(bpm.TileBpm / Main.Settings.BpmColorMax));
-        _overlay.BPMText.text = $"<color=white>TBPM | <color=#{colorHex}>{Math.Round(bpm.TileBpm, 2)}</color>\nCBPM |</color> {Math.Round(cbpm, 2)}\n<color=white>KPS |</color> {(isPseudo ? $"<color=#{BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(cbpm * count / Main.Settings.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
+        var lbl = Main.Settings.Labels;
+        _overlay.BPMText.text = $"<color=white>{lbl.TBPM} | <color=#{colorHex}>{Math.Round(bpm.TileBpm, 2)}</color>\n{lbl.CBPM} |</color> {Math.Round(cbpm, 2)}\n<color=white>{lbl.KPS} |</color> {(isPseudo ? $"<color=#{BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(cbpm * count / Main.Settings.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
         if (_overlay.LastCurBpm != cbpm) _overlay.BPMText.color = Main.Settings.Colors.GetBpmColor(cbpm / Main.Settings.BpmColorMax);
         _overlay.LastTileBpm = bpm.TileBpm; _overlay.LastCurBpm = cbpm; _lastCurKps = kps;
     }
@@ -250,7 +253,7 @@ public class JongyeolModule
     public void OnNonPerfectHit()
     {
         if (_perToCom) return;
-        _overlay.ComboTitle.text = "Combo";
+        _overlay.ComboTitle.text = Main.Settings.Labels.ComboTitleAlt;
         _perToCom = true;
     }
 
@@ -260,7 +263,7 @@ public class JongyeolModule
     {
         _perToCom = false; _purePerfect = true; _pseudoFloor = -1;
         _timingsSum = 0;
-        if (scrController.checkpointsUsed == 0) _overlay.ComboTitle.text = "Perfect";
+        if (scrController.checkpointsUsed == 0) _overlay.ComboTitle.text = Main.Settings.Labels.ComboTitle;
     }
 
     public void OnHide()
