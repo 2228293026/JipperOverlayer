@@ -370,13 +370,13 @@ public class Overlay
             if (t) t.font = font;
         foreach (var t in new[] { ProgressText, AccuracyText, XAccuracyText, TimeText, MapTimeText, CheckpointText, BestText,
             BPMText, TimingScaleText, AttemptText })
-        { if (t) try { ShadowManager.ApplyShadow(t); } catch { } }
+        { if (t) ShadowManager.ApplyShadow(t); }
         foreach (var jt in JudgementTexts)
-        { if (jt) try { ShadowManager.ApplyShadow(jt); } catch { } }
+        { if (jt) ShadowManager.ApplyShadow(jt); }
         foreach (var t in ExtraTexts)
-        { if (t) try { ShadowManager.ApplyShadow(t); } catch { } }
-        if (ComboTitle) try { ShadowManager.ApplyDarkShadow(ComboTitle); } catch { }
-        if (ComboText) try { ShadowManager.ApplyDarkShadow(ComboText); } catch { }
+        { if (t) ShadowManager.ApplyShadow(t); }
+        if (ComboTitle) ShadowManager.ApplyDarkShadow(ComboTitle);
+        if (ComboText) ShadowManager.ApplyDarkShadow(ComboText);
     }
 
     public void ApplyAlignment()
@@ -442,26 +442,31 @@ public class Overlay
 
         if (!s.CustomPositionsEnabled) return;
         var o = Main.Settings;
-        float sw = Screen.width, sh = Screen.height;
         if (_mainContainer)
-            _mainContainer.GetComponent<RectTransform>().position = new Vector3(o.MainPX * sw, o.MainPY * sh, 0);
+            _mainContainer.GetComponent<RectTransform>().position += new Vector3(o.MainOffsetX, o.MainOffsetY, 0);
         if (_bpmObject)
-            _bpmObject.GetComponent<RectTransform>().position = new Vector3(o.BPMPX * sw, o.BPMPY * sh, 0);
+            _bpmObject.GetComponent<RectTransform>().position += new Vector3(o.BPMOffsetX, o.BPMOffsetY, 0);
         for (int i = 0; i < 4; i++)
         {
             if (!_judgementObjects[i]) continue;
-            float px = i == 0 ? o.P1JudgePX : i == 1 ? o.P2JudgePX : i == 2 ? o.P3JudgePX : o.P4JudgePX;
-            float py = i == 0 ? o.P1JudgePY : i == 1 ? o.P2JudgePY : i == 2 ? o.P3JudgePY : o.P4JudgePY;
-            JudgementTexts[i].rectTransform.position = new Vector3(px * sw, py * sh, 0);
+            bool coop = VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1;
+            float ox, oy;
+            if (i == 0 && !coop) { ox = o.JudgeOffsetX; oy = o.JudgeOffsetY; }
+            else { ox = i == 0 ? o.P1JudgeOffsetX : i == 1 ? o.P2JudgeOffsetX : i == 2 ? o.P3JudgeOffsetX : o.P4JudgeOffsetX;
+                oy = i == 0 ? o.P1JudgeOffsetY : i == 1 ? o.P2JudgeOffsetY : i == 2 ? o.P3JudgeOffsetY : o.P4JudgeOffsetY; }
+            JudgementTexts[i].rectTransform.position += new Vector3(ox, oy, 0);
         }
         if (ComboTransform)
-            ComboTransform.position = new Vector3(o.ComboPX * sw, o.ComboPY * sh, 0);
+            ComboTransform.position += new Vector3(o.ComboOffsetX, o.ComboOffsetY, 0);
         if (_timingScaleObject)
-            TimingScaleText.rectTransform.position = new Vector3(o.TimingPX * sw, o.TimingPY * sh, 0);
+            TimingScaleText.rectTransform.position += new Vector3(o.TimingOffsetX, o.TimingOffsetY, 0);
         if (_attemptObject)
-            _attemptObject.GetComponent<RectTransform>().position = new Vector3(o.AttmptPX * sw, o.AttmptPY * sh, 0);
+        {
+            bool coop = VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1;
+            _attemptObject.GetComponent<RectTransform>().position += new Vector3(coop ? o.AttemptCoopOffsetX : o.AttemptOffsetX, coop ? o.AttemptCoopOffsetY : o.AttemptOffsetY, 0);
+        }
         if (_progressBarObject)
-            _progressBarObject.GetComponent<RectTransform>().position = new Vector3(o.ProgBarPX * sw, o.ProgBarPY * sh, 0);
+            _progressBarObject.GetComponent<RectTransform>().position += new Vector3(o.ProgBarOffsetX, o.ProgBarOffsetY, 0);
     }
 
     public void RefreshVisibility()

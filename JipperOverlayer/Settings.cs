@@ -45,6 +45,12 @@ public class Settings : UnityModManager.ModSettings
     public float TimingPX = 0.5f, TimingPY = 0.12f;
     public float AttmptPX = 0.661f, AttmptPY = 0.032f;
     public float ProgBarPX = 0.5f, ProgBarPY = 0.991f;
+    public float MainOffsetX, MainOffsetY, BPMOffsetX, BPMOffsetY, JudgeOffsetX, JudgeOffsetY;
+    public float P1JudgeOffsetX, P1JudgeOffsetY, P2JudgeOffsetX, P2JudgeOffsetY;
+    public float P3JudgeOffsetX, P3JudgeOffsetY, P4JudgeOffsetX, P4JudgeOffsetY;
+    public float ComboOffsetX, ComboOffsetY, TimingOffsetX, TimingOffsetY;
+    public float AttemptOffsetX, AttemptOffsetY, AttemptCoopOffsetX, AttemptCoopOffsetY, ProgBarOffsetX, ProgBarOffsetY;
+    public int ConfigVersion;
 
     [JsonIgnore] public ColorConfig Colors;
     [JsonIgnore] public LabelConfig Labels;
@@ -96,28 +102,27 @@ public class Settings : UnityModManager.ModSettings
         CustomPositionsEnabled = Tog(Tr.Get(Tr.Key.CustomPositions), CustomPositionsEnabled);
         if (CustomPositionsEnabled)
         {
-            PosSlide("  Main X", ref MainPX, 0, 1);
-            PosSlide("  Main Y", ref MainPY, 0, 1);
-            PosSlide("  BPM X", ref BPMPX, 0, 1);
-            PosSlide("  BPM Y", ref BPMPY, 0, 1);
-            PosSlide("  Judge X", ref JudgePX, 0, 1);
-            PosSlide("  Judge Y", ref JudgePY, 0, 1);
-            PosSlide("  P1 Judge X", ref P1JudgePX, 0, 1);
-            PosSlide("  P1 Judge Y", ref P1JudgePY, 0, 1);
-            PosSlide("  P2 Judge X", ref P2JudgePX, 0, 1);
-            PosSlide("  P2 Judge Y", ref P2JudgePY, 0, 1);
-            PosSlide("  P3 Judge X", ref P3JudgePX, 0, 1);
-            PosSlide("  P3 Judge Y", ref P3JudgePY, 0, 1);
-            PosSlide("  P4 Judge X", ref P4JudgePX, 0, 1);
-            PosSlide("  P4 Judge Y", ref P4JudgePY, 0, 1);
-            PosSlide("  Combo X", ref ComboPX, 0, 1);
-            PosSlide("  Combo Y", ref ComboPY, 0, 1);
-            PosSlide("  Timing X", ref TimingPX, 0, 1);
-            PosSlide("  Timing Y", ref TimingPY, 0, 1);
-            PosSlide("  Attmpt X", ref AttmptPX, 0, 1);
-            PosSlide("  Attmpt Y", ref AttmptPY, 0, 1);
-            PosSlide("  ProgBarX", ref ProgBarPX, 0, 1);
-            PosSlide("  ProgBarY", ref ProgBarPY, 0, 1);
+            PosGroup("Main/BPM", () =>
+            {
+                PosSlide2(Tr.Get(Tr.Key.PosMain), ref MainOffsetX, ref MainOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosBPM), ref BPMOffsetX, ref BPMOffsetY);
+            });
+            PosGroup(Tr.Get(Tr.Key.PosJudge), () =>
+            {
+                PosSlide2(Tr.Get(Tr.Key.PosJudge), ref JudgeOffsetX, ref JudgeOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosP1), ref P1JudgeOffsetX, ref P1JudgeOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosP2), ref P2JudgeOffsetX, ref P2JudgeOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosP3), ref P3JudgeOffsetX, ref P3JudgeOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosP4), ref P4JudgeOffsetX, ref P4JudgeOffsetY);
+            });
+            PosGroup(Tr.Get(Tr.Key.JudgementOther), () =>
+            {
+                PosSlide2(Tr.Get(Tr.Key.PosCombo), ref ComboOffsetX, ref ComboOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosTiming), ref TimingOffsetX, ref TimingOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosAttempt), ref AttemptOffsetX, ref AttemptOffsetY);
+                PosSlide2($"{Tr.Get(Tr.Key.PosAttempt)}\n{Tr.Get(Tr.Key.Coop)}", ref AttemptCoopOffsetX, ref AttemptCoopOffsetY);
+                PosSlide2(Tr.Get(Tr.Key.PosProgBar), ref ProgBarOffsetX, ref ProgBarOffsetY);
+            });
             if (GUILayout.Button(Tr.Get(Tr.Key.ResetPositions), GUILayout.ExpandWidth(false)))
                 ResetCustomPos();
         }
@@ -231,6 +236,20 @@ public class Settings : UnityModManager.ModSettings
         }
     }
 
+    void PosGroup(string label, Action content)
+    {
+        bool expanded = _expandedPos == label;
+        if (GUILayout.Button($"{(expanded ? "▼" : "▷")} {label}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _expandedPos = expanded ? null : label;
+        if (!expanded) return;
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        GUILayout.BeginVertical();
+        content();
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+    }
+
     void DrawTextSettings()
     {
         if (GUILayout.Button($"{( _alignFold ? "▼" : "▷")} {Tr.Get(Tr.Key.TextSettings)}", GUI.skin.label, GUILayout.ExpandWidth(true)))
@@ -261,33 +280,37 @@ public class Settings : UnityModManager.ModSettings
         DrawDisplaySub("jDisplay", Tr.Get(Tr.Key.DisplayOptions), () =>
         {
             ShowFPS = Tog(Tr.Get(Tr.Key.ShowFps), ShowFPS);
-            FPSRefreshRate = Slide(Tr.Get(Tr.Key.FPSRefreshRate), FPSRefreshRate, 0.05f, 1f, () => { });
+            if (ShowFPS)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(36);
+                FPSRefreshRate = Slide(Tr.Get(Tr.Key.FPSRefreshRate), FPSRefreshRate, 0.05f, 1f, () => { });
+                GUILayout.EndHorizontal();
+            }
             ShowAuthor = Tog(Tr.Get(Tr.Key.ShowAuthor), ShowAuthor);
             ShowState = Tog(Tr.Get(Tr.Key.ShowState), ShowState);
             ShowDeath = Tog(Tr.Get(Tr.Key.ShowDeath), ShowDeath);
             ShowStart = Tog(Tr.Get(Tr.Key.ShowStart), ShowStart);
             ShowTiming = Tog(Tr.Get(Tr.Key.ShowTiming), ShowTiming);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Tr.Get(Tr.Key.DecimalPrecision), GUILayout.Width(120));
+            JongyeolDecimalPrecision = (int)GUILayout.HorizontalSlider(JongyeolDecimalPrecision, 0, 5);
+            if (!_slideFields.TryGetValue("DecimalPrecision", out var dpText))
+                _slideFields["DecimalPrecision"] = dpText = JongyeolDecimalPrecision.ToString();
+            string newDpText = GUILayout.TextField(dpText, GUILayout.Width(55));
+            if (newDpText != dpText)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(Tr.Get(Tr.Key.DecimalPrecision), GUILayout.Width(120));
-                JongyeolDecimalPrecision = (int)GUILayout.HorizontalSlider(JongyeolDecimalPrecision, 0, 5);
-                if (!_slideFields.TryGetValue("DecimalPrecision", out var dpText))
-                    _slideFields["DecimalPrecision"] = dpText = JongyeolDecimalPrecision.ToString();
-                string newDpText = GUILayout.TextField(dpText, GUILayout.Width(55));
-                if (newDpText != dpText)
-                {
-                    _slideFields["DecimalPrecision"] = newDpText;
-                    if (int.TryParse(newDpText, out int dpParsed))
-                        JongyeolDecimalPrecision = Mathf.Clamp(dpParsed, 0, 5);
-                }
-                else if (newDpText == dpText && JongyeolDecimalPrecision.ToString() != dpText)
-                    _slideFields["DecimalPrecision"] = JongyeolDecimalPrecision.ToString();
-                GUILayout.EndHorizontal();
-                var o = Overlay.Instance;
-                if (o?.OverlayTextManager is OverlayTextManagerNormal n) n.DecimalPrecision = JongyeolDecimalPrecision;
-                else if (o?.OverlayTextManager is OverlayTextManagerCoop c) c.DecimalPrecision = JongyeolDecimalPrecision;
-                if (o?.Jongyeol != null) o.Jongyeol.DecimalPrecision = JongyeolDecimalPrecision;
+                _slideFields["DecimalPrecision"] = newDpText;
+                if (int.TryParse(newDpText, out int dpParsed))
+                    JongyeolDecimalPrecision = Mathf.Clamp(dpParsed, 0, 5);
             }
+            else if (newDpText == dpText && JongyeolDecimalPrecision.ToString() != dpText)
+                _slideFields["DecimalPrecision"] = JongyeolDecimalPrecision.ToString();
+            GUILayout.EndHorizontal();
+            var o = Overlay.Instance;
+            if (o?.OverlayTextManager is OverlayTextManagerNormal n) n.DecimalPrecision = JongyeolDecimalPrecision;
+            else if (o?.OverlayTextManager is OverlayTextManagerCoop c) c.DecimalPrecision = JongyeolDecimalPrecision;
+            if (o?.Jongyeol != null) o.Jongyeol.DecimalPrecision = JongyeolDecimalPrecision;
         });
 
         DrawDisplaySub("jBehavior", Tr.Get(Tr.Key.BehaviorOptions), () =>
@@ -304,12 +327,12 @@ public class Settings : UnityModManager.ModSettings
 
     void ResetCustomPos()
     {
-        MainPX = 0.008f; MainPY = 0.985f; BPMPX = 0.992f; BPMPY = 0.985f;
-        JudgePX = 0.5f; JudgePY = 0.005f; P1JudgePX = 0.37f; P1JudgePY = 0.032f;
-        P2JudgePX = 0.63f; P2JudgePY = 0.032f; P3JudgePX = 0.37f; P3JudgePY = 0.005f;
-        P4JudgePX = 0.63f; P4JudgePY = 0.005f; ComboPX = 0.5f; ComboPY = 0.947f;
-        TimingPX = 0.5f; TimingPY = 0.12f; AttmptPX = 0.661f; AttmptPY = 0.032f;
-        ProgBarPX = 0.5f; ProgBarPY = 0.991f;
+        MainOffsetX = MainOffsetY = BPMOffsetX = BPMOffsetY = JudgeOffsetX = JudgeOffsetY = 0;
+        P1JudgeOffsetX = P1JudgeOffsetY = P2JudgeOffsetX = P2JudgeOffsetY = 0;
+        P3JudgeOffsetX = P3JudgeOffsetY = P4JudgeOffsetX = P4JudgeOffsetY = 0;
+        ComboOffsetX = ComboOffsetY = TimingOffsetX = TimingOffsetY = 0;
+        AttemptOffsetX = AttemptOffsetY = AttemptCoopOffsetX = AttemptCoopOffsetY = ProgBarOffsetX = ProgBarOffsetY = 0;
+        _slideFields.Clear();
         Overlayer.Overlay.Instance?.ApplyPositionOffsets();
     }
 
@@ -356,29 +379,33 @@ public class Settings : UnityModManager.ModSettings
         return v;
     }
 
-    void PosSlide(string label, ref float v, float min, float max)
+    void PosSlide2(string label, ref float vx, ref float vy)
     {
+        const float min = -2000, max = 2000;
         GUILayout.BeginHorizontal();
-        GUILayout.Label(label, GUILayout.Width(70));
-        float nv = GUILayout.HorizontalSlider(v, min, max, GUILayout.ExpandWidth(true));
-        if (!_slideFields.TryGetValue(label, out var text))
-            _slideFields[label] = text = v.ToString("F3");
-        string newText = GUILayout.TextField(text, GUILayout.Width(50));
-        if (newText != text)
-        {
-            _slideFields[label] = newText;
-            if (float.TryParse(newText, out float parsed))
-                nv = Mathf.Clamp(parsed, min, max);
-        }
-        else if (newText == text && Math.Abs(nv - v) > 0.001f)
-            _slideFields[label] = nv.ToString("F3");
+        GUILayout.Label(label, GUILayout.Width(55));
+        GUILayout.Label("X", GUILayout.Width(14));
+        float nx = GUILayout.HorizontalSlider(vx, min, max, GUILayout.ExpandWidth(true));
+        if (!_slideFields.TryGetValue(label + "X", out var tx))
+            _slideFields[label + "X"] = tx = $"{(int)vx}";
+        string ntx = GUILayout.TextField(tx, GUILayout.Width(42));
+        if (ntx != tx) { _slideFields[label + "X"] = ntx; if (float.TryParse(ntx, out float p)) nx = Mathf.Clamp(p, min, max); }
+        else if (ntx == tx && Math.Abs(nx - vx) > 0.001f) _slideFields[label + "X"] = $"{(int)nx}";
+        GUILayout.Space(4);
+        GUILayout.Label("Y", GUILayout.Width(14));
+        float ny = GUILayout.HorizontalSlider(vy, min, max, GUILayout.ExpandWidth(true));
+        if (!_slideFields.TryGetValue(label + "Y", out var ty))
+            _slideFields[label + "Y"] = ty = $"{(int)vy}";
+        string nty = GUILayout.TextField(ty, GUILayout.Width(42));
+        if (nty != ty) { _slideFields[label + "Y"] = nty; if (float.TryParse(nty, out float p)) ny = Mathf.Clamp(p, min, max); }
+        else if (nty == ty && Math.Abs(ny - vy) > 0.001f) _slideFields[label + "Y"] = $"{(int)ny}";
         GUILayout.EndHorizontal();
-        if (Math.Abs(nv - v) > 0.001f) { v = nv; Overlayer.Overlay.Instance?.ApplyPositionOffsets(); }
+        if (Math.Abs(nx - vx) > 0.001f || Math.Abs(ny - vy) > 0.001f) { vx = nx; vy = ny; Overlayer.Overlay.Instance?.ApplyPositionOffsets(); }
     }
 
     static readonly Dictionary<string, string> _slideFields = new();
     private static bool _generalFold, _displayFold, _fontFold, _alignFold;
-    private static string _expandedAlign, _expandedDisplaySub;
+    private static string _expandedAlign, _expandedDisplaySub, _expandedPos;
     private static bool _labelsFold;
 
     void DrawLabelsSection()
@@ -511,6 +538,26 @@ public class Settings : UnityModManager.ModSettings
     public static Settings Load(UnityModManager.ModEntry modEntry)
     {
         var s = UnityModManagerNet.UnityModManager.ModSettings.Load<Settings>(modEntry);
+        if (s.ConfigVersion < 2)
+        {
+            float Sw = 1920, Sh = 1080;
+            s.MainOffsetX = s.MainPX * Sw - 16;
+            s.MainOffsetY = (s.MainPY - 1f) * Sh + 16;
+            s.BPMOffsetX = (s.BPMPX - 1f) * Sw + 16;
+            s.BPMOffsetY = (s.BPMPY - 1f) * Sh + 16;
+            s.JudgeOffsetX = (s.JudgePX - 0.5f) * Sw;
+            s.JudgeOffsetY = s.JudgePY * Sh - (s.JudgementLocationUp ? 85f : 5f);
+            s.ComboOffsetX = (s.ComboPX - 0.5f) * Sw;
+            s.ComboOffsetY = (s.ComboPY - 1f) * Sh + 43f + 14f * s.Size;
+            s.TimingOffsetX = (s.TimingPX - 0.5f) * Sw;
+            s.TimingOffsetY = s.TimingPY * Sh - 90f - 40f * s.Size;
+            s.AttemptOffsetX = (s.AttmptPX - 0.5f) * Sw - 310f;
+            s.AttemptOffsetY = s.AttmptPY * Sh - 35f;
+            s.ProgBarOffsetX = (s.ProgBarPX - 0.5f) * Sw;
+            s.ProgBarOffsetY = (s.ProgBarPY - 1f) * Sh + 10f;
+            s.ConfigVersion = 2;
+            s.Save(modEntry);
+        }
         s.Colors = ColorConfig.Load(modEntry);
         s.Labels = LabelConfig.Load(modEntry);
         return s;

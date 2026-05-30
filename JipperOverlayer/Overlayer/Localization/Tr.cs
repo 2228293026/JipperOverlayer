@@ -27,6 +27,10 @@ public static class Tr
         ProgressBarBest, ComboSection, BpmSection, JudgementOther,
         DisplayOptions, BehaviorOptions,
         FPSRefreshRate, DecimalPrecision,
+        Coop,
+        PosMain, PosBPM, PosJudge,
+        PosP1, PosP2, PosP3, PosP4,
+        PosCombo, PosTiming, PosAttempt, PosProgBar,
         Count
     }
 
@@ -52,7 +56,9 @@ public static class Tr
             "Combo Color", "BPM Color", "Add Color Stop", "Delete", "Percent", "Custom Labels",
             "General", "Display", "Progress && Accuracy", "Time",
             "Progress Bar && Best", "Combo", "BPM", "Judgement && Other",
-            "Display Options", "Behavior Options", "FPS Refresh Rate", "Decimal Precision" ],
+            "Display Options", "Behavior Options", "FPS Refresh Rate", "Decimal Precision",
+            "Coop",
+            "Main", "BPM", "Judge", "P1", "P2", "P3", "P4", "Combo", "Timing", "Attempt", "ProgBar" ],
 
         /* 1  Korean */ [ "크기", "진행도 표시", "정확도 표시", "X정확도 표시",
             "음악 시간 표시", "맵 시간 표시", "음악 없을 때 맵 시간",
@@ -74,7 +80,9 @@ public static class Tr
             "콤보 색상", "BPM 색상", "색상 포인트 추가", "삭제", "퍼센트", "사용자 레이블",
             "일반", "디스플레이", "진행 및 정확도", "시간",
             "진행 바 및 최고 기록", "콤보", "BPM", "판정 및 기타",
-            "표시 옵션", "동작 옵션", "FPS 새로고침 속도", "소수점 자릿수" ],
+            "표시 옵션", "동작 옵션", "FPS 새로고침 속도", "소수점 자릿수",
+            "협동",
+            "메인", "BPM", "판정", "P1", "P2", "P3", "P4", "콤보", "타이밍", "시도", "프로그레스바" ],
 
         /* 2  Chinese */ [ "大小", "显示进度", "显示准确率", "显示X准确率",
             "显示音乐时间", "显示地图时间", "无音乐时显示地图时间",
@@ -96,7 +104,9 @@ public static class Tr
             "连击颜色", "BPM颜色", "添加颜色点", "删除", "百分比", "自定义标签",
             "通用", "显示", "进度与准确率", "时间",
             "进度条与最佳", "连击", "BPM", "判定与其他",
-            "显示选项", "行为选项", "FPS刷新率", "小数位数" ],
+            "显示选项", "行为选项", "FPS刷新率", "小数位数",
+            "合作",
+            "主区域", "BPM", "判定", "P1", "P2", "P3", "P4", "连击", "判定区间", "尝试", "进度条" ],
     ];
 
     public static string Get(Key key)
