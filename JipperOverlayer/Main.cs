@@ -1,7 +1,6 @@
 using HarmonyLib;
 using JipperOverlayer.Overlayer;
 using JipperOverlayer.Overlayer.Features;
-using JipperOverlayer.Overlayer.Jongyeol;
 using UnityModManagerNet;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -71,7 +70,6 @@ public static class Main
             _overlay?.Destroy();
             _overlay = null;
             Overlay.Instance = null;
-            JOverlay.Instance = null;
 
             if (_overlayGo != null)
             {
@@ -106,7 +104,7 @@ public static class Main
 
     private static void CreateOverlay()
     {
-        _overlay = Settings.JongyeolMode ? new JOverlay() : new Overlay();
+        _overlay = new Overlay(Settings.JongyeolMode);
     }
 
     public static void RecreateOverlay()
@@ -114,7 +112,6 @@ public static class Main
         _overlay?.Destroy();
         _overlay = null;
         Overlay.Instance = null;
-        JOverlay.Instance = null;
         CreateOverlay();
         // If game is active, show overlay (constructor's Show(0) may not match current floor)
         try
@@ -143,7 +140,7 @@ public static class Main
     private static void OnUpdate(UnityModManager.ModEntry modEntry, float deltaTime)
     {
         if (Settings.JongyeolMode)
-            try { JOverlay.Instance?.UpdateFPS(deltaTime); }
+            try { _overlay?.Jongyeol?.UpdateFPS(deltaTime); }
             catch { }
     }
 }

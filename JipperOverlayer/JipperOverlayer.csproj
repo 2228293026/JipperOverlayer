@@ -138,10 +138,7 @@
     <Compile Include="Overlayer\Features\GameLifecyclePatches.cs" />
     <Compile Include="Overlayer\Features\V141Patches.cs" />
     <Compile Include="Overlayer\Features\V136Patches.cs" />
-    <Compile Include="Overlayer\Jongyeol\IJOverlayTextManager.cs" />
-    <Compile Include="Overlayer\Jongyeol\JOverlay.cs" />
-    <Compile Include="Overlayer\Jongyeol\JOverlayTextManagerNormal.cs" />
-    <Compile Include="Overlayer\Jongyeol\JOverlayTextManagerCoop.cs" />
+    <Compile Include="Overlayer\Jongyeol\JongyeolModule.cs" />
     <Compile Include="Overlayer\Jongyeol\Jbpm.cs" />
     <Compile Include="Overlayer\Localization\Language.cs" />
     <Compile Include="Overlayer\Localization\Tr.cs" />

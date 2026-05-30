@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using JipperOverlayer.Overlayer.Util;
+using JipperOverlayer.Overlayer.Jongyeol;
 using Object = UnityEngine.Object;
 
 namespace JipperOverlayer.Overlayer;
@@ -32,7 +33,7 @@ public class Overlay
     public TextMeshProUGUI JudgementText;
     public TextMeshProUGUI TimingScaleText;
     public ProgressBar ProgressBar;
-    public Color PurePerfectColor = new(1, 0.8549019607843137f, 0);
+    public static readonly Color PurePerfectColor = new(1, 0.8549019607843137f, 0);
     public int[] Hit;
     private GameObject _mainContainer;
     private GameObject _bpmObject;
@@ -43,32 +44,34 @@ public class Overlay
     private GameObject _progressBarObject;
     internal static scrEnableIfBeta BetaWatermark;
     internal static Vector2? BetaWatermarkOriginalPos;
-    protected int LastTime = -1;
-    protected int LastMapTime = -1;
-    protected int StartTile;
+    internal int LastTime = -1;
+    internal int LastMapTime = -1;
+    internal int StartTile;
     public int NoCheckStartTile;
     public int[] Checkpoints;
-    protected float LastTileBpm = -1;
-    protected float LastCurBpm = -1;
-    protected bool SongPlaying;
+    internal float LastTileBpm = -1;
+    internal float LastCurBpm = -1;
+    internal bool SongPlaying;
     public float StartProgress;
     public bool AutoOnceEnabled;
-    protected bool IsDeath;
-    protected string MusicTimeCache;
-    protected string MapTimeCache;
+    internal bool IsDeath;
+    internal string MusicTimeCache;
+    internal string MapTimeCache;
     public PlayCount.Hash LastHash;
     private float _lastSavedStartProgress = -1;
     public float LastMultiplier = 1f;
     private string _musicTimeLabel;
     private string _mapTimeLabel;
+    public JongyeolModule Jongyeol;
     internal static readonly StringBuilder _textSb = new(256);
 
     private static readonly IReadOnlyList<TextMeshProUGUI> _emptyTexts = Array.Empty<TextMeshProUGUI>();
-    protected virtual IReadOnlyList<TextMeshProUGUI> ExtraTexts => _emptyTexts;
+    protected IReadOnlyList<TextMeshProUGUI> ExtraTexts => Jongyeol?.ExtraTexts ?? _emptyTexts;
 
-    public Overlay()
+    public Overlay(bool enableJongyeol = false)
     {
         Instance = this;
+        if (enableJongyeol) Jongyeol = new JongyeolModule(this);
         OnChangePlayers();
         GameObject = new GameObject("JipperOverlayer Overlay");
         Canvas = GameObject.AddComponent<Canvas>();
@@ -85,6 +88,7 @@ public class Overlay
         InitializeProgressBar();
         InitializeTimingScale();
         InitializeAttempt();
+        Jongyeol?.InitializeExtraTexts();
         UpdateSize();
         var mono = GameObject.AddComponent<OverlayMono>();
         mono.Overlay = this;
@@ -101,14 +105,19 @@ public class Overlay
         SetupTextManager();
     }
 
-    protected virtual void SetupTextManager()
+    protected void SetupTextManager()
     {
         OverlayTextManager = VersionSafe.IsCoopMode()
             ? new OverlayTextManagerCoop(this)
             : new OverlayTextManagerNormal();
+        if (Jongyeol != null)
+        {
+            if (OverlayTextManager is OverlayTextManagerNormal normal) normal.DecimalPrecision = 5;
+            else if (OverlayTextManager is OverlayTextManagerCoop coop) coop.DecimalPrecision = 5;
+        }
     }
 
-    protected virtual void InitializeStatus()
+    protected void InitializeStatus()
     {
         var mainGo = new GameObject("Main"); _mainContainer = mainGo; var go = mainGo;
         var t = go.AddComponent<RectTransform>();
@@ -125,7 +134,7 @@ public class Overlay
         SetupMainText("Best", ref BestText);
     }
 
-    protected void SetupMainText(string name, ref TextMeshProUGUI text)
+    internal void SetupMainText(string name, ref TextMeshProUGUI text)
     {
         var go = new GameObject(name);
         var t = go.AddComponent<RectTransform>();
@@ -138,8 +147,9 @@ public class Overlay
         ShadowManager.ApplyShadow(text);
     }
 
-    public virtual void SetupLocationMain()
+    public void SetupLocationMain()
     {
+        if (Jongyeol != null) { Jongyeol.SetupLocation(); return; }
         int y = -15;
         var s = Main.Settings;
         SetupLocationMainText(ProgressText, s.ShowProgress, ref y);
@@ -307,7 +317,7 @@ public class Overlay
         if (ComboTransform) ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * size);
     }
 
-    public virtual void ApplyFontToAll()
+    public void ApplyFontToAll()
     {
         var font = FontManager.GetFont(Main.Settings.FontIndex);
         if (font == null) return;
@@ -336,7 +346,7 @@ public class Overlay
         if (ComboText) try { ShadowManager.ApplyDarkShadow(ComboText); } catch { }
     }
 
-    public virtual void ApplyAlignment()
+    public void ApplyAlignment()
     {
         var s = Main.Settings;
         var mainAlign = (TextAlignmentOptions)s.MainAlign;
@@ -357,7 +367,7 @@ public class Overlay
             if (t) t.alignment = mainAlign;
     }
 
-    public virtual void ApplyFontStyle()
+    public void ApplyFontStyle()
     {
         var s = Main.Settings;
         var mainStyle = (FontStyles)s.MainStyle;
@@ -454,7 +464,7 @@ public class Overlay
         rt.anchoredPosition = BetaWatermarkOriginalPos.Value;
     }
 
-    protected static int[] CollectCheckpoints()
+    internal static int[] CollectCheckpoints()
     {
         var floors = scrLevelMaker.instance.listFloors;
         int count = 0;
@@ -474,7 +484,7 @@ public class Overlay
         OverlayTextManager?.UpdateAccuracy(this, index);
     }
 
-    public virtual void UpdateProgress(scrPlanet planet = null)
+    public void UpdateProgress(scrPlanet planet = null)
     {
         if (!GameObject.activeSelf) return;
         OverlayTextManager?.CacheProgress(planet);
@@ -482,6 +492,9 @@ public class Overlay
         if (Main.Settings.ShowCheckpoint) UpdateCheckPointText();
         if (Main.Settings.ShowProgressBar) UpdateProgressBar();
         if (Main.Settings.ShowBest) OverlayTextManager?.UpdateBest(this);
+        Jongyeol?.CheckPurePerfect();
+        Jongyeol?.UpdateState();
+        Jongyeol?.UpdateDeath();
     }
 
     public void UpdateProgressBar()
@@ -531,8 +544,9 @@ public class Overlay
         JudgementText.text = _textSb.ToString();
     }
 
-    public virtual void UpdateTime()
+    public void UpdateTime()
     {
+        if (Jongyeol != null) { Jongyeol.UpdateTime(); return; }
         if (!GameObject.activeSelf || IsDeath) return;
         var s = Main.Settings;
         bool requireMusicToMap = false;
@@ -582,16 +596,18 @@ public class Overlay
         else { var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StopComboBump(); ComboText.fontSize = 78; if (_comboTitleTransform) _comboTitleTransform.anchoredPosition = new Vector2(0, 43.505f); }
     }
 
-    public virtual Color UpdateComboColor(int combo)
+    public Color UpdateComboColor(int combo)
     {
+        if (Jongyeol != null) return Jongyeol.UpdateComboColor(combo);
         if (combo > Main.Settings.ComboColorMax) combo = Main.Settings.ComboColorMax;
         return Main.Settings.Colors.GetComboColor((float)combo / Main.Settings.ComboColorMax);
     }
 
-    public virtual void OnNonPerfectHit() { }
+    public void OnNonPerfectHit() { Jongyeol?.OnNonPerfectHit(); }
 
-    public virtual void UpdateBPM()
+    public void UpdateBPM()
     {
+        if (Jongyeol != null) { Jongyeol.UpdateBPM(); return; }
         if (!GameObject.activeSelf) return;
         var floor = scrController.instance.currFloor ?? scrController.instance.firstFloor;
         if (floor == null) return;
@@ -652,8 +668,9 @@ public class Overlay
         TimingScaleText.text = $"Timing Scale - {Math.Round(scrController.instance.currFloor.marginScale * 100, 2)}%";
     }
 
-    public virtual void Show(int floor)
+    public void Show(int floor)
     {
+        Jongyeol?.OnShow(floor);
         if (_lastSavedStartProgress != -1)
         {
             if (!AutoOnceEnabled) PlayCount.SetBest(LastHash, _lastSavedStartProgress, OverlayTextManager.GetProgress(), LastMultiplier);
@@ -712,8 +729,9 @@ public class Overlay
         OverlayTextManager.SetBest(1);
     }
 
-    public virtual void Hide()
+    public void Hide()
     {
+        Jongyeol?.OnHide();
         ResetBetaWatermark();
         RepositionAutoText(false);
         _autoText = null;

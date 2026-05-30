@@ -7,10 +7,4 @@ public static class Jbpm
         get => Main.Settings.CheckPseudo;
         set => Main.Settings.CheckPseudo = value;
     }
-
-    public static float BpmColorMax
-    {
-        get => Main.Settings.BpmColorMax;
-        set => Main.Settings.BpmColorMax = value;
-    }
 }

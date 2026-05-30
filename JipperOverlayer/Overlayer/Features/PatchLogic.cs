@@ -1,5 +1,4 @@
 using HarmonyLib;
-using JipperOverlayer.Overlayer.Jongyeol;
 
 namespace JipperOverlayer.Overlayer.Features;
 
@@ -42,8 +41,8 @@ internal static class PatchLogic
 
     public static void JComboPostfix(HitMargin hit)
     {
-        var overlay = JOverlay.Instance;
-        if (overlay == null) return;
+        var overlay = Overlay.Instance;
+        if (overlay?.Jongyeol == null) return;
         switch (hit)
         {
             case HitMargin.Perfect:
@@ -59,6 +58,6 @@ internal static class PatchLogic
                 break;
         }
         if (hit is not HitMargin.Perfect and not HitMargin.Auto)
-            overlay.PerfectToCombo();
+            overlay.Jongyeol.OnNonPerfectHit();
     }
 }

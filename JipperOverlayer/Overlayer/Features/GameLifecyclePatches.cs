@@ -158,8 +158,8 @@ internal static class RdcSetAutoPatch
     static void Postfix()
     {
         if (!ADOBase.isScnGame) return;
-        Jongyeol.JOverlay.Instance?.SetupLocationMain();
-        Jongyeol.JOverlay.Instance?.UpdateState();
+        Overlay.Instance?.Jongyeol?.SetupLocation();
+        Overlay.Instance?.Jongyeol?.UpdateState();
     }
 }
 
@@ -170,7 +170,7 @@ internal static class ScrMiscGetHitMarginPatch
     {
         float angle = (hitangle - refangle) * (isCW ? 1 : -1) * 57.29578f;
         float timing = angle / 180 / bpmTimesSpeed / conductorPitch * 60000;
-        Jongyeol.JOverlay.Instance?.UpdateTiming(timing);
+        Overlay.Instance?.Jongyeol?.UpdateTiming(timing);
     }
 }
 
@@ -197,9 +197,5 @@ internal static class GameLifecycleHelper
 {
     public static int ComboCount;
 
-    public static Overlay GetOverlay()
-    {
-        if (Main.Settings.JongyeolMode) return Jongyeol.JOverlay.Instance;
-        return Overlay.Instance;
-    }
+    public static Overlay GetOverlay() => Overlay.Instance;
 }
