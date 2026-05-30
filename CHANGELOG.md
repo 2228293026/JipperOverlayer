@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.0.7 — 2026-05-31
+
+- All custom positions changed to pixel offsets (position += offset), not affected by alignment
+- New PosSlide2: XY on the same line, -2000~2000 range, integer pixel values
+- Tr.cs: Added Coop and 11 position tags Key, trilingual translation
+- Position grouping fold: Main/BPM, Judge(P1~P4), Others
+- FPS refresh rate slider indented below ShowFPS, hidden when turned off
+- DecimalPrecision remove extra {} blocks, indentation alignment
+- Attempt added Coop independent offset field
+- ApplyFontToAll remove redundant try-catch
+- Configuration migration: ConfigVersion 0→2, old PX/PY converted to offset
+
+- Change JudgementText/_judgementObject to [4] array
+- SetupLocationJudgement: P1/P3 x=-250, P2/P4 x=250  First row y=35, Second row y=5 (same as single-player default height)
+- UpdateJudgement: Read per-player marginTrackers in coop mode
+- Settings: P1~P4 JudgePX/PY sliders, default values aligned with two-column layout
+- Move Attempt text to x=550 in multiplayer mode to avoid overlap
+- In Show(), set up SetupLocationJudgement first, then UpdateJudgement
+
+- Title text updates in real time, pausing switching Jongyeol does not lose text, DecimalPrecision injection, code cleanup
+
 ## v1.0.6 — 2026-05-30
 
 ### Bug Fixes
