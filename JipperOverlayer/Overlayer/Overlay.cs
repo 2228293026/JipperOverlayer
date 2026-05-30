@@ -30,14 +30,14 @@ public class Overlay
     public RectTransform ComboTextTransform;
     internal RectTransform _comboTitleTransform;
     public TextMeshProUGUI BPMText;
-    public TextMeshProUGUI JudgementText;
+    public TextMeshProUGUI[] JudgementTexts = new TextMeshProUGUI[4];
     public TextMeshProUGUI TimingScaleText;
     public ProgressBar ProgressBar;
     public static readonly Color PurePerfectColor = new(1, 0.8549019607843137f, 0);
     public int[] Hit;
     private GameObject _mainContainer;
     private GameObject _bpmObject;
-    private GameObject _judgementObject;
+    private GameObject[] _judgementObjects = new GameObject[4];
     private GameObject _comboObject;
     private GameObject _timingScaleObject;
     private GameObject _attemptObject;
@@ -178,9 +178,23 @@ public class Overlay
 
     public void SetupLocationJudgement()
     {
-        JudgementText.rectTransform.anchoredPosition = new Vector2(0, Main.Settings.JudgementLocationUp ? 85 : 5);
+        bool coop = VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1;
+        int count = coop ? Math.Min(scrPlayerManager.playerCount, 4) : 1;
+        for (int i = 0; i < 4; i++)
+        {
+            if (JudgementTexts[i] == null) continue;
+            bool active = i < count;
+            JudgementTexts[i].enabled = active;
+            _judgementObjects[i].SetActive(active);
+            if (!active) continue;
+            var rt = JudgementTexts[i].rectTransform;
+            rt.sizeDelta = new Vector2(1000, 30);
+            rt.anchoredPosition = coop
+                ? new Vector2(i % 2 == 0 ? -250 : 250, 35 - 30 * (i / 2))
+                : new Vector2(0, Main.Settings.JudgementLocationUp ? 85 : 5);
+            JudgementTexts[i].alignment = TextAlignmentOptions.Center;
+        }
     }
-
     protected void InitializeBPM()
     {
         var go = new GameObject("BPM");
@@ -200,19 +214,21 @@ public class Overlay
 
     private void InitializeJudgement()
     {
-        var go = new GameObject("Judgement");
-        var t = go.AddComponent<RectTransform>();
-        t.SetParent(Canvas.transform);
-        t.anchorMin = t.anchorMax = t.pivot = new Vector2(0.5f, 0);
-        t.sizeDelta = new Vector2(1000, 30);
-        JudgementText = go.AddComponent<TextMeshProUGUI>();
+        for (int i = 0; i < 4; i++)
+        {
+            var go = new GameObject($"Judgement{i + 1}");
+            var t = go.AddComponent<RectTransform>();
+            t.SetParent(Canvas.transform);
+            t.anchorMin = t.anchorMax = t.pivot = new Vector2(0.5f, 0);
+            t.sizeDelta = new Vector2(1000, 30);
+            JudgementTexts[i] = go.AddComponent<TextMeshProUGUI>();
+            JudgementTexts[i].font = BundleLoader.FontAsset;
+            JudgementTexts[i].fontSize = 25;
+            JudgementTexts[i].color = new Color(0.8509804f, 0.345098f, 1);
+            ShadowManager.ApplyShadow(JudgementTexts[i]);
+            _judgementObjects[i] = go;
+        }
         SetupLocationJudgement();
-        JudgementText.font = BundleLoader.FontAsset;
-        JudgementText.fontSize = 25;
-        JudgementText.alignment = TextAlignmentOptions.Bottom;
-        JudgementText.color = new Color(0.8509804f, 0.345098f, 1);
-        ShadowManager.ApplyShadow(JudgementText);
-        _judgementObject = go;
     }
 
     protected void InitializeCombo()
@@ -345,7 +361,7 @@ public class Overlay
         if (CheckpointText) CheckpointText.font = font;
         if (BestText) BestText.font = font;
         if (BPMText) BPMText.font = font;
-        if (JudgementText) JudgementText.font = font;
+        foreach (var jt in JudgementTexts) if (jt) jt.font = font;
         if (ComboTitle) ComboTitle.font = font;
         if (ComboText) ComboText.font = font;
         if (TimingScaleText) TimingScaleText.font = font;
@@ -353,8 +369,10 @@ public class Overlay
         foreach (var t in ExtraTexts)
             if (t) t.font = font;
         foreach (var t in new[] { ProgressText, AccuracyText, XAccuracyText, TimeText, MapTimeText, CheckpointText, BestText,
-            BPMText, JudgementText, TimingScaleText, AttemptText })
+            BPMText, TimingScaleText, AttemptText })
         { if (t) try { ShadowManager.ApplyShadow(t); } catch { } }
+        foreach (var jt in JudgementTexts)
+        { if (jt) try { ShadowManager.ApplyShadow(jt); } catch { } }
         foreach (var t in ExtraTexts)
         { if (t) try { ShadowManager.ApplyShadow(t); } catch { } }
         if (ComboTitle) try { ShadowManager.ApplyDarkShadow(ComboTitle); } catch { }
@@ -366,7 +384,8 @@ public class Overlay
         var s = Main.Settings;
         var mainAlign = (TextAlignmentOptions)s.MainAlign;
         if (BPMText) BPMText.alignment = (TextAlignmentOptions)s.BPMAlign;
-        if (JudgementText) JudgementText.alignment = (TextAlignmentOptions)s.JudgeAlign;
+        var judgeAlign = (TextAlignmentOptions)s.JudgeAlign;
+        if (JudgementTexts[0]) JudgementTexts[0].alignment = judgeAlign;
         if (ComboTitle) ComboTitle.alignment = (TextAlignmentOptions)s.ComboAlign;
         if (ComboText) ComboText.alignment = (TextAlignmentOptions)s.ComboValAlign;
         if (TimingScaleText) TimingScaleText.alignment = (TextAlignmentOptions)s.TimingAlign;
@@ -394,7 +413,8 @@ public class Overlay
         if (CheckpointText) CheckpointText.fontStyle = mainStyle;
         if (BestText) BestText.fontStyle = mainStyle;
         if (BPMText) BPMText.fontStyle = (FontStyles)s.BPMStyle;
-        if (JudgementText) JudgementText.fontStyle = (FontStyles)s.JudgeStyle;
+        var judgeStyle = (FontStyles)s.JudgeStyle;
+        foreach (var jt in JudgementTexts) if (jt) jt.fontStyle = judgeStyle;
         if (ComboTitle) ComboTitle.fontStyle = (FontStyles)s.ComboStyle;
         if (ComboText) ComboText.fontStyle = (FontStyles)s.ComboValStyle;
         if (TimingScaleText) TimingScaleText.fontStyle = (FontStyles)s.TimingStyle;
@@ -411,14 +431,12 @@ public class Overlay
             _mainContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(16, -16);
         if (_bpmObject)
             _bpmObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-16, -16);
-        if (_judgementObject)
-            JudgementText.rectTransform.anchoredPosition = new Vector2(0, s.JudgementLocationUp ? 85 : 5);
         if (ComboTransform)
             ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * s.Size);
         if (_timingScaleObject)
             TimingScaleText.rectTransform.anchoredPosition = new Vector2(0, 90 + 40 * s.Size);
         if (_attemptObject)
-            _attemptObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(310, 35);
+            _attemptObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1 ? 550 : 310, 35);
         if (_progressBarObject)
             _progressBarObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -10);
 
@@ -429,8 +447,13 @@ public class Overlay
             _mainContainer.GetComponent<RectTransform>().position = new Vector3(o.MainPX * sw, o.MainPY * sh, 0);
         if (_bpmObject)
             _bpmObject.GetComponent<RectTransform>().position = new Vector3(o.BPMPX * sw, o.BPMPY * sh, 0);
-        if (_judgementObject)
-            JudgementText.rectTransform.position = new Vector3(o.JudgePX * sw, o.JudgePY * sh, 0);
+        for (int i = 0; i < 4; i++)
+        {
+            if (!_judgementObjects[i]) continue;
+            float px = i == 0 ? o.P1JudgePX : i == 1 ? o.P2JudgePX : i == 2 ? o.P3JudgePX : o.P4JudgePX;
+            float py = i == 0 ? o.P1JudgePY : i == 1 ? o.P2JudgePY : i == 2 ? o.P3JudgePY : o.P4JudgePY;
+            JudgementTexts[i].rectTransform.position = new Vector3(px * sw, py * sh, 0);
+        }
         if (ComboTransform)
             ComboTransform.position = new Vector3(o.ComboPX * sw, o.ComboPY * sh, 0);
         if (_timingScaleObject)
@@ -446,7 +469,7 @@ public class Overlay
         var s = Main.Settings;
         if (_mainContainer) _mainContainer.SetActive(s.ShowProgress || s.ShowAccuracy || s.ShowXAccuracy || s.ShowMusicTime || s.ShowMapTime || s.ShowCheckpoint || s.ShowBest);
         if (_bpmObject) { _bpmObject.SetActive(s.ShowBPM); if (s.ShowBPM && GameObject.activeSelf) UpdateBPM(); }
-        if (_judgementObject) { _judgementObject.SetActive(s.ShowJudgement); if (s.ShowJudgement) { SetupLocationJudgement(); if (GameObject.activeSelf) UpdateJudgement(); } }
+        for (int i = 0; i < 4; i++) if (_judgementObjects[i]) _judgementObjects[i].SetActive(s.ShowJudgement && i < (VersionSafe.IsCoopMode() && scrPlayerManager.playerCount > 1 ? Math.Min(scrPlayerManager.playerCount, 4) : 1)); if (s.ShowJudgement) { SetupLocationJudgement(); if (GameObject.activeSelf) UpdateJudgement(); }
         if (_comboObject) { _comboObject.SetActive(s.ShowCombo); if (s.ShowCombo && GameObject.activeSelf) UpdateCombo(Features.GameLifecycleHelper.ComboCount, false); }
         if (_timingScaleObject) { _timingScaleObject.SetActive(s.ShowTimingScale); if (s.ShowTimingScale && GameObject.activeSelf) UpdateTimingScale(); }
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
@@ -543,25 +566,48 @@ public class Overlay
     public void UpdateJudgement()
     {
         if (!GameObject.activeSelf || Hit == null) return;
-        _textSb.Clear();
-        _textSb.Append(Hit[9]);
-        _textSb.Append(" <color=red>");
-        _textSb.Append(Hit[0]);
-        _textSb.Append(" <color=#FF6F4E>");
-        _textSb.Append(Hit[1]);
-        _textSb.Append(" <color=#A0FF4E>");
-        _textSb.Append(Hit[2]);
-        _textSb.Append(" <color=#60FF4E>");
-        _textSb.Append(Hit[3] + (Hit.Length > 10 ? Hit[10] : 0));
-        _textSb.Append("</color> ");
-        _textSb.Append(Hit[4]);
-        _textSb.Append("</color> ");
-        _textSb.Append(Hit[5]);
-        _textSb.Append("</color> ");
-        _textSb.Append(Hit[6]);
-        _textSb.Append("</color> ");
-        _textSb.Append(Hit[8]);
-        JudgementText.text = _textSb.ToString();
+        if (VersionSafe.IsCoopMode() && scrMistakesManager.marginTrackers != null)
+        {
+            int count = Math.Min(Math.Min(scrPlayerManager.playerCount, scrMistakesManager.marginTrackers.Length), 4);
+            for (int p = 0; p < count; p++)
+            {
+                if (JudgementTexts[p] == null) continue;
+                _textSb.Clear();
+                var h = scrMistakesManager.marginTrackers[p].hitMarginsCount;
+                string hex = ColorUtility.ToHtmlStringRGB(scrPlayerManager.playerColors[p].ToRealColor());
+                _textSb.Append($"<color=#{hex}>P{p + 1}</color> ");
+                AppendJudgementLine(_textSb, h);
+                _textSb.Append($" <color=#{hex}>P{p + 1}</color>");
+                JudgementTexts[p].text = _textSb.ToString();
+            }
+        }
+        else
+        {
+            _textSb.Clear();
+            AppendJudgementLine(_textSb, Hit);
+            JudgementTexts[0].text = _textSb.ToString();
+        }
+    }
+
+    private static void AppendJudgementLine(StringBuilder sb, int[] h)
+    {
+        sb.Append(h[9]);
+        sb.Append(" <color=red>");
+        sb.Append(h[0]);
+        sb.Append(" <color=#FF6F4E>");
+        sb.Append(h[1]);
+        sb.Append(" <color=#A0FF4E>");
+        sb.Append(h[2]);
+        sb.Append(" <color=#60FF4E>");
+        sb.Append(h[3] + (h.Length > 10 ? h[10] : 0));
+        sb.Append("</color> ");
+        sb.Append(h[4]);
+        sb.Append("</color> ");
+        sb.Append(h[5]);
+        sb.Append("</color> ");
+        sb.Append(h[6]);
+        sb.Append("</color> ");
+        sb.Append(h[8]);
     }
 
     public void UpdateTime()
@@ -727,7 +773,7 @@ public class Overlay
 
         if (s.ShowProgress || s.ShowMusicTime || s.ShowCheckpoint || s.ShowBest || Jongyeol != null)
             SetupLocationMain();
-        if (s.ShowJudgement) UpdateJudgement();
+        if (s.ShowJudgement) { SetupLocationJudgement(); UpdateJudgement(); }
         if (s.ShowCombo) UpdateCombo(0, false);
         if (s.ShowBPM) UpdateBPM();
         if (!suppressNativeUI) AdjustBetaWatermark(s.Size);

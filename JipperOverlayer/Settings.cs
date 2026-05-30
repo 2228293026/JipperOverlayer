@@ -37,6 +37,10 @@ public class Settings : UnityModManager.ModSettings
     public float MainPX = 0.008f, MainPY = 0.985f;
     public float BPMPX = 0.992f, BPMPY = 0.985f;
     public float JudgePX = 0.5f, JudgePY = 0.005f;
+    public float P1JudgePX = 0.37f, P1JudgePY = 0.032f;
+    public float P2JudgePX = 0.63f, P2JudgePY = 0.032f;
+    public float P3JudgePX = 0.37f, P3JudgePY = 0.005f;
+    public float P4JudgePX = 0.63f, P4JudgePY = 0.005f;
     public float ComboPX = 0.5f, ComboPY = 0.947f;
     public float TimingPX = 0.5f, TimingPY = 0.12f;
     public float AttmptPX = 0.661f, AttmptPY = 0.032f;
@@ -98,6 +102,14 @@ public class Settings : UnityModManager.ModSettings
             PosSlide("  BPM Y", ref BPMPY, 0, 1);
             PosSlide("  Judge X", ref JudgePX, 0, 1);
             PosSlide("  Judge Y", ref JudgePY, 0, 1);
+            PosSlide("  P1 Judge X", ref P1JudgePX, 0, 1);
+            PosSlide("  P1 Judge Y", ref P1JudgePY, 0, 1);
+            PosSlide("  P2 Judge X", ref P2JudgePX, 0, 1);
+            PosSlide("  P2 Judge Y", ref P2JudgePY, 0, 1);
+            PosSlide("  P3 Judge X", ref P3JudgePX, 0, 1);
+            PosSlide("  P3 Judge Y", ref P3JudgePY, 0, 1);
+            PosSlide("  P4 Judge X", ref P4JudgePX, 0, 1);
+            PosSlide("  P4 Judge Y", ref P4JudgePY, 0, 1);
             PosSlide("  Combo X", ref ComboPX, 0, 1);
             PosSlide("  Combo Y", ref ComboPY, 0, 1);
             PosSlide("  Timing X", ref TimingPX, 0, 1);
@@ -293,7 +305,9 @@ public class Settings : UnityModManager.ModSettings
     void ResetCustomPos()
     {
         MainPX = 0.008f; MainPY = 0.985f; BPMPX = 0.992f; BPMPY = 0.985f;
-        JudgePX = 0.5f; JudgePY = 0.005f; ComboPX = 0.5f; ComboPY = 0.947f;
+        JudgePX = 0.5f; JudgePY = 0.005f; P1JudgePX = 0.37f; P1JudgePY = 0.032f;
+        P2JudgePX = 0.63f; P2JudgePY = 0.032f; P3JudgePX = 0.37f; P3JudgePY = 0.005f;
+        P4JudgePX = 0.63f; P4JudgePY = 0.005f; ComboPX = 0.5f; ComboPY = 0.947f;
         TimingPX = 0.5f; TimingPY = 0.12f; AttmptPX = 0.661f; AttmptPY = 0.032f;
         ProgBarPX = 0.5f; ProgBarPY = 0.991f;
         Overlayer.Overlay.Instance?.ApplyPositionOffsets();
