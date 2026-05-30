@@ -41,7 +41,7 @@ public static class Main
             Mod.Logger.Log("JipperOverlayer enabled.");
 
             PatchManager.Initialize(Harmony);
-            VersionSafe.Setup(Harmony);         // must be before RegisterFeatures
+            VersionSafe.Setup();         // must be before RegisterFeatures
             RegisterFeatures();
 
             BundleLoader.LoadBundle();

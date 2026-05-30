@@ -16,7 +16,6 @@ internal static class GameLifecyclePatches
             typeof(UIControllerWipeToBlackPatch),
             typeof(ScnEditorResetScenePatch),
             typeof(ControllerStartLoadingScenePatch),
-            typeof(MistakesManagerSetPlayerCountPatch),
             typeof(ControllerAwakeRewindPatch),
             typeof(ControllerChangeStatePatch)
         );

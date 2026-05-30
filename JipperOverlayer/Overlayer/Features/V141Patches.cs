@@ -31,6 +31,9 @@ internal static class V141Patches
         // Jongyeol Combo (v141: scrMarginTracker.AddHit)
         PatchManager.RegisterPatches(() => Main.Settings.JongyeolMode && Main.Settings.YellowCombo,
             typeof(ScrMarginAddHitJComboPatch));
+
+        // Player count change (v141: scrMistakesManager.SetPlayerCount)
+        PatchManager.RegisterPatches(() => true, typeof(MistakesManagerSetPlayerCountPatch));
     }
 }
 

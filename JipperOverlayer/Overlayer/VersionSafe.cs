@@ -16,8 +16,9 @@ public static class VersionSafe
     private static Func<float> _getPercentAcc;
     private static Func<float> _getPercentXAcc;
     private static Func<bool> _isCoopMode;
+    private static Func<scrShowIfDebug, bool> _getHideWithNoAuto;
 
-    public static void Setup(Harmony harmony)
+    public static void Setup()
     {
         if (IsInitialized) return;
         IsInitialized = true;
@@ -66,6 +67,7 @@ public static class VersionSafe
         _getPercentAcc = () => scrController.instance?.playerManager?.mistakesManager?.percentAcc ?? 1f;
         _getPercentXAcc = () => scrController.instance?.playerManager?.mistakesManager?.percentXAcc ?? 1f;
         _isCoopMode = () => scrPlayerManager.playerCount > 1;
+        _getHideWithNoAuto = instance => instance.hideWithNoAuto;
     }
 
     // ===== v136 — full reflection (no direct member access to avoid JIT resolution) =====
@@ -95,6 +97,7 @@ public static class VersionSafe
         _getPercentXAcc = () => (float?)(xAccField?.GetValue(GetMM())) ?? 1f;
 
         _isCoopMode = () => false;
+        _getHideWithNoAuto = _ => true;
     }
 
     // ========== Public API (delegate-forwarded, zero reflection) ==========
@@ -105,7 +108,6 @@ public static class VersionSafe
     public static float GetPercentAcc() => _getPercentAcc?.Invoke() ?? 1f;
     public static float GetPercentXAcc() => _getPercentXAcc?.Invoke() ?? 1f;
     public static bool IsCoopMode() => _isCoopMode?.Invoke() ?? false;
-
     public static int GetPlayerIndex(object tracker)
     {
         if (!IsV141OrLater || scrMistakesManager.marginTrackers == null) return 0;
@@ -115,4 +117,5 @@ public static class VersionSafe
         }
         return 0;
     }
+    public static bool GetHideWithNoAuto(scrShowIfDebug instance) => _getHideWithNoAuto?.Invoke(instance) ?? true;
 }

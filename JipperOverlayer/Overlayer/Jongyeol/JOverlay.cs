@@ -256,9 +256,9 @@ public class JOverlay : Overlay
         float kps = cbpm / 60;
         if (isPseudo) kps *= count;
         if (LastTileBpm == bpm && LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
-        string colorHex = ColorToHex(Main.Settings.Colors.GetBpmColor(bpm / Main.Settings.BpmColorMax));
-        BPMText.text = $"<color=white>TBPM | <color=#{colorHex}>{Math.Round(bpm, 2)}</color>\nCBPM |</color> {Math.Round(cbpm, 2)}\n<color=white>KPS |</color> {(isPseudo ? $"<color=#{ColorToHex(Main.Settings.Colors.GetBpmColor(cbpm * count / Main.Settings.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
-        if (LastCurBpm != cbpm) BPMText.color = Main.Settings.Colors.GetBpmColor(cbpm / Main.Settings.BpmColorMax);
+        string colorHex = ColorToHex(Main.Settings.Colors.GetBpmColor(bpm / Jbpm.BpmColorMax));
+        BPMText.text = $"<color=white>TBPM | <color=#{colorHex}>{Math.Round(bpm, 2)}</color>\nCBPM |</color> {Math.Round(cbpm, 2)}\n<color=white>KPS |</color> {(isPseudo ? $"<color=#{ColorToHex(Main.Settings.Colors.GetBpmColor(cbpm * count / Jbpm.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
+        if (LastCurBpm != cbpm) BPMText.color = Main.Settings.Colors.GetBpmColor(cbpm / Jbpm.BpmColorMax);
         LastTileBpm = bpm; LastCurBpm = cbpm; _lastCurKps = kps;
     }
 

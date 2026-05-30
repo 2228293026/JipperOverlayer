@@ -698,7 +698,9 @@ public class Overlay
             var all = Resources.FindObjectsOfTypeAll<scrShowIfDebug>();
             foreach (var s in all)
             {
-                if (!s.hideWithNoAuto || !s.gameObject.scene.IsValid()) continue;
+                if (!s.gameObject.scene.IsValid()) continue;
+                if (!VersionSafe.GetHideWithNoAuto(s))
+                    continue;
                 _autoText = s;
                 break;
             }
