@@ -100,3 +100,4 @@ jobs:
           files: JipperOverlayer.zip
           prerelease: ${{ contains(github.ref, '-') }}
           body_path: relnotes.md
+          generate_release_notes: true
