@@ -43,7 +43,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         {
             int cur = scrController.instance.currentSeqID;
             int last = ADOBase.lm.listFloors.Count - 1;
-            overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {cur} / {last}{(cur == last ? "" : $" [-{last - cur}]")} ({Math.Round(Progress * 100, 5)}%)";
+            overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {cur} / {last}{(cur == last ? "" : $" [-{last - cur}]")} ({Math.Round(Progress * 100, DecimalPrecision)}%)";
         }
         else
             overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {Math.Round(Progress * 100, DecimalPrecision)}%";
@@ -85,8 +85,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
     public void UpdateBestText(Overlay overlay)
     {
         float best = CurBest > Progress || overlay.AutoOnceEnabled ? CurBest : Progress;
-        int precision = Main.Settings.JongyeolMode ? 5 : 2;
-        overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, precision)}%";
+        overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, DecimalPrecision)}%";
         overlay.BestText.color = Main.Settings.Colors.GetBestColor(best);
     }
 }

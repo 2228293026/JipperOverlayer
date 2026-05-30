@@ -19,6 +19,7 @@ public class JongyeolModule
     private int _pseudoFloor = -1;
     private float _lastCurKps = -1, _fpsTime, _timingsSum;
     private bool _perToCom;
+    public int DecimalPrecision = 2;
 
     public JongyeolModule(Overlay overlay)
     {
@@ -85,21 +86,23 @@ public class JongyeolModule
 
     public void UpdateFPS(float deltaTime)
     {
-        if (!Main.Settings.ShowFPS || !_overlay.GameObject.activeSelf || (_fpsTime += deltaTime) < Main.Settings.FPSRefreshRate) return;
-        _fpsTime %= Main.Settings.FPSRefreshRate;
+        var s = Main.Settings;
+        if (!s.ShowFPS || !_overlay.GameObject.activeSelf || (_fpsTime += deltaTime) < s.FPSRefreshRate) return;
+        _fpsTime %= s.FPSRefreshRate;
         Overlay._textSb.Clear();
-        Overlay._textSb.Append(Main.Settings.Labels.FPS);
+        Overlay._textSb.Append(s.Labels.FPS);
         Overlay._textSb.Append(" | ");
-        Overlay._textSb.Append((1f / deltaTime).ToString("F4"));
+        Overlay._textSb.Append((1f / deltaTime).ToString($"F{DecimalPrecision}"));
         FPSText.text = Overlay._textSb.ToString();
     }
 
     public void UpdateAuthor()
     {
-        if (!Main.Settings.ShowAuthor || !_overlay.GameObject.activeSelf) return;
+        var s = Main.Settings;
+        if (!s.ShowAuthor || !_overlay.GameObject.activeSelf) return;
         var ld = scnGame.instance?.levelData;
         string author = ld?.GetType().GetProperty("author")?.GetValue(ld) as string ?? "";
-        AuthorText.text = $"{Main.Settings.Labels.Author} | {author}";
+        AuthorText.text = $"{s.Labels.Author} | {author}";
     }
 
     public void UpdateState()
@@ -141,11 +144,12 @@ public class JongyeolModule
 
     public void UpdateDeath()
     {
-        if (!Main.Settings.ShowDeath || !_overlay.GameObject.activeSelf) return;
+        var s = Main.Settings;
+        if (!s.ShowDeath || !_overlay.GameObject.activeSelf) return;
         int[] hits = _overlay.Hit;
         if (_lastDeath != (_deathCount = hits[8] + hits[9]))
         {
-            DeathText.text = $"<color=white>{Main.Settings.Labels.Death} |</color> {_deathCount}";
+            DeathText.text = $"<color=white>{s.Labels.Death} |</color> {_deathCount}";
             _lastDeath = _deathCount;
         }
         float max = (scrController.instance.currentSeqID - _overlay.StartTile) * 0.05f;
@@ -155,13 +159,15 @@ public class JongyeolModule
 
     public void UpdateStart()
     {
-        if (!Main.Settings.ShowStart || !_overlay.GameObject.activeSelf || _overlay.StartTile != scrController.instance.currentSeqID) return;
-        StartText.text = $"{Main.Settings.Labels.Start} | {_overlay.StartTile} ({Math.Round(_overlay.OverlayTextManager.GetProgress() * 100, 5)}%)";
+        var s = Main.Settings;
+        if (!s.ShowStart || !_overlay.GameObject.activeSelf || _overlay.StartTile != scrController.instance.currentSeqID) return;
+        StartText.text = $"{s.Labels.Start} | {_overlay.StartTile} ({Math.Round(_overlay.OverlayTextManager.GetProgress() * 100, DecimalPrecision)}%)";
     }
 
     public void UpdateTiming(float timing)
     {
-        if (!Main.Settings.ShowTiming || !_overlay.GameObject.activeSelf) return;
+        var s = Main.Settings;
+        if (!s.ShowTiming || !_overlay.GameObject.activeSelf) return;
         if (_timings.Count >= 5000)
         {
             for (int i = 0; i < 1000; i++) _timingsSum -= _timings[i];
@@ -169,7 +175,7 @@ public class JongyeolModule
         }
         _timings.Add(timing);
         _timingsSum += timing;
-        TimingText.text = $"<color=white>{Main.Settings.Labels.Timing} |</color> {Math.Round(timing, 5)} ({Math.Round(_timingsSum / _timings.Count, 5)})";
+        TimingText.text = $"<color=white>{s.Labels.Timing} |</color> {Math.Round(timing, DecimalPrecision)} ({Math.Round(_timingsSum / _timings.Count, DecimalPrecision)})";
         TimingText.color = GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
     }
 
@@ -216,6 +222,7 @@ public class JongyeolModule
 
     public void UpdateBPM()
     {
+        var s = Main.Settings;
         if (!_overlay.GameObject.activeSelf) return;
         scrFloor floor = scrController.instance.currFloor ?? scrController.instance.firstFloor;
         if (floor == null || floor.seqID <= _pseudoFloor) return;
@@ -228,10 +235,10 @@ public class JongyeolModule
         float kps = cbpm / 60;
         if (isPseudo) kps *= count;
         if (_overlay.LastTileBpm == bpm.TileBpm && _overlay.LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
-        string colorHex = BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(bpm.TileBpm / Main.Settings.BpmColorMax));
-        var lbl = Main.Settings.Labels;
-        _overlay.BPMText.text = $"<color=white>{lbl.TBPM} | <color=#{colorHex}>{Math.Round(bpm.TileBpm, 2)}</color>\n{lbl.CBPM} |</color> {Math.Round(cbpm, 2)}\n<color=white>{lbl.KPS} |</color> {(isPseudo ? $"<color=#{BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(cbpm * count / Main.Settings.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
-        if (_overlay.LastCurBpm != cbpm) _overlay.BPMText.color = Main.Settings.Colors.GetBpmColor(cbpm / Main.Settings.BpmColorMax);
+        string colorHex = BpmCalculator.ColorToHex(s.Colors.GetBpmColor(bpm.TileBpm / s.BpmColorMax));
+        var lbl = s.Labels;
+        _overlay.BPMText.text = $"<color=white>{lbl.TBPM} | <color=#{colorHex}>{Math.Round(bpm.TileBpm, 2)}</color>\n{lbl.CBPM} |</color> {Math.Round(cbpm, 2)}\n<color=white>{lbl.KPS} |</color> {(isPseudo ? $"<color=#{BpmCalculator.ColorToHex(s.Colors.GetBpmColor(cbpm * count / s.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
+        if (_overlay.LastCurBpm != cbpm) _overlay.BPMText.color = s.Colors.GetBpmColor(cbpm / s.BpmColorMax);
         _overlay.LastTileBpm = bpm.TileBpm; _overlay.LastCurBpm = cbpm; _lastCurKps = kps;
     }
 

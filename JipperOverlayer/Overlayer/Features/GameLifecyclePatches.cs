@@ -101,7 +101,6 @@ internal static class ControllerAwakeRewindPatch
         float size = Main.Settings.Size;
         t.anchoredPosition = new Vector2(0, -20 - 7 * size);
         t.localScale = new Vector3(0.5f * size, 0.5f * size);
-        t.sizeDelta = new Vector2(Math.Abs(t.sizeDelta.x * 2.5f), t.sizeDelta.y);
         ___txtLevelName.text = ___txtLevelName.text.Replace('\n', ' ');
     }
 }
@@ -138,22 +137,14 @@ internal static class ScrShowIfDebugUpdatePatch
 [HarmonyPatch(typeof(scrShowIfDebug), "Awake")]
 internal static class ScrShowIfDebugAwakePatch
 {
-    static async void Postfix(scrShowIfDebug __instance)
+    static void Postfix(scrShowIfDebug __instance)
     {
-        await System.Threading.Tasks.Task.Delay(1);
-        try
-        {
-            if (__instance)
-            {
-                var t = __instance.GetComponent<RectTransform>();
-                t.anchoredPosition = new Vector2(300, t.anchoredPosition.y);
-            }
-        }
-        catch { }
+        var t = __instance.GetComponent<RectTransform>();
+        if (t) t.anchoredPosition = new Vector2(300, t.anchoredPosition.y);
     }
 }
 
-[HarmonyPatch(typeof(RDC), "set_auto")]
+[HarmonyPatch(typeof(RDC), nameof(RDC.auto), MethodType.Setter)]
 internal static class RdcSetAutoPatch
 {
     static void Postfix()

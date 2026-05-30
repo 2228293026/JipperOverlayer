@@ -114,17 +114,20 @@ public static class Main
         Overlay.Instance = null;
         CreateOverlay();
         // If game is active, show overlay (constructor's Show(0) may not match current floor)
-        try
+        if (ADOBase.controller == null || ADOBase.conductor is not { isGameWorld: true })
+            return;
+        if (_overlay == null || _overlay.GameObject.activeSelf) return;
+
+        if (ADOBase.controller.paused)
         {
-            if (ADOBase.controller is { paused: false } && ADOBase.conductor is { isGameWorld: true })
-            {
-                int floor = scrController.instance.currentSeqID;
-                // Prevent double Show by checking if the overlay is already active
-                if (_overlay != null && !_overlay.GameObject.activeSelf)
-                    _overlay.Show(floor);
-            }
+            _overlay.Show(scrController.instance.currentSeqID, suppressNativeUI: true);
+            if (_overlay.Canvas)
+                _overlay.Canvas.enabled = false;
         }
-        catch { }
+        else
+        {
+            _overlay.Show(scrController.instance.currentSeqID);
+        }
     }
 
     private static void OnSceneUnloaded(Scene _)

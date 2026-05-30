@@ -72,7 +72,6 @@ public class Overlay
     {
         Instance = this;
         if (enableJongyeol) Jongyeol = new JongyeolModule(this);
-        OnChangePlayers();
         GameObject = new GameObject("JipperOverlayer Overlay");
         Canvas = GameObject.AddComponent<Canvas>();
         Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -89,6 +88,7 @@ public class Overlay
         InitializeTimingScale();
         InitializeAttempt();
         Jongyeol?.InitializeExtraTexts();
+        OnChangePlayers();
         UpdateSize();
         var mono = GameObject.AddComponent<OverlayMono>();
         mono.Overlay = this;
@@ -107,13 +107,15 @@ public class Overlay
 
     protected void SetupTextManager()
     {
+        var s = Main.Settings;
         OverlayTextManager = VersionSafe.IsCoopMode()
             ? new OverlayTextManagerCoop(this)
             : new OverlayTextManagerNormal();
         if (Jongyeol != null)
         {
-            if (OverlayTextManager is OverlayTextManagerNormal normal) normal.DecimalPrecision = 5;
-            else if (OverlayTextManager is OverlayTextManagerCoop coop) coop.DecimalPrecision = 5;
+            if (OverlayTextManager is OverlayTextManagerNormal normal) normal.DecimalPrecision = s.JongyeolDecimalPrecision;
+            else if (OverlayTextManager is OverlayTextManagerCoop coop) coop.DecimalPrecision = s.JongyeolDecimalPrecision;
+            Jongyeol.DecimalPrecision = s.JongyeolDecimalPrecision;
         }
     }
 
@@ -301,6 +303,8 @@ public class Overlay
         _attemptObject = go;
     }
 
+    private static float? _originalLevelNameWidth;
+
     public void UpdateSize()
     {
         var t = GameObject.transform;
@@ -308,13 +312,24 @@ public class Overlay
         var scale = new Vector3(size, size, 1);
         for (int i = 0; i < t.childCount; i++) t.GetChild(i).localScale = scale;
         if (TimingScaleText) TimingScaleText.rectTransform.anchoredPosition = new Vector2(0, 90 + 40 * size);
-        var txtLevelName = ADOBase.controller?.txtLevelName?.GetComponent<RectTransform>();
-        if (txtLevelName)
+        var levelName = ADOBase.controller?.txtLevelName;
+        if (levelName)
         {
-            txtLevelName.anchoredPosition = new Vector2(0, -20 - 7 * size);
-            txtLevelName.localScale = new Vector3(0.5f * size, 0.5f * size);
+            var rt = levelName.GetComponent<RectTransform>();
+            rt.anchoredPosition = new Vector2(0, -20 - 7 * size);
+            rt.localScale = new Vector3(0.5f * size, 0.5f * size);
+            // Track original width once for idempotent 2.5x widening
+            if (_originalLevelNameWidth == null)
+                _originalLevelNameWidth = Math.Abs(rt.sizeDelta.x);
+            rt.sizeDelta = new Vector2(_originalLevelNameWidth.Value * 2.5f, rt.sizeDelta.y);
+            levelName.text = levelName.text.Replace('\n', ' ');
         }
         if (ComboTransform) ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * size);
+        if (GameObject.activeSelf)
+        {
+            AdjustBetaWatermark(size);
+            RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf, size);
+        }
     }
 
     public void ApplyFontToAll()
@@ -390,23 +405,24 @@ public class Overlay
 
     public void ApplyPositionOffsets()
     {
+        var s = Main.Settings;
         // Reset to default anchored positions
         if (_mainContainer)
             _mainContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(16, -16);
         if (_bpmObject)
             _bpmObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-16, -16);
         if (_judgementObject)
-            JudgementText.rectTransform.anchoredPosition = new Vector2(0, Main.Settings.JudgementLocationUp ? 85 : 5);
+            JudgementText.rectTransform.anchoredPosition = new Vector2(0, s.JudgementLocationUp ? 85 : 5);
         if (ComboTransform)
-            ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * Main.Settings.Size);
+            ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * s.Size);
         if (_timingScaleObject)
-            TimingScaleText.rectTransform.anchoredPosition = new Vector2(0, 90 + 40 * Main.Settings.Size);
+            TimingScaleText.rectTransform.anchoredPosition = new Vector2(0, 90 + 40 * s.Size);
         if (_attemptObject)
             _attemptObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(310, 35);
         if (_progressBarObject)
             _progressBarObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -10);
 
-        if (!Main.Settings.CustomPositionsEnabled) return;
+        if (!s.CustomPositionsEnabled) return;
         var o = Main.Settings;
         float sw = Screen.width, sh = Screen.height;
         if (_mainContainer)
@@ -436,15 +452,15 @@ public class Overlay
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
         if (_progressBarObject) { _progressBarObject.SetActive(s.ShowProgressBar); if (s.ShowProgressBar && GameObject.activeSelf) UpdateProgressBar(); }
         if (GameObject != null && GameObject.activeSelf) SetupLocationMain();
-        if (GameObject != null && GameObject.activeSelf) AdjustBetaWatermark();
+        if (GameObject != null && GameObject.activeSelf && ADOBase.controller is { paused: false }) AdjustBetaWatermark(s.Size);
         ApplyPositionOffsets();
         ApplyAlignment();
         ApplyFontStyle();
-        RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf);
+        RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf, s.Size);
         RefreshTimeLabels();
     }
 
-    private static void AdjustBetaWatermark()
+    private static void AdjustBetaWatermark(float size)
     {
         if (BetaWatermark == null || !BetaWatermark.gameObject.activeInHierarchy) return;
         var rt = BetaWatermark.GetComponent<RectTransform>();
@@ -452,7 +468,7 @@ public class Overlay
         if (BetaWatermarkOriginalPos == null)
             BetaWatermarkOriginalPos = rt.anchoredPosition;
         var pos = rt.anchoredPosition;
-        pos.y = Main.Settings.ShowBPM ? BetaWatermarkOriginalPos.Value.y - 110f : BetaWatermarkOriginalPos.Value.y;
+        pos.y = BetaWatermarkOriginalPos.Value.y - (Main.Settings.ShowBPM ? 110f * size : 0);
         rt.anchoredPosition = pos;
     }
 
@@ -486,12 +502,13 @@ public class Overlay
 
     public void UpdateProgress(scrPlanet planet = null)
     {
+        var s = Main.Settings;
         if (!GameObject.activeSelf) return;
         OverlayTextManager?.CacheProgress(planet);
-        if (Main.Settings.ShowProgress) OverlayTextManager?.UpdateProgress(this);
-        if (Main.Settings.ShowCheckpoint) UpdateCheckPointText();
-        if (Main.Settings.ShowProgressBar) UpdateProgressBar();
-        if (Main.Settings.ShowBest) OverlayTextManager?.UpdateBest(this);
+        if (s.ShowProgress) OverlayTextManager?.UpdateProgress(this);
+        if (s.ShowCheckpoint) UpdateCheckPointText();
+        if (s.ShowProgressBar) UpdateProgressBar();
+        if (s.ShowBest) OverlayTextManager?.UpdateBest(this);
         Jongyeol?.CheckPurePerfect();
         Jongyeol?.UpdateState();
         Jongyeol?.UpdateDeath();
@@ -512,12 +529,13 @@ public class Overlay
 
     public void UpdateAttempts()
     {
-        var labels = Main.Settings.Labels;
+        var s = Main.Settings;
+        var labels = s.Labels;
         string v0 = "", v1 = "";
         int count = 0;
-        if (Main.Settings.ShowAttempt)
+        if (s.ShowAttempt)
             v0 = count++ == 0 ? $"{labels.Attempt} {PlayCount.GetData(LastHash)?.GetAttempts(StartProgress) ?? 0}" : "";
-        if (Main.Settings.ShowFullAttempt)
+        if (s.ShowFullAttempt)
             v1 = count++ <= 1 ? $"{labels.FullAttempt} {PlayCount.GetData(LastHash)?.GetAttempts() ?? 0}" : "";
         AttemptText.text = count switch { 0 => "", 1 => v0 + v1, _ => $"{v0}\n{v1}" };
     }
@@ -600,24 +618,26 @@ public class Overlay
 
     public Color UpdateComboColor(int combo)
     {
+        var s = Main.Settings;
         if (Jongyeol != null) return Jongyeol.UpdateComboColor(combo);
-        if (combo > Main.Settings.ComboColorMax) combo = Main.Settings.ComboColorMax;
-        return Main.Settings.Colors.GetComboColor((float)combo / Main.Settings.ComboColorMax);
+        if (combo > s.ComboColorMax) combo = s.ComboColorMax;
+        return s.Colors.GetComboColor((float)combo / s.ComboColorMax);
     }
 
     public void OnNonPerfectHit() { Jongyeol?.OnNonPerfectHit(); }
 
     public void UpdateBPM()
     {
+        var s = Main.Settings;
         if (Jongyeol != null) { Jongyeol.UpdateBPM(); return; }
         if (!GameObject.activeSelf) return;
         var floor = scrController.instance.currFloor ?? scrController.instance.firstFloor;
         if (floor == null) return;
         var bpm = BpmCalculator.Calculate(floor, (float)(scrConductor.instance.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance)));
         if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm) return;
-        string hex = BpmCalculator.ColorToHex(Main.Settings.Colors.GetBpmColor(bpm.TileBpm / Main.Settings.BpmColorMax));
+        string hex = BpmCalculator.ColorToHex(s.Colors.GetBpmColor(bpm.TileBpm / s.BpmColorMax));
         _textSb.Clear();
-        var labels = Main.Settings.Labels;
+        var labels = s.Labels;
         _textSb.Append("<color=white>");
         _textSb.Append(labels.TBPM);
         _textSb.Append(" | <color=#");
@@ -633,20 +653,21 @@ public class Overlay
         _textSb.Append(" |</color> ");
         _textSb.Append(Math.Round(bpm.Kps, 2));
         BPMText.text = _textSb.ToString();
-        if (LastCurBpm != bpm.CurrentBpm) BPMText.color = Main.Settings.Colors.GetBpmColor(bpm.CurrentBpm / Main.Settings.BpmColorMax);
+        if (LastCurBpm != bpm.CurrentBpm) BPMText.color = s.Colors.GetBpmColor(bpm.CurrentBpm / s.BpmColorMax);
         LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;
     }
 
     internal void RefreshTimeLabels()
     {
-        _musicTimeLabel = $"<color=white>{Main.Settings.Labels.MusicTime} |</color>";
-        _mapTimeLabel = $"<color=white>{Main.Settings.Labels.MapTime} |</color>";
+        var s = Main.Settings;
+        _musicTimeLabel = $"<color=white>{s.Labels.MusicTime} |</color>";
+        _mapTimeLabel = $"<color=white>{s.Labels.MapTime} |</color>";
     }
 
     private static scrShowIfDebug _autoText;
     private static Vector2? _autoTextOriginalPos;
 
-    private static void RepositionAutoText(bool needRoom)
+    private static void RepositionAutoText(bool needRoom, float size = 1)
     {
         if (_autoText == null)
         {
@@ -666,7 +687,7 @@ public class Overlay
         if (_autoTextOriginalPos == null)
             _autoTextOriginalPos = rt.anchoredPosition;
         var pos = rt.anchoredPosition;
-        pos.x = needRoom ? 300f : _autoTextOriginalPos.Value.x;
+        pos.x = needRoom ? 300f * size : _autoTextOriginalPos.Value.x;
         rt.anchoredPosition = pos;
     }
 
@@ -677,8 +698,9 @@ public class Overlay
         TimingScaleText.text = $"{Main.Settings.Labels.TimingScale} - {Math.Round(scrController.instance.currFloor.marginScale * 100, 2)}%";
     }
 
-    public void Show(int floor)
+    public void Show(int floor, bool suppressNativeUI = false)
     {
+        var s = Main.Settings;
         Jongyeol?.OnShow(floor);
         if (_lastSavedStartProgress != -1)
         {
@@ -703,20 +725,19 @@ public class Overlay
         if (mono) mono.enabled = true;
         SongPlaying = false; IsDeath = false;
 
-        if (Main.Settings.ShowProgress || Main.Settings.ShowMusicTime || Main.Settings.ShowCheckpoint || Main.Settings.ShowBest || Jongyeol != null)
+        if (s.ShowProgress || s.ShowMusicTime || s.ShowCheckpoint || s.ShowBest || Jongyeol != null)
             SetupLocationMain();
-        if (Main.Settings.ShowJudgement) UpdateJudgement();
-        if (Main.Settings.ShowCombo) UpdateCombo(0, false);
-        if (Main.Settings.ShowBPM) UpdateBPM();
-        AdjustBetaWatermark();
-        if (Main.Settings.ShowTimingScale) UpdateTimingScale();
-        if (Main.Settings.ShowAttempt) UpdateAttempts();
+        if (s.ShowJudgement) UpdateJudgement();
+        if (s.ShowCombo) UpdateCombo(0, false);
+        if (s.ShowBPM) UpdateBPM();
+        if (!suppressNativeUI) AdjustBetaWatermark(s.Size);
+        if (s.ShowTimingScale) UpdateTimingScale();
+        if (s.ShowAttempt) UpdateAttempts();
         ApplyPositionOffsets();
         ApplyAlignment();
         ApplyFontStyle();
         Features.GameLifecycleHelper.ComboCount = 0;
-        var s2 = Main.Settings;
-        RepositionAutoText(s2.ShowProgress || s2.ShowAccuracy || s2.ShowXAccuracy || s2.ShowMusicTime || s2.ShowMapTime || s2.ShowCheckpoint || s2.ShowBest);
+        if (!suppressNativeUI) RepositionAutoText(s.ShowProgress || s.ShowAccuracy || s.ShowXAccuracy || s.ShowMusicTime || s.ShowMapTime || s.ShowCheckpoint || s.ShowBest, s.Size);
         RefreshTimeLabels();
     }
 
@@ -766,6 +787,7 @@ public class Overlay
 
     public void Destroy()
     {
+        ResetBetaWatermark();
         Object.Destroy(GameObject);
         GC.SuppressFinalize(this);
     }

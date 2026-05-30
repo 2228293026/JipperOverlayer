@@ -7,11 +7,19 @@ public class OverlayMono : MonoBehaviour
 {
     public Overlay Overlay;
     private Coroutine _comboAnim;
+    private bool _lastPaused;
 
     private void Update()
     {
         if (Overlay == null) return;
         Overlay.UpdateTime();
+        bool paused = ADOBase.controller?.paused ?? _lastPaused;
+        if (paused != _lastPaused)
+        {
+            _lastPaused = paused;
+            if (Overlay.Canvas)
+                Overlay.Canvas.enabled = !paused;
+        }
     }
 
     public void StartComboBump()

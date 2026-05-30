@@ -19,9 +19,9 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         PlayerDatas = new PlayerData[scrPlayerManager.playerCount];
         _accStrings = new string[PlayerDatas.Length + 1];
         _xaccStrings = new string[PlayerDatas.Length + 1];
-        overlay.ProgressText.color = Color.white;
-        overlay.AccuracyText.color = Color.white;
-        overlay.XAccuracyText.color = Color.white;
+        if (overlay.ProgressText) overlay.ProgressText.color = Color.white;
+        if (overlay.AccuracyText) overlay.AccuracyText.color = Color.white;
+        if (overlay.XAccuracyText) overlay.XAccuracyText.color = Color.white;
     }
 
     public void SetBest(float best) => CurBest = best;
@@ -134,8 +134,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
     public void UpdateBestText(Overlay overlay)
     {
         float best = CurBest > MaxProgress || overlay.AutoOnceEnabled ? CurBest : MaxProgress;
-        int precision = Main.Settings.JongyeolMode ? 5 : 2;
-        overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, precision)}%";
+        overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, DecimalPrecision)}%";
         overlay.BestText.color = Main.Settings.Colors.GetBestColor(best);
     }
 

@@ -23,8 +23,9 @@ public class Settings : UnityModManager.ModSettings
     public int ComboColorMax = 1000;
     public bool JongyeolMode, ShowFPS = true, ShowAuthor = true, ShowState = true;
     public float FPSRefreshRate = 0.2f;
+    public int JongyeolDecimalPrecision = 5;
     public bool HideDebugText = true, ShowDeath = true, ShowStart = true, ShowTiming = true;
-    public bool RemoveNotRequireInAuto = true, CheckPseudo = true, AllowELCombo = true;
+    public bool RemoveNotRequireInAuto = true, CheckPseudo = true, AllowELCombo = true, AllowOrangeCombo = true;
     public Language CurrentLanguage;
     public int FontIndex;
     public string FontName;
@@ -254,6 +255,27 @@ public class Settings : UnityModManager.ModSettings
             ShowDeath = Tog(Tr.Get(Tr.Key.ShowDeath), ShowDeath);
             ShowStart = Tog(Tr.Get(Tr.Key.ShowStart), ShowStart);
             ShowTiming = Tog(Tr.Get(Tr.Key.ShowTiming), ShowTiming);
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(Tr.Get(Tr.Key.DecimalPrecision), GUILayout.Width(120));
+                JongyeolDecimalPrecision = (int)GUILayout.HorizontalSlider(JongyeolDecimalPrecision, 0, 5);
+                if (!_slideFields.TryGetValue("DecimalPrecision", out var dpText))
+                    _slideFields["DecimalPrecision"] = dpText = JongyeolDecimalPrecision.ToString();
+                string newDpText = GUILayout.TextField(dpText, GUILayout.Width(55));
+                if (newDpText != dpText)
+                {
+                    _slideFields["DecimalPrecision"] = newDpText;
+                    if (int.TryParse(newDpText, out int dpParsed))
+                        JongyeolDecimalPrecision = Mathf.Clamp(dpParsed, 0, 5);
+                }
+                else if (newDpText == dpText && JongyeolDecimalPrecision.ToString() != dpText)
+                    _slideFields["DecimalPrecision"] = JongyeolDecimalPrecision.ToString();
+                GUILayout.EndHorizontal();
+                var o = Overlay.Instance;
+                if (o?.OverlayTextManager is OverlayTextManagerNormal n) n.DecimalPrecision = JongyeolDecimalPrecision;
+                else if (o?.OverlayTextManager is OverlayTextManagerCoop c) c.DecimalPrecision = JongyeolDecimalPrecision;
+                if (o?.Jongyeol != null) o.Jongyeol.DecimalPrecision = JongyeolDecimalPrecision;
+            }
         });
 
         DrawDisplaySub("jBehavior", Tr.Get(Tr.Key.BehaviorOptions), () =>
@@ -261,7 +283,10 @@ public class Settings : UnityModManager.ModSettings
             HideDebugText = Tog(Tr.Get(Tr.Key.HideDebugText), HideDebugText);
             RemoveNotRequireInAuto = Tog(Tr.Get(Tr.Key.RemoveAutoReq), RemoveNotRequireInAuto);
             CheckPseudo = Tog(Tr.Get(Tr.Key.CheckPseudo), CheckPseudo);
+            bool prevEL = AllowELCombo;
             AllowELCombo = Tog(Tr.Get(Tr.Key.AllowELCombo), AllowELCombo);
+            if (prevEL != AllowELCombo) { PatchManager.RefreshPatches(); if (!AllowELCombo) AllowOrangeCombo = false; }
+            if (AllowELCombo) AllowOrangeCombo = Tog(Tr.Get(Tr.Key.AllowOrangeCombo), AllowOrangeCombo, 20);
         });
     }
 
@@ -286,9 +311,10 @@ public class Settings : UnityModManager.ModSettings
         MainStyle = BPMStyle = JudgeStyle = ComboStyle = ComboValStyle = TimingStyle = AttemptStyle = 0;
     }
 
-    static bool Tog(string label, bool v)
+    static bool Tog(string label, bool v, int indent = 0)
     {
         GUILayout.BeginHorizontal();
+        if (indent > 0) GUILayout.Space(indent);
         v = GUILayout.Toggle(v, GUIContent.none, GUILayout.ExpandWidth(false));
         GUILayout.Label(label, GUILayout.ExpandWidth(true));
         GUILayout.EndHorizontal();

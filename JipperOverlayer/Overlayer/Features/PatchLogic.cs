@@ -51,6 +51,11 @@ internal static class PatchLogic
             case HitMargin.Auto when Main.Settings.EnableAutoCombo:
                 overlay.UpdateCombo(++GameLifecycleHelper.ComboCount, true);
                 break;
+            case HitMargin.VeryEarly:
+            case HitMargin.VeryLate:
+                if (!Main.Settings.AllowOrangeCombo) goto default;
+                overlay.UpdateCombo(++GameLifecycleHelper.ComboCount, true);
+                break;
             case HitMargin.Auto when !Main.Settings.EnableAutoCombo:
                 break;
             default:
