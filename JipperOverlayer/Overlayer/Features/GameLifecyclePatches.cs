@@ -23,7 +23,8 @@ internal static class GameLifecyclePatches
         PatchManager.RegisterPatches(() => Main.Settings.ShowProgress || Main.Settings.ShowAccuracy ||
               Main.Settings.ShowXAccuracy || Main.Settings.ShowMusicTime || Main.Settings.ShowMapTime ||
               Main.Settings.ShowCheckpoint || Main.Settings.ShowBest || Main.Settings.ShowProgressBar ||
-              Main.Settings.ShowTimingScale || Main.Settings.ShowAttempt || Main.Settings.ShowFullAttempt,
+              Main.Settings.ShowTimingScale || Main.Settings.ShowAttempt || Main.Settings.ShowFullAttempt ||
+              (Main.Settings.JongyeolMode && (Main.Settings.ShowState || Main.Settings.ShowDeath || Main.Settings.ShowStart || Main.Settings.ShowTiming)),
             typeof(PlanetMoveToNextFloorPatch));
         PatchManager.RegisterPatches(() => Main.Settings.JongyeolMode,
             typeof(ScrShowIfDebugUpdatePatch),

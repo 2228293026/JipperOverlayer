@@ -20,7 +20,7 @@ internal static class V136Patches
               Main.Settings.ShowXAccuracy || Main.Settings.ShowMusicTime || Main.Settings.ShowMapTime ||
               Main.Settings.ShowCheckpoint || Main.Settings.ShowBest || Main.Settings.ShowProgressBar,
             typeof(ScrMistakesCalcAccPatch));
-        PatchManager.RegisterPatches(() => Main.Settings.JongyeolMode && Main.Settings.AllowELCombo,
+        PatchManager.RegisterPatches(() => Main.Settings.ShowCombo && Main.Settings.JongyeolMode && Main.Settings.AllowELCombo,
             typeof(ScrMistakesAddHitJComboPatch));
     }
 }

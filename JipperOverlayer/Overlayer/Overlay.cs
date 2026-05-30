@@ -429,12 +429,12 @@ public class Overlay
     {
         var s = Main.Settings;
         if (_mainContainer) _mainContainer.SetActive(s.ShowProgress || s.ShowAccuracy || s.ShowXAccuracy || s.ShowMusicTime || s.ShowMapTime || s.ShowCheckpoint || s.ShowBest);
-        if (_bpmObject) _bpmObject.SetActive(s.ShowBPM);
-        if (_judgementObject) { _judgementObject.SetActive(s.ShowJudgement); if (s.ShowJudgement) SetupLocationJudgement(); }
-        if (_comboObject) _comboObject.SetActive(s.ShowCombo);
-        if (_timingScaleObject) _timingScaleObject.SetActive(s.ShowTimingScale);
+        if (_bpmObject) { _bpmObject.SetActive(s.ShowBPM); if (s.ShowBPM && GameObject.activeSelf) UpdateBPM(); }
+        if (_judgementObject) { _judgementObject.SetActive(s.ShowJudgement); if (s.ShowJudgement) { SetupLocationJudgement(); if (GameObject.activeSelf) UpdateJudgement(); } }
+        if (_comboObject) { _comboObject.SetActive(s.ShowCombo); if (s.ShowCombo && GameObject.activeSelf) UpdateCombo(Features.GameLifecycleHelper.ComboCount, false); }
+        if (_timingScaleObject) { _timingScaleObject.SetActive(s.ShowTimingScale); if (s.ShowTimingScale && GameObject.activeSelf) UpdateTimingScale(); }
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
-        if (_progressBarObject) _progressBarObject.SetActive(s.ShowProgressBar);
+        if (_progressBarObject) { _progressBarObject.SetActive(s.ShowProgressBar); if (s.ShowProgressBar && GameObject.activeSelf) UpdateProgressBar(); }
         if (GameObject != null && GameObject.activeSelf) SetupLocationMain();
         if (GameObject != null && GameObject.activeSelf) AdjustBetaWatermark();
         ApplyPositionOffsets();
@@ -695,7 +695,7 @@ public class Overlay
         if (mono) mono.enabled = true;
         SongPlaying = false; IsDeath = false;
 
-        if (Main.Settings.ShowProgress || Main.Settings.ShowMusicTime || Main.Settings.ShowCheckpoint || Main.Settings.ShowBest)
+        if (Main.Settings.ShowProgress || Main.Settings.ShowMusicTime || Main.Settings.ShowCheckpoint || Main.Settings.ShowBest || Jongyeol != null)
             SetupLocationMain();
         if (Main.Settings.ShowJudgement) UpdateJudgement();
         if (Main.Settings.ShowCombo) UpdateCombo(0, false);
