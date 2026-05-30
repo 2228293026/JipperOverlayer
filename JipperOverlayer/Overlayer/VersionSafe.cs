@@ -35,7 +35,7 @@ public static class VersionSafe
     private static bool DetectApiVersion()
     {
         try { return AccessTools.TypeByName("scrMarginTracker") != null
-                    && typeof(scrController).GetProperty("playerManager", BindingFlags.Public | BindingFlags.Instance) != null; }
+                    && typeof(ADOBase).GetProperty("playerManager") != null; }
         catch { return false; }
     }
 
@@ -64,8 +64,8 @@ public static class VersionSafe
                 t?.CalculatePercentAcc();
         };
 
-        _getPercentAcc = () => scrController.instance?.playerManager?.mistakesManager?.percentAcc ?? 1f;
-        _getPercentXAcc = () => scrController.instance?.playerManager?.mistakesManager?.percentXAcc ?? 1f;
+        _getPercentAcc = () => ADOBase.playerManager?.mistakesManager?.percentAcc ?? 1f;
+        _getPercentXAcc = () => ADOBase.playerManager?.mistakesManager?.percentXAcc ?? 1f;
         _isCoopMode = () => scrPlayerManager.playerCount > 1;
         _getHideWithNoAuto = instance => instance.hideWithNoAuto;
     }
