@@ -22,7 +22,7 @@ public class Settings : UnityModManager.ModSettings
     public int ComboColorMax = 1000, TimeTextTypeValue;
     public bool JongyeolMode, ShowFPS = true, ShowAuthor = true, ShowState = true;
     public bool HideDebugText = true, ShowDeath = true, ShowStart = true, ShowTiming = true;
-    public bool RemoveNotRequireInAuto = true, CheckPseudo = true, YellowCombo = true;
+    public bool RemoveNotRequireInAuto = true, CheckPseudo = true, AllowELCombo = true;
     public Language CurrentLanguage;
     public int FontIndex;
     public string FontName;
@@ -210,7 +210,7 @@ public class Settings : UnityModManager.ModSettings
             HideDebugText = Tog(Tr.Get(Tr.Key.HideDebugText), HideDebugText);
             RemoveNotRequireInAuto = Tog(Tr.Get(Tr.Key.RemoveAutoReq), RemoveNotRequireInAuto);
             CheckPseudo = Tog(Tr.Get(Tr.Key.CheckPseudo), CheckPseudo);
-            YellowCombo = Tog(Tr.Get(Tr.Key.YellowCombo), YellowCombo);
+            AllowELCombo = Tog(Tr.Get(Tr.Key.AllowELCombo), AllowELCombo);
         }
     }
 

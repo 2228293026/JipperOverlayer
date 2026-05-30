@@ -159,7 +159,6 @@ internal static class RdcSetAutoPatch
     {
         if (!ADOBase.isScnGame) return;
         Overlay.Instance?.Jongyeol?.SetupLocation();
-        Overlay.Instance?.Jongyeol?.UpdateState();
     }
 }
 

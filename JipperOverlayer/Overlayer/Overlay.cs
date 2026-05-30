@@ -495,6 +495,7 @@ public class Overlay
         Jongyeol?.CheckPurePerfect();
         Jongyeol?.UpdateState();
         Jongyeol?.UpdateDeath();
+        Jongyeol?.UpdateStart();
     }
 
     public void UpdateProgressBar()
