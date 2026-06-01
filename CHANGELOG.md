@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.8 — 2026.06.02
+
+feat: integrate XPerfect counter into judgement display
+
+Add optional integration with XPerfect mod:
+- Detect XPerfect availability via UnityModManager and cache delegates
+- Replace perfect counts in judgement line with +Perfect / X-Perfect / -Perfect
+- Ensure correct execution order with HarmonyAfter
+- Handle dynamic enable/disable of XPerfect via OnToggle event
+- Add settings toggle "Show XPerfect in Judgement"
+
 ## v1.0.7 — 2026-05-31
 
 - All custom positions changed to pixel offsets (position += offset), not affected by alignment
