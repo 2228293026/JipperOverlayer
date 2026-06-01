@@ -51,6 +51,7 @@ public class Settings : UnityModManager.ModSettings
     public float ComboOffsetX, ComboOffsetY, TimingOffsetX, TimingOffsetY;
     public float AttemptOffsetX, AttemptOffsetY, AttemptCoopOffsetX, AttemptCoopOffsetY, ProgBarOffsetX, ProgBarOffsetY;
     public int ConfigVersion;
+    public bool ShowXPerfectInJudgement;
 
     [JsonIgnore] public ColorConfig Colors;
     [JsonIgnore] public LabelConfig Labels;
@@ -212,6 +213,7 @@ public class Settings : UnityModManager.ModSettings
         {
             ShowJudgement = Tog(Tr.Get(Tr.Key.ShowJudgement), ShowJudgement);
             if (ShowJudgement) JudgementLocationUp = Tog(Tr.Get(Tr.Key.JudgementUp), JudgementLocationUp);
+            if (XPerfectIntegration.IsAvailable && ShowJudgement) ShowXPerfectInJudgement = Tog(Tr.Get(Tr.Key.ShowXPerfectInJudgement), ShowXPerfectInJudgement);
             ShowTimingScale = Tog(Tr.Get(Tr.Key.ShowTimingScale), ShowTimingScale);
             ShowAttempt = Tog(Tr.Get(Tr.Key.ShowAttempt), ShowAttempt);
             ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);

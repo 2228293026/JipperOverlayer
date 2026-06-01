@@ -38,6 +38,7 @@ internal static class ScrMistakesAddHitComboPatch
 }
 
 [HarmonyPatch(typeof(scrMistakesManager), "AddHit")]
+[HarmonyAfter("XPerfect")]
 internal static class ScrMistakesAddHitJudgementPatch
 {
     static void Postfix() => PatchLogic.JudgementPostfix();

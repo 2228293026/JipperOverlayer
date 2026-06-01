@@ -142,6 +142,7 @@ public static class Main
 
     private static void OnUpdate(UnityModManager.ModEntry modEntry, float deltaTime)
     {
+        XPerfectIntegration.EnsureInitialized();
         if (Settings.JongyeolMode)
             try { _overlay?.Jongyeol?.UpdateFPS(deltaTime); }
             catch { }

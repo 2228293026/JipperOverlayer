@@ -1,11 +1,13 @@
+using JipperOverlayer.Overlayer.Jongyeol;
+using JipperOverlayer.Overlayer.Util;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using JipperOverlayer.Overlayer.Util;
-using JipperOverlayer.Overlayer.Jongyeol;
+using UnityModManagerNet;
 using Object = UnityEngine.Object;
 
 namespace JipperOverlayer.Overlayer;
@@ -32,6 +34,7 @@ public class Overlay
     public TextMeshProUGUI BPMText;
     public TextMeshProUGUI[] JudgementTexts = new TextMeshProUGUI[4];
     public TextMeshProUGUI TimingScaleText;
+    public TextMeshProUGUI XPerfectText;
     public ProgressBar ProgressBar;
     public static readonly Color PurePerfectColor = new(1, 0.8549019607843137f, 0);
     public int[] Hit;
@@ -87,6 +90,7 @@ public class Overlay
         InitializeProgressBar();
         InitializeTimingScale();
         InitializeAttempt();
+        InitializeXPerfect();
         Jongyeol?.InitializeExtraTexts();
         OnChangePlayers();
         UpdateSize();
@@ -522,6 +526,19 @@ public class Overlay
     }
 
 
+    private void InitializeXPerfect()
+    {
+        var go = new GameObject("XPerfect");
+        var t = go.AddComponent<RectTransform>();
+        t.SetParent(_mainContainer.transform);
+        t.anchorMin = t.anchorMax = new Vector2(0, 1);
+        t.sizeDelta = new Vector2(456, 30);
+        XPerfectText = go.AddComponent<TextMeshProUGUI>();
+        XPerfectText.font = BundleLoader.FontAsset;
+        XPerfectText.fontSize = 25;
+        ShadowManager.ApplyShadow(XPerfectText);
+    }
+
     public void UpdateAccuracy(int index = -1)
     {
         if (!GameObject.activeSelf) return;
@@ -568,34 +585,6 @@ public class Overlay
         AttemptText.text = count switch { 0 => "", 1 => v0 + v1, _ => $"{v0}\n{v1}" };
     }
 
-    public void UpdateJudgement()
-    {
-        if (!GameObject.activeSelf || Hit == null) return;
-        bool isCoop = VersionSafe.IsCoopMode();
-        int playerCount = VersionSafe.GetPlayerCount();
-        if (isCoop && playerCount > 1)
-        {
-            int count = Math.Min(playerCount, 4);
-            for (int p = 0; p < count; p++)
-            {
-                if (JudgementTexts[p] == null) continue;
-                _textSb.Clear();
-                var h = VersionSafe.GetHitMarginsCountForPlayer(p);
-                string hex = VersionSafe.GetPlayerColorHex(p);
-                _textSb.Append($"<color=#{hex}>P{p + 1}</color> ");
-                AppendJudgementLine(_textSb, h);
-                _textSb.Append($" <color=#{hex}>P{p + 1}</color>");
-                JudgementTexts[p].text = _textSb.ToString();
-            }
-        }
-        else
-        {
-            _textSb.Clear();
-            AppendJudgementLine(_textSb, Hit);
-            JudgementTexts[0].text = _textSb.ToString();
-        }
-    }
-
     private static void AppendJudgementLine(StringBuilder sb, int[] h)
     {
         sb.Append(h[9]);
@@ -615,6 +604,77 @@ public class Overlay
         sb.Append(h[6]);
         sb.Append("</color> ");
         sb.Append(h[8]);
+    }
+
+    public void UpdateJudgement()
+    {
+        if (!GameObject.activeSelf || Hit == null) return;
+        bool isCoop = VersionSafe.IsCoopMode();
+        int playerCount = VersionSafe.GetPlayerCount();
+        bool useXPerfect = Main.Settings.ShowXPerfectInJudgement && XPerfectIntegration.IsAvailable;
+
+        if (isCoop && playerCount > 1)
+        {
+            int count = Math.Min(playerCount, 4);
+            for (int p = 0; p < count; p++)
+            {
+                if (JudgementTexts[p] == null) continue;
+                var h = VersionSafe.GetHitMarginsCountForPlayer(p);
+                string hex = VersionSafe.GetPlayerColorHex(p);
+                string prefix = $"<color=#{hex}>P{p + 1}</color> ";
+                string suffix = $" <color=#{hex}>P{p + 1}</color>";
+                JudgementTexts[p].text = BuildJudgementString(h, useXPerfect, prefix, suffix);
+            }
+        }
+        else
+        {
+            JudgementTexts[0].text = BuildJudgementString(Hit, useXPerfect);
+        }
+    }
+
+    private string BuildJudgementString(int[] h, bool useXPerfect, string prefix = "", string suffix = "")
+    {
+        var sb = new StringBuilder(prefix);
+
+        if (!useXPerfect)
+        {
+            AppendJudgementLine(sb, h);
+        }
+        else
+        {
+            int plus = XPerfectIntegration.PlusPerfect;
+            int x = XPerfectIntegration.XPerfect;
+            int minus = XPerfectIntegration.MinusPerfect;
+
+            // 完全复用原版的嵌套颜色结构，仅替换绿色数字为 + X -
+            sb.Append(h[9]);                          // FailOverload (默认紫色)
+            sb.Append(" <color=red>");
+            sb.Append(h[0]);                          // TooEarly (红)
+            sb.Append(" <color=#FF6F4E>");
+            sb.Append(h[1]);                          // VeryEarly (橙)
+            sb.Append(" <color=#A0FF4E>");
+            sb.Append(h[2]);                          // EarlyPerfect (黄绿) ← 保留
+            sb.Append(" <color=#60FF4E>");
+
+            // 替换掉原 h[3]+h[10] 的绿色数字
+            sb.Append(plus);                          // +Perfect (绿)
+            sb.Append("</color> <color=#4DCCFF>");
+            sb.Append(x);                             // X-Perfect (蓝)
+            sb.Append("</color> <color=#60FF4E>");
+            sb.Append(minus);                         // -Perfect (绿)
+
+            sb.Append("</color> ");                  // 关闭绿色，栈顶回到黄绿
+            sb.Append(h[4]);                          // LatePerfect (黄绿) ← 保留
+            sb.Append("</color> ");                  // 关闭黄绿，栈顶回到橙
+            sb.Append(h[5]);                          // VeryLate (橙)
+            sb.Append("</color> ");                  // 关闭橙，栈顶回到红
+            sb.Append(h[6]);                          // TooLate (红)
+            sb.Append("</color> ");                  // 关闭红，栈顶回到默认紫
+            sb.Append(h[8]);                          // FailMiss (默认紫色)
+        }
+
+        sb.Append(suffix);
+        return sb.ToString();
     }
 
     public void UpdateTime()

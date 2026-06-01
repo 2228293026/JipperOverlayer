@@ -39,6 +39,7 @@ internal static class ScrMarginAddHitComboPatch
 }
 
 [HarmonyPatch(typeof(scrMarginTracker), nameof(scrMarginTracker.AddHit))]
+[HarmonyAfter("XPerfect")]
 internal static class ScrMarginAddHitJudgementPatch
 {
     static void Postfix() => PatchLogic.JudgementPostfix();
