@@ -351,64 +351,23 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.Space(20);
         GUILayout.Label("─── " + Tr.Get(Tr.Key.BpmSection) + " " + Tr.Get(Tr.Key.DisplayOrder) + " ───");
         GUILayout.EndHorizontal();
-
-        var list = new List<int>(BpmLineOrder);
-        bool changed = false;
-
-        for (int i = 0; i < list.Count; i++)
-        {
-            var line = list[i];
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(36);
-
-            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(22), GUILayout.Height(18)))
-            {
-                (list[i], list[i - 1]) = (list[i - 1], list[i]);
-                changed = true;
-            }
-            else GUILayout.Space(22);
-
-            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(22), GUILayout.Height(18)))
-            {
-                (list[i], list[i + 1]) = (list[i + 1], list[i]);
-                changed = true;
-            }
-            else GUILayout.Space(22);
-
-            var name = line switch
-            {
-                0 => Tr.Get(Tr.Key.BpmLineTile),
-                1 => Tr.Get(Tr.Key.BpmLineCur),
-                _ => Tr.Get(Tr.Key.BpmLineKps),
-            };
-            GUILayout.Label($"  {i + 1}. {name}");
-            GUILayout.EndHorizontal();
-        }
-
-        if (GUILayout.Button(Tr.Get(Tr.Key.ResetOrder), GUILayout.ExpandWidth(false)))
-        {
-            list.Clear();
-            list.AddRange([0, 1, 2]);
-            changed = true;
-        }
-
-        if (changed)
-        {
-            BpmLineOrder = list.ToArray();
-            Save(Main.Mod);
-            var o = Overlay.Instance;
-            if (o != null) { o.UpdateBPM(); }
-        }
+        DrawReorderList(BpmLineOrder, id => id switch { 0 => Tr.Get(Tr.Key.BpmLineTile), 1 => Tr.Get(Tr.Key.BpmLineCur), _ => Tr.Get(Tr.Key.BpmLineKps) }, [0, 1, 2],
+            arr => { BpmLineOrder = arr; Save(Main.Mod); Overlay.Instance?.UpdateBPM(); });
     }
 
     void DrawAttemptLineOrder()
     {
-        var list = new List<int>(AttemptLineOrder);
+        DrawReorderList(AttemptLineOrder, id => id == 0 ? Tr.Get(Tr.Key.AttemptLineAttempt) : Tr.Get(Tr.Key.AttemptLineFull), [0, 1],
+            arr => { AttemptLineOrder = arr; Save(Main.Mod); Overlay.Instance?.UpdateAttempts(); });
+    }
+
+    void DrawReorderList(int[] order, Func<int, string> getName, int[] defaultOrder, Action<int[]> onSave)
+    {
+        var list = new List<int>(order);
         bool changed = false;
 
         for (int i = 0; i < list.Count; i++)
         {
-            int line = list[i];
             GUILayout.BeginHorizontal();
             GUILayout.Space(36);
 
@@ -426,24 +385,20 @@ public class Settings : UnityModManager.ModSettings
             }
             else GUILayout.Space(22);
 
-            var name = line == 0 ? Tr.Get(Tr.Key.AttemptLineAttempt) : Tr.Get(Tr.Key.AttemptLineFull);
-            GUILayout.Label($"  {i + 1}. {name}");
+            GUILayout.Label($"  {i + 1}. {getName(list[i])}");
             GUILayout.EndHorizontal();
         }
 
         if (GUILayout.Button(Tr.Get(Tr.Key.ResetOrder), GUILayout.ExpandWidth(false)))
         {
             list.Clear();
-            list.AddRange([0, 1]);
+            list.AddRange(defaultOrder);
             changed = true;
         }
 
         if (changed)
         {
-            AttemptLineOrder = list.ToArray();
-            Save(Main.Mod);
-            var o = Overlay.Instance;
-            if (o != null) { o.UpdateAttempts(); }
+            onSave(list.ToArray());
         }
     }
 
