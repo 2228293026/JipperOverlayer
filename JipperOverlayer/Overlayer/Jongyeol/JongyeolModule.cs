@@ -90,10 +90,12 @@ public class JongyeolModule
         if (!s.ShowFPS || !_overlay.GameObject.activeSelf || (_fpsTime += deltaTime) < s.FPSRefreshRate) return;
         _fpsTime %= s.FPSRefreshRate;
         Overlay._textSb.Clear();
+        Overlay._textSb.Append("<color=white>");
         Overlay._textSb.Append(s.Labels.FPS);
-        Overlay._textSb.Append(" | ");
+        Overlay._textSb.Append(" |</color> ");
         Overlay._textSb.Append((1f / deltaTime).ToString($"F{DecimalPrecision}"));
         FPSText.text = Overlay._textSb.ToString();
+        FPSText.color = s.Colors.JFps;
     }
 
     public void UpdateAuthor()
@@ -102,30 +104,40 @@ public class JongyeolModule
         if (!s.ShowAuthor || !_overlay.GameObject.activeSelf) return;
         var ld = scnGame.instance?.levelData;
         string author = ld?.GetType().GetProperty("author")?.GetValue(ld) as string ?? "";
-        AuthorText.text = $"{s.Labels.Author} | {author}";
+        AuthorText.text = $"<color=white>{s.Labels.Author} |</color> {author}";
+    }
+
+    public void UpdateColors()
+    {
+        if (!_overlay.GameObject.activeSelf) return;
+        var c = Main.Settings.Colors;
+        if (FPSText) FPSText.color = c.JFps;
+        if (AuthorText) AuthorText.color = c.JAuthor;
+        if (StartText) StartText.color = c.JStart;
     }
 
     public void UpdateState()
     {
         if (!Main.Settings.ShowState || !_overlay.GameObject.activeSelf) return;
         string s;
+        var sColors = Main.Settings.Colors;
         var labels = Main.Settings.Labels;
-        StateText.color = Color.white;
+        StateText.color = sColors.JStateWaiting;
         if (scrController.instance.currentSeqID == _overlay.StartTile) s = labels.StateWaiting;
         else if (scrController.instance.currFloor?.nextfloor is { auto: true })
         {
             s = labels.StateAutoTile;
-            StateText.color = new Color(1, 0.5f, 0);
+            StateText.color = sColors.JStateAutoTile;
         }
-        else if (RDC.auto) { s = labels.StateAuto; StateText.color = new Color(0.1058824f, 1, 0); }
-        else if (_purePerfect) { s = labels.StatePerfectPlay; StateText.color = Overlay.PurePerfectColor; }
+        else if (RDC.auto) { s = labels.StateAuto; StateText.color = sColors.JStateAuto; }
+        else if (_purePerfect) { s = labels.StatePerfectPlay; StateText.color = sColors.JStatePerfectPlay; }
         else
         {
             int[] hits = _overlay.Hit;
-            if (_deathCount != 0) s = labels.StateComplete;
-            else if (hits[0] != 0) s = labels.StateClear;
-            else if (hits[1] != 0 || hits[5] != 0) s = labels.StateNoMiss;
-            else s = labels.StatePerfectionist;
+            if (_deathCount != 0) { s = labels.StateComplete; StateText.color = sColors.JStateComplete; }
+            else if (hits[0] != 0) { s = labels.StateClear; StateText.color = sColors.JStateClear; }
+            else if (hits[1] != 0 || hits[5] != 0) { s = labels.StateNoMiss; StateText.color = sColors.JStateNoMiss; }
+            else { s = labels.StatePerfectionist; StateText.color = sColors.JStatePerfectionist; }
         }
         if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count) s += labels.StateSuffix;
         if (_overlay.StartTile != 0) s += labels.StateMidStart;
@@ -154,14 +166,15 @@ public class JongyeolModule
         }
         float max = (scrController.instance.currentSeqID - _overlay.StartTile) * 0.05f;
         if (max < 0.001f) return;
-        DeathText.color = GetColor(1 - Math.Min(_deathCount, max) / max);
+        DeathText.color = s.Colors.JDeath.GetColor(1 - Math.Min(_deathCount, max) / max);
     }
 
     public void UpdateStart()
     {
         var s = Main.Settings;
         if (!s.ShowStart || !_overlay.GameObject.activeSelf || _overlay.StartTile != scrController.instance.currentSeqID) return;
-        StartText.text = $"{s.Labels.Start} | {_overlay.StartTile} ({Math.Round(_overlay.OverlayTextManager.GetProgress() * 100, DecimalPrecision)}%)";
+        StartText.text = $"<color=white>{s.Labels.Start} |</color> {_overlay.StartTile} ({Math.Round(_overlay.OverlayTextManager.GetProgress() * 100, DecimalPrecision)}%)";
+        StartText.color = s.Colors.JStart;
     }
 
     public void UpdateTiming(float timing)
@@ -176,7 +189,7 @@ public class JongyeolModule
         _timings.Add(timing);
         _timingsSum += timing;
         TimingText.text = $"<color=white>{s.Labels.Timing} |</color> {Math.Round(timing, DecimalPrecision)} ({Math.Round(_timingsSum / _timings.Count, DecimalPrecision)})";
-        TimingText.color = GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
+        TimingText.color = s.Colors.JTiming.GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
     }
 
     // ===== Overridden Update Methods =====
@@ -244,17 +257,10 @@ public class JongyeolModule
 
     public Color UpdateComboColor(int combo)
     {
-        if (_purePerfect) return Overlay.PurePerfectColor;
+        if (_purePerfect) return Main.Settings.Colors.JStatePerfectPlay;
         float value = (float)combo / (scrController.instance.currentSeqID - _overlay.StartTile + _overlay.Hit[0] + _overlay.Hit[6] + 1) * 2;
         if (value > 1) value = 1;
-        return GetColor(value, 0.2f, false);
-    }
-
-    public Color GetColor(float value, float middle = 0.5f, bool ppColor = true)
-    {
-        return value < middle ? new Color(1 - value / middle * 0.0117647f, value / middle, value / middle * 0.3019608f) :
-               value < 1f || !ppColor ? new Color(0.9882353f - (value - middle) / (1 - middle) * 0.6156863f, 1, 0.3019608f + (value - middle) / (1 - middle) * 0.01f) :
-               Overlay.PurePerfectColor;
+        return Main.Settings.Colors.JCombo.GetColor(value);
     }
 
     public void OnNonPerfectHit()

@@ -195,7 +195,8 @@ public class Settings : UnityModManager.ModSettings
             {
                 EnableAutoCombo = Tog(Tr.Get(Tr.Key.EnableAutoCombo), EnableAutoCombo);
                 ComboColorMax = (int)Slide(Tr.Get(Tr.Key.ComboColorMax), ComboColorMax, 1, 5000, () => { });
-                Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.ComboColor));
+                Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.ComboColor),
+                    () => { Colors.Combo = new([(0f, new Color(0.8745f, 0.7098f, 1f)), (1f, new Color(0.7176f, 0.3490f, 1f))]); Colors.Save(Main.Mod); });
             }
         });
 
@@ -205,7 +206,8 @@ public class Settings : UnityModManager.ModSettings
             if (ShowBPM)
             {
                 BpmColorMax = Slide(Tr.Get(Tr.Key.BpmColorMax), BpmColorMax, 100, 20000, () => { });
-                Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor));
+                Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor),
+                    () => { Colors.Bpm = new([(0f, Color.white), (1f, Color.magenta)]); Colors.Save(Main.Mod); });
             }
         });
 
@@ -292,12 +294,43 @@ public class Settings : UnityModManager.ModSettings
                 GUILayout.Space(36);
                 FPSRefreshRate = Slide(Tr.Get(Tr.Key.FPSRefreshRate), FPSRefreshRate, 0.05f, 1f, () => { });
                 GUILayout.EndHorizontal();
+                DrawJColorFoldout("jFps", Tr.Get(Tr.Key.FpsColor), Colors.JFps,
+                    () => { Colors.JFps = new(Color.white); Colors.Save(Main.Mod); });
             }
             ShowAuthor = Tog(Tr.Get(Tr.Key.ShowAuthor), ShowAuthor);
+            if (ShowAuthor) DrawJColorFoldout("jAuthor", Tr.Get(Tr.Key.AuthorColor), Colors.JAuthor,
+                () => { Colors.JAuthor = new(Color.white); Colors.Save(Main.Mod); });
             ShowState = Tog(Tr.Get(Tr.Key.ShowState), ShowState);
+            if (ShowState)
+            {
+                DrawJColorFoldout("jStWaiting", Tr.Get(Tr.Key.StateDefaultColor), Colors.JStateWaiting,
+                    () => { Colors.JStateWaiting = new(Color.white); Colors.Save(Main.Mod); });
+                DrawJColorFoldout("jStAutoTile", Tr.Get(Tr.Key.StateAutoTileColor), Colors.JStateAutoTile,
+                    () => { Colors.JStateAutoTile = new(new Color(1, 0.5f, 0)); Colors.Save(Main.Mod); });
+                DrawJColorFoldout("jStAuto", Tr.Get(Tr.Key.StateAutoColor), Colors.JStateAuto,
+                    () => { Colors.JStateAuto = new(new Color(0.1058824f, 1f, 0)); Colors.Save(Main.Mod); });
+                DrawJColorFoldout("jStPerfect", Tr.Get(Tr.Key.StatePerfectColor), Colors.JStatePerfectPlay,
+                    () => { Colors.JStatePerfectPlay = new(new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
+                DrawJColorFoldout("jStComplete", Tr.Get(Tr.Key.StateCompleteColor), Colors.JStateComplete,
+                    () => { Colors.JStateComplete = new(Color.white); Colors.Save(Main.Mod); });
+                DrawJColorFoldout("jStClear", Tr.Get(Tr.Key.StateClearColor), Colors.JStateClear,
+                    () => { Colors.JStateClear = new(Color.white); Colors.Save(Main.Mod); });
+                DrawJColorFoldout("jStNoMiss", Tr.Get(Tr.Key.StateNoMissColor), Colors.JStateNoMiss,
+                    () => { Colors.JStateNoMiss = new(Color.white); Colors.Save(Main.Mod); });
+                DrawJColorFoldout("jStPerf", Tr.Get(Tr.Key.StatePerfectionistColor), Colors.JStatePerfectionist,
+                    () => { Colors.JStatePerfectionist = new(Color.white); Colors.Save(Main.Mod); });
+            }
             ShowDeath = Tog(Tr.Get(Tr.Key.ShowDeath), ShowDeath);
+            if (ShowDeath) Colors.JDeath.SettingGUI(ColorChanged(() => Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.DeathColor),
+                () => { Colors.JDeath = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(Main.Mod); });
             ShowStart = Tog(Tr.Get(Tr.Key.ShowStart), ShowStart);
+            if (ShowStart) DrawJColorFoldout("jStart", Tr.Get(Tr.Key.StartColor), Colors.JStart,
+                () => { Colors.JStart = new(Color.white); Colors.Save(Main.Mod); });
             ShowTiming = Tog(Tr.Get(Tr.Key.ShowTiming), ShowTiming);
+            if (ShowTiming) Colors.JTiming.SettingGUI(ColorChanged(() => Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.TimingColor),
+                () => { Colors.JTiming = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(Main.Mod); });
+            Colors.JCombo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.JComboColor),
+                () => { Colors.JCombo = new([(0f, Color.red), (0.2f, new Color(0.9882f, 1, 0.302f)), (1f, new Color(0.3725f, 1, 0.3119f))]); Colors.Save(Main.Mod); });
             GUILayout.BeginHorizontal();
             GUILayout.Label(Tr.Get(Tr.Key.DecimalPrecision), GUILayout.Width(120));
             JongyeolDecimalPrecision = (int)GUILayout.HorizontalSlider(JongyeolDecimalPrecision, 0, 5);
@@ -410,6 +443,11 @@ public class Settings : UnityModManager.ModSettings
     }
 
     static readonly Dictionary<string, string> _slideFields = new();
+    static readonly Dictionary<string, bool> _jColorFold = new();
+    private static readonly GUIStyle _foldBtn = new()
+    {
+        fixedWidth = 18f, normal = new GUIStyleState { textColor = Color.white }, fontSize = 14, margin = new RectOffset(4, 2, 4, 4)
+    };
     private static bool _generalFold, _displayFold, _fontFold, _alignFold;
     private static string _expandedAlign, _expandedDisplaySub, _expandedPos;
     private static bool _labelsFold;
@@ -501,6 +539,27 @@ public class Settings : UnityModManager.ModSettings
     }
 
     static Action ColorChanged(Action updateOverlay) => () => updateOverlay?.Invoke();
+
+    static bool DrawJColorFoldout(string key, string label, ColorCache cache, Action onReset = null)
+    {
+        bool expanded = _jColorFold.TryGetValue(key, out var v) && v;
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        expanded = GUILayout.Toggle(expanded, expanded ? "▼" : "▷", _foldBtn, GUILayout.Width(18));
+        if (GUILayout.Button(label, GUI.skin.label)) expanded = !expanded;
+        GUILayout.FlexibleSpace();
+        if (onReset != null && GUILayout.Button("R", GUILayout.MinWidth(20))) { onReset(); }
+        GUILayout.EndHorizontal();
+        _jColorFold[key] = expanded;
+        if (!expanded) return false;
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(32);
+        GUILayout.BeginVertical();
+        cache.SettingGUI("", cache);
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+        return true;
+    }
 
     static readonly int[] AlignValues = [257, 258, 260, 513, 514, 516, 1025, 1026, 1028];
     static readonly string[] AlignLabels = ["TL", "T", "TR", "L", "C", "R", "BL", "B", "BR"];

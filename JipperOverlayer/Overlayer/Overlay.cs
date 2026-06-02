@@ -544,6 +544,7 @@ public class Overlay
         Jongyeol?.UpdateState();
         Jongyeol?.UpdateDeath();
         Jongyeol?.UpdateStart();
+        Jongyeol?.UpdateColors();
     }
 
     public void UpdateProgressBar()

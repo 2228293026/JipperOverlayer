@@ -31,6 +31,9 @@ public static class Tr
         PosMain, PosBPM, PosJudge,
         PosP1, PosP2, PosP3, PosP4,
         PosCombo, PosTiming, PosAttempt, PosProgBar,
+        FpsColor, AuthorColor, StateDefaultColor, StateAutoTileColor, StateAutoColor, StatePerfectColor,
+        StateCompleteColor, StateClearColor, StateNoMissColor, StatePerfectionistColor,
+        DeathColor, StartColor, TimingColor, JComboColor,
         Count
     }
 
@@ -58,7 +61,10 @@ public static class Tr
             "Progress Bar && Best", "Combo", "BPM", "Judgement && Other",
             "Display Options", "Behavior Options", "FPS Refresh Rate", "Decimal Precision",
             "Coop",
-            "Main", "BPM", "Judge", "P1", "P2", "P3", "P4", "Combo", "Timing", "Attempt", "ProgBar" ],
+            "Main", "BPM", "Judge", "P1", "P2", "P3", "P4", "Combo", "Timing", "Attempt", "ProgBar",
+            "FPS Color", "Author Color", "State Default Color", "State Auto-tile Color", "State Auto Color", "State Perfect Color",
+            "State Complete Color", "State Clear Color", "State No Miss Color", "State Perfectionist Color",
+            "Death Color", "Start Color", "Timing Color", "Combo Color" ],
 
         /* 1  Korean */ [ "크기", "진행도 표시", "정확도 표시", "X정확도 표시",
             "음악 시간 표시", "맵 시간 표시", "음악 없을 때 맵 시간",
@@ -82,7 +88,10 @@ public static class Tr
             "진행 바 및 최고 기록", "콤보", "BPM", "판정 및 기타",
             "표시 옵션", "동작 옵션", "FPS 새로고침 속도", "소수점 자릿수",
             "협동",
-            "메인", "BPM", "판정", "P1", "P2", "P3", "P4", "콤보", "타이밍", "시도", "프로그레스바" ],
+            "메인", "BPM", "판정", "P1", "P2", "P3", "P4", "콤보", "타이밍", "시도", "프로그레스바",
+            "FPS 색상", "제작자 색상", "상태 기본 색상", "상태 자동 타일 색상", "상태 자동 색상", "상태 퍼펙트 색상",
+            "상태 완주 색상", "상태 클리어 색상", "상태 노미스 색상", "상태 완벽주의 색상",
+            "사망 색상", "시작 색상", "타이밍 색상", "콤보 색상" ],
 
         /* 2  Chinese */ [ "大小", "显示进度", "显示准确率", "显示X准确率",
             "显示音乐时间", "显示地图时间", "无音乐时显示地图时间",
@@ -106,7 +115,10 @@ public static class Tr
             "进度条与最佳", "连击", "BPM", "判定与其他",
             "显示选项", "行为选项", "FPS刷新率", "小数位数",
             "合作",
-            "主区域", "BPM", "判定", "P1", "P2", "P3", "P4", "连击", "判定区间", "尝试", "进度条" ],
+            "主区域", "BPM", "判定", "P1", "P2", "P3", "P4", "连击", "判定区间", "尝试", "进度条",
+            "FPS颜色", "作者颜色", "状态默认颜色", "状态自动方块颜色", "状态自动颜色", "状态完美颜色",
+            "状态完成颜色", "状态通关颜色", "状态无Miss颜色", "状态完美主义颜色",
+            "死亡颜色", "开始颜色", "时机颜色", "连击颜色" ],
     ];
 
     public static string Get(Key key)

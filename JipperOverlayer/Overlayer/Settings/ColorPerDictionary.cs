@@ -35,10 +35,10 @@ public class ColorPerDictionary {
         List.Sort((a, b) => a.Progress.CompareTo(b.Progress));
     }
 
-    public Color GetColor(float key) {
+    public Color GetColor(float key, bool noCache = false) {
         if (key < 0) key = 0;
         if (key > 1) key = 1;
-        if (_lastKey == key && _lastColor.HasValue) return _lastColor.Value;
+        if (!noCache && _lastKey == key && _lastColor.HasValue) return _lastColor.Value;
         Color result;
         if (PerfectColor != null && key == 1) result = PerfectColor;
         else if (List.Count == 0) result = PerfectColor ?? Color.white;
@@ -53,8 +53,10 @@ public class ColorPerDictionary {
                 result = Color.Lerp(List[index - 1], List[index], (key - s) / (e - s));
             }
         }
-        _lastKey = key;
-        _lastColor = result;
+        if (!noCache) {
+            _lastKey = key;
+            _lastColor = result;
+        }
         return result;
     }
 
@@ -78,7 +80,7 @@ public class ColorPerDictionary {
         Expanded = GUILayout.Toggle(Expanded, Expanded ? "▼" : "▷", _foldoutStyle);
         if (GUILayout.Button(text, GUI.skin.label)) Expanded = !Expanded;
         GUILayout.FlexibleSpace();
-        if (onReset != null && GUILayout.Button("R", GUILayout.Width(20))) { onReset(); onChanged?.Invoke(); }
+        if (onReset != null && GUILayout.Button("R", GUILayout.MinWidth(20))) { onReset(); onChanged?.Invoke(); }
         GUILayout.EndHorizontal();
         if (!Expanded) return false;
 
