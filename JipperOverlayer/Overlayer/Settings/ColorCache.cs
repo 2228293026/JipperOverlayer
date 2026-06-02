@@ -3,7 +3,7 @@ using System.Text;
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace JipperOverlayer.Overlayer.Settings;
+namespace JipperOverlayer.Overlayer;
 
 public class ColorCache {
     public float r;

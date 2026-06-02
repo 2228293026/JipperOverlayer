@@ -134,6 +134,7 @@
     <Compile Include="Overlayer\Settings\ColorCache.cs" />
     <Compile Include="Overlayer\Settings\ProgressColorCache.cs" />
     <Compile Include="Overlayer\Settings\ColorPerDictionary.cs" />
+    <Compile Include="Overlayer\Settings\DisplayElement.cs" />
     <Compile Include="Overlayer\Features\PatchLogic.cs" />
     <Compile Include="Overlayer\Features\GameLifecyclePatches.cs" />
     <Compile Include="Overlayer\Features\V141Patches.cs" />

@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace JipperOverlayer.Overlayer.Settings;
+namespace JipperOverlayer.Overlayer;
 
 public class ProgressColorCache : ColorCache {
     public float Progress;

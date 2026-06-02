@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityModManagerNet;
 
-namespace JipperOverlayer.Overlayer.Settings;
+namespace JipperOverlayer.Overlayer;
 
 public class ColorConfig
 {

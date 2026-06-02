@@ -4,7 +4,7 @@ using JipperOverlayer.Overlayer.Localization;
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace JipperOverlayer.Overlayer.Settings;
+namespace JipperOverlayer.Overlayer;
 
 public class ColorPerDictionary {
     public ColorCache PerfectColor;

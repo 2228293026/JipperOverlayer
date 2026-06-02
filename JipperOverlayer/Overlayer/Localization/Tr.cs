@@ -34,6 +34,12 @@ public static class Tr
         FpsColor, AuthorColor, StateDefaultColor, StateAutoTileColor, StateAutoColor, StatePerfectColor,
         StateCompleteColor, StateClearColor, StateNoMissColor, StatePerfectionistColor,
         DeathColor, StartColor, TimingColor, JComboColor,
+        DisplayOrder, ResetOrder,
+        ElemProgress, ElemAccuracy, ElemXAccuracy, ElemMusicTime, ElemMapTime,
+        ElemCheckpoint, ElemBest, ElemBPM, ElemAttempt, ElemTimingScale,
+        ElemFPS, ElemAuthor, ElemState, ElemDeath, ElemStart, ElemTiming,
+        BpmLineTile, BpmLineCur, BpmLineKps,
+        AttemptLineAttempt, AttemptLineFull,
         Count
     }
 
@@ -64,7 +70,13 @@ public static class Tr
             "Main", "BPM", "Judge", "P1", "P2", "P3", "P4", "Combo", "Timing", "Attempt", "ProgBar",
             "FPS Color", "Author Color", "State Default Color", "State Auto-tile Color", "State Auto Color", "State Perfect Color",
             "State Complete Color", "State Clear Color", "State No Miss Color", "State Perfectionist Color",
-            "Death Color", "Start Color", "Timing Color", "Combo Color" ],
+            "Death Color", "Start Color", "Timing Color", "Combo Color",
+            "Display Order", "Reset Order",
+            "Progress", "Accuracy", "XAccuracy", "Music Time", "Map Time",
+            "Checkpoint", "Best", "BPM", "Attempt", "Timing Scale",
+            "FPS", "Author", "State", "Death", "Start", "Timing",
+            "Tile BPM", "Cur BPM", "KPS",
+            "Attempt", "Full Attempt" ],
 
         /* 1  Korean */ [ "크기", "진행도 표시", "정확도 표시", "X정확도 표시",
             "음악 시간 표시", "맵 시간 표시", "음악 없을 때 맵 시간",
@@ -91,7 +103,13 @@ public static class Tr
             "메인", "BPM", "판정", "P1", "P2", "P3", "P4", "콤보", "타이밍", "시도", "프로그레스바",
             "FPS 색상", "제작자 색상", "상태 기본 색상", "상태 자동 타일 색상", "상태 자동 색상", "상태 퍼펙트 색상",
             "상태 완주 색상", "상태 클리어 색상", "상태 노미스 색상", "상태 완벽주의 색상",
-            "사망 색상", "시작 색상", "타이밍 색상", "콤보 색상" ],
+            "사망 색상", "시작 색상", "타이밍 색상", "콤보 색상",
+            "표시 순서", "순서 초기화",
+            "진행도", "정확도", "X정확도", "음악 시간", "맵 시간",
+            "체크포인트", "최고 기록", "BPM", "시도", "타이밍 스케일",
+            "FPS", "제작자", "상태", "사망", "시작", "타이밍",
+            "타일 BPM", "현재 BPM", "KPS",
+            "시도 횟수", "전체 시도" ],
 
         /* 2  Chinese */ [ "大小", "显示进度", "显示准确率", "显示X准确率",
             "显示音乐时间", "显示地图时间", "无音乐时显示地图时间",
@@ -118,7 +136,13 @@ public static class Tr
             "主区域", "BPM", "判定", "P1", "P2", "P3", "P4", "连击", "判定区间", "尝试", "进度条",
             "FPS颜色", "作者颜色", "状态默认颜色", "状态自动方块颜色", "状态自动颜色", "状态完美颜色",
             "状态完成颜色", "状态通关颜色", "状态无Miss颜色", "状态完美主义颜色",
-            "死亡颜色", "开始颜色", "时机颜色", "连击颜色" ],
+            "死亡颜色", "开始颜色", "时机颜色", "连击颜色",
+            "显示顺序", "重置顺序",
+            "进度", "准确率", "X准确率", "音乐时间", "地图时间",
+            "检查点", "最佳", "BPM", "尝试", "判定区间",
+            "FPS", "作者", "状态", "死亡", "开始", "时机",
+            "Tile BPM", "当前 BPM", "KPS",
+            "尝试", "总尝试" ],
     ];
 
     public static string Get(Key key)

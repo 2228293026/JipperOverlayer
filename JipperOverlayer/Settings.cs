@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityModManagerNet;
 using JipperOverlayer.Overlayer;
 using JipperOverlayer.Overlayer.Features;
 using JipperOverlayer.Overlayer.Localization;
-using JipperOverlayer.Overlayer.Settings;
 
 namespace JipperOverlayer;
 
@@ -52,6 +52,10 @@ public class Settings : UnityModManager.ModSettings
     public float AttemptOffsetX, AttemptOffsetY, AttemptCoopOffsetX, AttemptCoopOffsetY, ProgBarOffsetX, ProgBarOffsetY;
     public int ConfigVersion;
     public bool ShowXPerfectInJudgement;
+    public int[] GeneralDisplayOrder = [0, 1, 2, 3, 4, 5, 6];
+    public int[] JongyeolDisplayOrder = [10, 11, 0, 1, 2, 3, 4, 5, 6, 12, 13, 14, 15];
+    public int[] BpmLineOrder = [0, 1, 2];
+    public int[] AttemptLineOrder = [0, 1];
 
     [JsonIgnore] public ColorConfig Colors;
     [JsonIgnore] public LabelConfig Labels;
@@ -208,6 +212,7 @@ public class Settings : UnityModManager.ModSettings
                 BpmColorMax = Slide(Tr.Get(Tr.Key.BpmColorMax), BpmColorMax, 100, 20000, () => { });
                 Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor),
                     () => { Colors.Bpm = new([(0f, Color.white), (1f, Color.magenta)]); Colors.Save(Main.Mod); });
+                DrawBpmLineOrder();
             }
         });
 
@@ -219,9 +224,11 @@ public class Settings : UnityModManager.ModSettings
             ShowTimingScale = Tog(Tr.Get(Tr.Key.ShowTimingScale), ShowTimingScale);
             ShowAttempt = Tog(Tr.Get(Tr.Key.ShowAttempt), ShowAttempt);
             ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);
+            DrawAttemptLineOrder();
         });
 
         GUILayout.Space(5);
+        DrawOrderSection("generalOrder", GeneralDisplayOrder, false);
     }
 
     void DrawDisplaySub(string key, string label, Action content)
@@ -241,6 +248,202 @@ public class Settings : UnityModManager.ModSettings
             content();
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
+        }
+    }
+
+    void DrawOrderSection(string key, int[] order, bool isJongyeol)
+    {
+        bool expanded = _expandedOrder == key;
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        if (GUILayout.Button($"{(expanded ? "▼" : "▷")} {Tr.Get(Tr.Key.DisplayOrder)}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _expandedOrder = expanded ? null : key;
+        GUILayout.EndHorizontal();
+        if (!expanded) return;
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(36);
+        GUILayout.BeginVertical();
+
+        var list = new List<int>(order);
+        bool changed = false;
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            var elem = (DisplayElement)list[i];
+
+            GUILayout.BeginHorizontal();
+            // ▲
+            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(22), GUILayout.Height(18)))
+            {
+                (list[i], list[i - 1]) = (list[i - 1], list[i]);
+                changed = true;
+            }
+            else GUILayout.Space(22);
+
+            // ▼
+            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(22), GUILayout.Height(18)))
+            {
+                (list[i], list[i + 1]) = (list[i + 1], list[i]);
+                changed = true;
+            }
+            else GUILayout.Space(22);
+
+            GUILayout.Label($"  {i + 1}. {GetElementName(elem)}");
+            GUILayout.EndHorizontal();
+        }
+
+        if (GUILayout.Button(Tr.Get(Tr.Key.ResetOrder), GUILayout.ExpandWidth(false)))
+        {
+            list.Clear();
+            list.AddRange(isJongyeol ? GetDefaultJongyeolOrder() : GetDefaultGeneralOrder());
+            changed = true;
+        }
+
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+
+        if (changed)
+        {
+            var newArr = list.ToArray();
+            if (isJongyeol) JongyeolDisplayOrder = newArr;
+            else GeneralDisplayOrder = newArr;
+            Save(Main.Mod);
+            var o = Overlay.Instance;
+            if (o != null) { o.SetupLocationMain(); o.RefreshVisibility(); }
+        }
+    }
+
+    static int[] GetDefaultGeneralOrder() => [0, 1, 2, 3, 4, 5, 6];
+    static int[] GetDefaultJongyeolOrder() => [10, 11, 0, 1, 2, 3, 4, 5, 6, 12, 13, 14, 15];
+
+    static string GetElementName(DisplayElement elem) => elem switch
+    {
+        DisplayElement.Progress => Tr.Get(Tr.Key.ElemProgress),
+        DisplayElement.Accuracy => Tr.Get(Tr.Key.ElemAccuracy),
+        DisplayElement.XAccuracy => Tr.Get(Tr.Key.ElemXAccuracy),
+        DisplayElement.MusicTime => Tr.Get(Tr.Key.ElemMusicTime),
+        DisplayElement.MapTime => Tr.Get(Tr.Key.ElemMapTime),
+        DisplayElement.Checkpoint => Tr.Get(Tr.Key.ElemCheckpoint),
+        DisplayElement.Best => Tr.Get(Tr.Key.ElemBest),
+        DisplayElement.BPM => Tr.Get(Tr.Key.ElemBPM),
+        DisplayElement.Attempt => Tr.Get(Tr.Key.ElemAttempt),
+        DisplayElement.TimingScale => Tr.Get(Tr.Key.ElemTimingScale),
+        DisplayElement.FPS => Tr.Get(Tr.Key.ElemFPS),
+        DisplayElement.Author => Tr.Get(Tr.Key.ElemAuthor),
+        DisplayElement.State => Tr.Get(Tr.Key.ElemState),
+        DisplayElement.Death => Tr.Get(Tr.Key.ElemDeath),
+        DisplayElement.Start => Tr.Get(Tr.Key.ElemStart),
+        DisplayElement.Timing => Tr.Get(Tr.Key.ElemTiming),
+        _ => elem.ToString()
+    };
+
+    static bool IsValidJongyeolElement(int id) => id switch
+    {
+        >= 10 and <= 15 => true,  // FPS..Timing
+        >= 0 and <= 6 => true,    // Progress..Best
+        _ => false,
+    };
+
+    void DrawBpmLineOrder()
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(20);
+        GUILayout.Label("─── " + Tr.Get(Tr.Key.BpmSection) + " " + Tr.Get(Tr.Key.DisplayOrder) + " ───");
+        GUILayout.EndHorizontal();
+
+        var list = new List<int>(BpmLineOrder);
+        bool changed = false;
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            var line = list[i];
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(36);
+
+            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(22), GUILayout.Height(18)))
+            {
+                (list[i], list[i - 1]) = (list[i - 1], list[i]);
+                changed = true;
+            }
+            else GUILayout.Space(22);
+
+            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(22), GUILayout.Height(18)))
+            {
+                (list[i], list[i + 1]) = (list[i + 1], list[i]);
+                changed = true;
+            }
+            else GUILayout.Space(22);
+
+            var name = line switch
+            {
+                0 => Tr.Get(Tr.Key.BpmLineTile),
+                1 => Tr.Get(Tr.Key.BpmLineCur),
+                _ => Tr.Get(Tr.Key.BpmLineKps),
+            };
+            GUILayout.Label($"  {i + 1}. {name}");
+            GUILayout.EndHorizontal();
+        }
+
+        if (GUILayout.Button(Tr.Get(Tr.Key.ResetOrder), GUILayout.ExpandWidth(false)))
+        {
+            list.Clear();
+            list.AddRange([0, 1, 2]);
+            changed = true;
+        }
+
+        if (changed)
+        {
+            BpmLineOrder = list.ToArray();
+            Save(Main.Mod);
+            var o = Overlay.Instance;
+            if (o != null) { o.UpdateBPM(); }
+        }
+    }
+
+    void DrawAttemptLineOrder()
+    {
+        var list = new List<int>(AttemptLineOrder);
+        bool changed = false;
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            int line = list[i];
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(36);
+
+            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(22), GUILayout.Height(18)))
+            {
+                (list[i], list[i - 1]) = (list[i - 1], list[i]);
+                changed = true;
+            }
+            else GUILayout.Space(22);
+
+            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(22), GUILayout.Height(18)))
+            {
+                (list[i], list[i + 1]) = (list[i + 1], list[i]);
+                changed = true;
+            }
+            else GUILayout.Space(22);
+
+            var name = line == 0 ? Tr.Get(Tr.Key.AttemptLineAttempt) : Tr.Get(Tr.Key.AttemptLineFull);
+            GUILayout.Label($"  {i + 1}. {name}");
+            GUILayout.EndHorizontal();
+        }
+
+        if (GUILayout.Button(Tr.Get(Tr.Key.ResetOrder), GUILayout.ExpandWidth(false)))
+        {
+            list.Clear();
+            list.AddRange([0, 1]);
+            changed = true;
+        }
+
+        if (changed)
+        {
+            AttemptLineOrder = list.ToArray();
+            Save(Main.Mod);
+            var o = Overlay.Instance;
+            if (o != null) { o.UpdateAttempts(); }
         }
     }
 
@@ -331,6 +534,7 @@ public class Settings : UnityModManager.ModSettings
                 () => { Colors.JTiming = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(Main.Mod); });
             Colors.JCombo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.JComboColor),
                 () => { Colors.JCombo = new([(0f, Color.red), (0.2f, new Color(0.9882f, 1, 0.302f)), (1f, new Color(0.3725f, 1, 0.3119f))]); Colors.Save(Main.Mod); });
+            DrawBpmLineOrder();
             GUILayout.BeginHorizontal();
             GUILayout.Label(Tr.Get(Tr.Key.DecimalPrecision), GUILayout.Width(120));
             JongyeolDecimalPrecision = (int)GUILayout.HorizontalSlider(JongyeolDecimalPrecision, 0, 5);
@@ -350,6 +554,8 @@ public class Settings : UnityModManager.ModSettings
             if (o?.OverlayTextManager is OverlayTextManagerNormal n) n.DecimalPrecision = JongyeolDecimalPrecision;
             else if (o?.OverlayTextManager is OverlayTextManagerCoop c) c.DecimalPrecision = JongyeolDecimalPrecision;
             if (o?.Jongyeol != null) o.Jongyeol.DecimalPrecision = JongyeolDecimalPrecision;
+            GUILayout.Space(3);
+            DrawOrderSection("jOrder", JongyeolDisplayOrder, true);
         });
 
         DrawDisplaySub("jBehavior", Tr.Get(Tr.Key.BehaviorOptions), () =>
@@ -450,6 +656,7 @@ public class Settings : UnityModManager.ModSettings
     };
     private static bool _generalFold, _displayFold, _fontFold, _alignFold;
     private static string _expandedAlign, _expandedDisplaySub, _expandedPos;
+    private static string _expandedOrder;
     private static bool _labelsFold;
 
     void DrawLabelsSection()
@@ -625,6 +832,18 @@ public class Settings : UnityModManager.ModSettings
         }
         s.Colors = ColorConfig.Load(modEntry);
         s.Labels = LabelConfig.Load(modEntry);
+        if (s.GeneralDisplayOrder == null || s.GeneralDisplayOrder.Length == 0)
+            s.GeneralDisplayOrder = GetDefaultGeneralOrder();
+        else
+            s.GeneralDisplayOrder = s.GeneralDisplayOrder.Where(x => x >= 0 && x <= 6).ToArray();
+        if (s.JongyeolDisplayOrder == null || s.JongyeolDisplayOrder.Length == 0)
+            s.JongyeolDisplayOrder = GetDefaultJongyeolOrder();
+        else
+            s.JongyeolDisplayOrder = s.JongyeolDisplayOrder.Where(x => IsValidJongyeolElement(x)).ToArray();
+        if (s.BpmLineOrder == null || s.BpmLineOrder.Length == 0)
+            s.BpmLineOrder = [0, 1, 2];
+        if (s.AttemptLineOrder == null || s.AttemptLineOrder.Length == 0)
+            s.AttemptLineOrder = [0, 1];
         return s;
     }
 }

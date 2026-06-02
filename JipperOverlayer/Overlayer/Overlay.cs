@@ -2,6 +2,7 @@ using JipperOverlayer.Overlayer.Jongyeol;
 using JipperOverlayer.Overlayer.Util;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using TMPro;
@@ -156,19 +157,45 @@ public class Overlay
         if (Jongyeol != null) { Jongyeol.SetupLocation(); return; }
         int y = -15;
         var s = Main.Settings;
-        SetupLocationMainText(ProgressText, s.ShowProgress, ref y);
-        SetupLocationMainText(AccuracyText, s.ShowAccuracy, ref y);
-        SetupLocationMainText(XAccuracyText, s.ShowXAccuracy, ref y);
-        SetupLocationMainText(TimeText, s.ShowMusicTime, ref y);
-        SetupLocationMainText(MapTimeText, s.ShowMapTime, ref y);
-        SetupLocationMainText(CheckpointText,
-            s.ShowCheckpoint &&
-            (Checkpoints ??= CollectCheckpoints()).Length > 0, ref y);
-        SetupLocationMainText(BestText, s.ShowBest, ref y);
+        Checkpoints ??= CollectCheckpoints();
+
+        foreach (int elemId in s.GeneralDisplayOrder)
+        {
+            var elem = (DisplayElement)elemId;
+            var text = GetStackText(elem);
+            if (text == null) continue;
+            bool enabled = IsStackElementEnabled(elem, s);
+            SetupLocationMainText(text, enabled, ref y);
+        }
+
         UpdateProgress();
         VersionSafe.CalculatePercentAcc();
         UpdateTime();
     }
+
+    TextMeshProUGUI GetStackText(DisplayElement elem) => elem switch
+    {
+        DisplayElement.Progress => ProgressText,
+        DisplayElement.Accuracy => AccuracyText,
+        DisplayElement.XAccuracy => XAccuracyText,
+        DisplayElement.MusicTime => TimeText,
+        DisplayElement.MapTime => MapTimeText,
+        DisplayElement.Checkpoint => CheckpointText,
+        DisplayElement.Best => BestText,
+        _ => null,
+    };
+
+    bool IsStackElementEnabled(DisplayElement elem, Settings s) => elem switch
+    {
+        DisplayElement.Progress => s.ShowProgress,
+        DisplayElement.Accuracy => s.ShowAccuracy,
+        DisplayElement.XAccuracy => s.ShowXAccuracy,
+        DisplayElement.MusicTime => s.ShowMusicTime,
+        DisplayElement.MapTime => s.ShowMapTime,
+        DisplayElement.Checkpoint => s.ShowCheckpoint && (Checkpoints ??= CollectCheckpoints()).Length > 0,
+        DisplayElement.Best => s.ShowBest,
+        _ => false,
+    };
 
     protected static void SetupLocationMainText(TextMeshProUGUI text, bool enabled, ref int y)
     {
@@ -563,13 +590,27 @@ public class Overlay
     {
         var s = Main.Settings;
         var labels = s.Labels;
-        string v0 = "", v1 = "";
-        int count = 0;
-        if (s.ShowAttempt)
-            v0 = count++ == 0 ? $"{labels.Attempt} {PlayCount.GetData(LastHash)?.GetAttempts(StartProgress) ?? 0}" : "";
-        if (s.ShowFullAttempt)
-            v1 = count++ <= 1 ? $"{labels.FullAttempt} {PlayCount.GetData(LastHash)?.GetAttempts() ?? 0}" : "";
-        AttemptText.text = count switch { 0 => "", 1 => v0 + v1, _ => $"{v0}\n{v1}" };
+        var order = s.AttemptLineOrder;
+        int attemptCount = PlayCount.GetData(LastHash)?.GetAttempts(StartProgress) ?? 0;
+        int fullAttemptCount = PlayCount.GetData(LastHash)?.GetAttempts() ?? 0;
+        bool showA = s.ShowAttempt;
+        bool showF = s.ShowFullAttempt;
+        var sb = new StringBuilder();
+        for (int i = 0; i < order.Length; i++)
+        {
+            int line = order[i];
+            if (line == 0 && showA)
+            {
+                if (sb.Length > 0) sb.Append('\n');
+                sb.Append($"{labels.Attempt} {attemptCount}");
+            }
+            else if (line == 1 && showF)
+            {
+                if (sb.Length > 0) sb.Append('\n');
+                sb.Append($"{labels.FullAttempt} {fullAttemptCount}");
+            }
+        }
+        AttemptText.text = sb.ToString();
     }
 
     private static void AppendJudgementLine(StringBuilder sb, int[] h)
@@ -736,25 +777,32 @@ public class Overlay
         var bpm = BpmCalculator.Calculate(floor, (float)(scrConductor.instance.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance)));
         if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm) return;
         string hex = BpmCalculator.ColorToHex(s.Colors.GetBpmColor(bpm.TileBpm / s.BpmColorMax));
-        _textSb.Clear();
-        var labels = s.Labels;
-        _textSb.Append("<color=white>");
-        _textSb.Append(labels.TBPM);
-        _textSb.Append(" | <color=#");
-        _textSb.Append(hex);
-        _textSb.Append('>');
-        _textSb.Append(Math.Round(bpm.TileBpm, 2));
-        _textSb.Append("</color>\n");
-        _textSb.Append(labels.CBPM);
-        _textSb.Append(" |</color> ");
-        _textSb.Append(Math.Round(bpm.CurrentBpm, 2));
-        _textSb.Append("\n<color=white>");
-        _textSb.Append(labels.KPS);
-        _textSb.Append(" |</color> ");
-        _textSb.Append(Math.Round(bpm.Kps, 2));
-        BPMText.text = _textSb.ToString();
+        BPMText.text = BuildBpmText(s.BpmLineOrder, hex, s, bpm.TileBpm, bpm.CurrentBpm, bpm.Kps);
         if (LastCurBpm != bpm.CurrentBpm) BPMText.color = s.Colors.GetBpmColor(bpm.CurrentBpm / s.BpmColorMax);
         LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;
+    }
+
+    public static string BuildBpmText(int[] order, string hex, Settings s, double tileBpm, double curBpm, double kps, string kpsPrefix = "", string kpsSuffix = "")
+    {
+        var sb = new StringBuilder();
+        var labels = s.Labels;
+        for (int i = 0; i < order.Length; i++)
+        {
+            if (i > 0) sb.Append('\n');
+            switch (order[i])
+            {
+                case 0: // Tile BPM
+                    sb.Append($"<color=white>{labels.TBPM} | <color=#{hex}>{Math.Round(tileBpm, 2)}</color></color>");
+                    break;
+                case 1: // Current BPM
+                    sb.Append($"<color=white>{labels.CBPM} |</color> {Math.Round(curBpm, 2)}");
+                    break;
+                case 2: // KPS
+                    sb.Append($"<color=white>{labels.KPS} |</color> {kpsPrefix}{Math.Round(kps, 2)}{kpsSuffix}");
+                    break;
+            }
+        }
+        return sb.ToString();
     }
 
     internal void RefreshTimeLabels()

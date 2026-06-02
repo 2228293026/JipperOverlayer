@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using UnityModManagerNet;
 using JipperOverlayer.Overlayer.Localization;
 
-namespace JipperOverlayer.Overlayer.Settings;
+namespace JipperOverlayer.Overlayer;
 
 public class LabelConfig
 {

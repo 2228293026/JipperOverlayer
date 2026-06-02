@@ -46,21 +46,17 @@ public class JongyeolModule
         var s = Main.Settings;
         bool checkAuto = !s.RemoveNotRequireInAuto || !RDC.auto;
 
-        SetupText(FPSText, s.ShowFPS, ref y);
-        var levelData = scnGame.instance?.levelData;
-        SetupText(AuthorText, !string.IsNullOrEmpty(levelData?.GetType().GetProperty("author")?.GetValue(levelData) as string) && s.ShowAuthor, ref y);
-        SetupText(_overlay.ProgressText, s.ShowProgress, ref y);
-        SetupText(_overlay.AccuracyText, checkAuto && s.ShowAccuracy, ref y);
-        SetupText(_overlay.XAccuracyText, checkAuto && s.ShowXAccuracy, ref y);
-        SetupText(_overlay.TimeText, s.ShowMusicTime, ref y);
-        SetupText(_overlay.MapTimeText, s.ShowMapTime, ref y);
         _overlay.Checkpoints ??= Overlay.CollectCheckpoints();
-        SetupText(_overlay.CheckpointText, checkAuto && s.ShowCheckpoint && _overlay.Checkpoints.Length > 0, ref y);
-        SetupText(_overlay.BestText, checkAuto && s.ShowBest, ref y);
-        SetupText(StateText, s.ShowState, ref y);
-        SetupText(DeathText, scrController.instance.noFail && s.ShowDeath, ref y);
-        SetupText(StartText, _overlay.StartTile != 0 && s.ShowStart, ref y);
-        SetupText(TimingText, checkAuto && s.ShowTiming, ref y);
+
+        foreach (int elemId in s.JongyeolDisplayOrder)
+        {
+            var elem = (DisplayElement)elemId;
+            var text = GetJongyeolStackText(elem);
+            if (text == null) continue;
+            bool enabled = IsJongyeolElementEnabled(elem, s, checkAuto);
+            SetupText(text, enabled, ref y);
+        }
+
         _overlay.UpdateProgress();
         VersionSafe.CalculatePercentAcc();
         _overlay.UpdateTime();
@@ -74,8 +70,52 @@ public class JongyeolModule
         _timingsSum = 0;
     }
 
+    TextMeshProUGUI GetJongyeolStackText(DisplayElement elem) => elem switch
+    {
+        DisplayElement.FPS => FPSText,
+        DisplayElement.Author => AuthorText,
+        DisplayElement.Progress => _overlay.ProgressText,
+        DisplayElement.Accuracy => _overlay.AccuracyText,
+        DisplayElement.XAccuracy => _overlay.XAccuracyText,
+        DisplayElement.MusicTime => _overlay.TimeText,
+        DisplayElement.MapTime => _overlay.MapTimeText,
+        DisplayElement.Checkpoint => _overlay.CheckpointText,
+        DisplayElement.Best => _overlay.BestText,
+        DisplayElement.State => StateText,
+        DisplayElement.Death => DeathText,
+        DisplayElement.Start => StartText,
+        DisplayElement.Timing => TimingText,
+        _ => null,
+    };
+
+    bool IsJongyeolElementEnabled(DisplayElement elem, Settings s, bool checkAuto)
+    {
+        if (elem == DisplayElement.Author)
+        {
+            var ld = scnGame.instance?.levelData;
+            return !string.IsNullOrEmpty(ld?.GetType().GetProperty("author")?.GetValue(ld) as string) && s.ShowAuthor;
+        }
+        if (elem == DisplayElement.Death) return scrController.instance.noFail && s.ShowDeath;
+        if (elem == DisplayElement.Start) return _overlay.StartTile != 0 && s.ShowStart;
+        if (elem == DisplayElement.Checkpoint) return checkAuto && s.ShowCheckpoint && (_overlay.Checkpoints?.Length > 0);
+        return elem switch
+        {
+            DisplayElement.FPS => s.ShowFPS,
+            DisplayElement.Progress => s.ShowProgress,
+            DisplayElement.Accuracy => checkAuto && s.ShowAccuracy,
+            DisplayElement.XAccuracy => checkAuto && s.ShowXAccuracy,
+            DisplayElement.MusicTime => s.ShowMusicTime,
+            DisplayElement.MapTime => s.ShowMapTime,
+            DisplayElement.Best => checkAuto && s.ShowBest,
+            DisplayElement.State => s.ShowState,
+            DisplayElement.Timing => checkAuto && s.ShowTiming,
+            _ => false,
+        };
+    }
+
     private static void SetupText(TextMeshProUGUI text, bool enabled, ref int y)
     {
+        if (text == null) return;
         text.enabled = enabled;
         if (!enabled) return;
         text.rectTransform.anchoredPosition = new Vector2(228, y);
@@ -249,8 +289,9 @@ public class JongyeolModule
         if (isPseudo) kps *= count;
         if (_overlay.LastTileBpm == bpm.TileBpm && _overlay.LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
         string colorHex = BpmCalculator.ColorToHex(s.Colors.GetBpmColor(bpm.TileBpm / s.BpmColorMax));
-        var lbl = s.Labels;
-        _overlay.BPMText.text = $"<color=white>{lbl.TBPM} | <color=#{colorHex}>{Math.Round(bpm.TileBpm, 2)}</color>\n{lbl.CBPM} |</color> {Math.Round(cbpm, 2)}\n<color=white>{lbl.KPS} |</color> {(isPseudo ? $"<color=#{BpmCalculator.ColorToHex(s.Colors.GetBpmColor(cbpm * count / s.BpmColorMax))}>" : "")}{Math.Round(kps, 2)}{(isPseudo ? "</color>" : "")}";
+        string kpsPrefix = isPseudo ? $"<color=#{BpmCalculator.ColorToHex(s.Colors.GetBpmColor(cbpm * count / s.BpmColorMax))}>" : "";
+        string kpsSuffix = isPseudo ? "</color>" : "";
+        _overlay.BPMText.text = Overlay.BuildBpmText(s.BpmLineOrder, colorHex, s, bpm.TileBpm, cbpm, kps, kpsPrefix, kpsSuffix);
         if (_overlay.LastCurBpm != cbpm) _overlay.BPMText.color = s.Colors.GetBpmColor(cbpm / s.BpmColorMax);
         _overlay.LastTileBpm = bpm.TileBpm; _overlay.LastCurBpm = cbpm; _lastCurKps = kps;
     }
