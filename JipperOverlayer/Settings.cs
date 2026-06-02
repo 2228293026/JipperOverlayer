@@ -507,7 +507,6 @@ public class Settings : UnityModManager.ModSettings
                 () => { Colors.JTiming = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(Main.Mod); });
             Colors.JCombo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.JComboColor),
                 () => { Colors.JCombo = new([(0f, Color.red), (0.2f, new Color(0.9882f, 1, 0.302f)), (1f, new Color(0.3725f, 1, 0.3119f))]); Colors.Save(Main.Mod); });
-            DrawBpmLineOrder();
             GUILayout.BeginHorizontal();
             GUILayout.Label(Tr.Get(Tr.Key.DecimalPrecision), GUILayout.Width(120));
             JongyeolDecimalPrecision = (int)GUILayout.HorizontalSlider(JongyeolDecimalPrecision, 0, 5);
