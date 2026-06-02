@@ -17,11 +17,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
-      - name: Restore game DLLs from git history
-        run: git checkout a4baa7c -- Libs/
+      - name: Checkout game DLLs
+        uses: actions/checkout@v6
+        with:
+          repository: 2228293026/adofai-libs
+          token: ${{ secrets.LIBS_ACCESS_TOKEN }}
+          path: ../Libs
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
