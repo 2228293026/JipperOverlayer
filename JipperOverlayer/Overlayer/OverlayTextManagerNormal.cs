@@ -88,4 +88,66 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, DecimalPrecision)}%";
         overlay.BestText.color = Main.Settings.Colors.GetBestColor(best);
     }
+
+    // ===== Jongyeol-mode helpers (single-player) =====
+
+    private int _deathCount;
+    private int _lastDeath = -1;
+
+    public void UpdateDeath(Overlay overlay)
+    {
+        var s = Main.Settings;
+        if (!s.ShowDeath || !overlay.GameObject.activeSelf || overlay.DeathText == null) return;
+        int[] hits = overlay.Hit;
+        if (_lastDeath != (_deathCount = hits[8] + hits[9]))
+        {
+            overlay.DeathText.text = $"<color=white>{s.Labels.Death} |</color> {_deathCount}";
+            _lastDeath = _deathCount;
+        }
+        float max = (scrController.instance.currentSeqID - overlay.StartTile) * 0.05f;
+        if (max < 0.001f) return;
+        overlay.DeathText.color = s.Colors.JDeath.GetColor(1 - Math.Min(_deathCount, max) / max);
+    }
+
+    public void UpdateState(Overlay overlay, bool isPurePerfect)
+    {
+        var s = Main.Settings;
+        if (!s.ShowState || !overlay.GameObject.activeSelf || overlay.StateText == null) return;
+        var sColors = s.Colors;
+        var labels = s.Labels;
+        string state;
+        overlay.StateText.color = sColors.JStateWaiting;
+        if (scrController.instance.currentSeqID == overlay.StartTile) state = labels.StateWaiting;
+        else if (scrController.instance.currFloor?.nextfloor is { auto: true })
+        {
+            state = labels.StateAutoTile;
+            overlay.StateText.color = sColors.JStateAutoTile;
+        }
+        else if (RDC.auto) { state = labels.StateAuto; overlay.StateText.color = sColors.JStateAuto; }
+        else if (isPurePerfect) { state = labels.StatePerfectPlay; overlay.StateText.color = sColors.JStatePerfectPlay; }
+        else
+        {
+            int[] hits = overlay.Hit;
+            if (_deathCount != 0) { state = labels.StateComplete; overlay.StateText.color = sColors.JStateComplete; }
+            else if (hits[0] != 0) { state = labels.StateClear; overlay.StateText.color = sColors.JStateClear; }
+            else if (hits[1] != 0 || hits[5] != 0) { state = labels.StateNoMiss; overlay.StateText.color = sColors.JStateNoMiss; }
+            else { state = labels.StatePerfectionist; overlay.StateText.color = sColors.JStatePerfectionist; }
+        }
+        if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count) state += labels.StateSuffix;
+        if (overlay.StartTile != 0) state += labels.StateMidStart;
+        overlay.StateText.text = $"<color=white>{labels.State} |</color> {state}";
+    }
+
+    public bool CheckPurePerfect(Overlay overlay)
+    {
+        int[] hits = overlay.Hit;
+        for (int i = 0; i < hits.Length && i < 10; i++)
+        {
+            if (i is 3 or 7) continue;
+            if (hits[i] != 0) return false;
+        }
+        return true;
+    }
+
+    public int GetTooJudgement(Overlay overlay) => overlay.Hit[0] + overlay.Hit[6];
 }

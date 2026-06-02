@@ -10,4 +10,10 @@ public interface IOverlayTextManager
     void UpdateCheckpoint(Overlay overlay);
     void UpdateBest(Overlay overlay);
     float GetProgress();
+
+    // Jongyeol-mode helpers (coop-aware)
+    void UpdateDeath(Overlay overlay);
+    void UpdateState(Overlay overlay, bool isPurePerfect);
+    bool CheckPurePerfect(Overlay overlay);
+    int GetTooJudgement(Overlay overlay);
 }

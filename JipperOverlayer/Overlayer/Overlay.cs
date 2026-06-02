@@ -35,6 +35,8 @@ public class Overlay
     public TextMeshProUGUI BPMText;
     public TextMeshProUGUI[] JudgementTexts = new TextMeshProUGUI[4];
     public TextMeshProUGUI TimingScaleText;
+    public TextMeshProUGUI DeathText;   // set by JongyeolModule.InitializeExtraTexts
+    public TextMeshProUGUI StateText;   // set by JongyeolModule.InitializeExtraTexts
     public ProgressBar ProgressBar;
     public static readonly Color PurePerfectColor = new(1, 0.8549019607843137f, 0);
     public int[] Hit;

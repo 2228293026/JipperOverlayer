@@ -15,7 +15,6 @@ public class JongyeolModule
 
     private List<float> _timings;
     private bool _purePerfect;
-    private int _deathCount, _lastDeath = -1;
     private int _pseudoFloor = -1;
     private float _lastCurKps = -1, _fpsTime, _timingsSum;
     private bool _perToCom;
@@ -34,6 +33,8 @@ public class JongyeolModule
         _overlay.SetupMainText("Death", ref DeathText);
         _overlay.SetupMainText("Start", ref StartText);
         _overlay.SetupMainText("Timing", ref TimingText);
+        _overlay.DeathText = DeathText;
+        _overlay.StateText = StateText;
         ExtraTexts.AddRange([FPSText, AuthorText, StateText, DeathText, StartText, TimingText]);
     }
 
@@ -158,55 +159,17 @@ public class JongyeolModule
 
     public void UpdateState()
     {
-        if (!Main.Settings.ShowState || !_overlay.GameObject.activeSelf) return;
-        string s;
-        var sColors = Main.Settings.Colors;
-        var labels = Main.Settings.Labels;
-        StateText.color = sColors.JStateWaiting;
-        if (scrController.instance.currentSeqID == _overlay.StartTile) s = labels.StateWaiting;
-        else if (scrController.instance.currFloor?.nextfloor is { auto: true })
-        {
-            s = labels.StateAutoTile;
-            StateText.color = sColors.JStateAutoTile;
-        }
-        else if (RDC.auto) { s = labels.StateAuto; StateText.color = sColors.JStateAuto; }
-        else if (_purePerfect) { s = labels.StatePerfectPlay; StateText.color = sColors.JStatePerfectPlay; }
-        else
-        {
-            int[] hits = _overlay.Hit;
-            if (_deathCount != 0) { s = labels.StateComplete; StateText.color = sColors.JStateComplete; }
-            else if (hits[0] != 0) { s = labels.StateClear; StateText.color = sColors.JStateClear; }
-            else if (hits[1] != 0 || hits[5] != 0) { s = labels.StateNoMiss; StateText.color = sColors.JStateNoMiss; }
-            else { s = labels.StatePerfectionist; StateText.color = sColors.JStatePerfectionist; }
-        }
-        if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count) s += labels.StateSuffix;
-        if (_overlay.StartTile != 0) s += labels.StateMidStart;
-        StateText.text = $"<color=white>{labels.State} |</color> {s}";
+        _overlay.OverlayTextManager?.UpdateState(_overlay, _purePerfect);
     }
 
     public void CheckPurePerfect()
     {
-        int[] hits = _overlay.Hit;
-        for (int i = 0; i < hits.Length && i < 10; i++)
-        {
-            if (i is 3 or 7) continue;
-            if (hits[i] != 0) { _purePerfect = false; return; }
-        }
+        _purePerfect = _overlay.OverlayTextManager?.CheckPurePerfect(_overlay) ?? true;
     }
 
     public void UpdateDeath()
     {
-        var s = Main.Settings;
-        if (!s.ShowDeath || !_overlay.GameObject.activeSelf) return;
-        int[] hits = _overlay.Hit;
-        if (_lastDeath != (_deathCount = hits[8] + hits[9]))
-        {
-            DeathText.text = $"<color=white>{s.Labels.Death} |</color> {_deathCount}";
-            _lastDeath = _deathCount;
-        }
-        float max = (scrController.instance.currentSeqID - _overlay.StartTile) * 0.05f;
-        if (max < 0.001f) return;
-        DeathText.color = s.Colors.JDeath.GetColor(1 - Math.Min(_deathCount, max) / max);
+        _overlay.OverlayTextManager?.UpdateDeath(_overlay);
     }
 
     public void UpdateStart()
@@ -299,7 +262,8 @@ public class JongyeolModule
     public Color UpdateComboColor(int combo)
     {
         if (_purePerfect) return Main.Settings.Colors.JStatePerfectPlay;
-        float value = (float)combo / (scrController.instance.currentSeqID - _overlay.StartTile + _overlay.Hit[0] + _overlay.Hit[6] + 1) * 2;
+        int too = _overlay.OverlayTextManager?.GetTooJudgement(_overlay) ?? 0;
+        float value = (float)combo / (scrController.instance.currentSeqID - _overlay.StartTile + too + 1) * 2;
         if (value > 1) value = 1;
         return Main.Settings.Colors.JCombo.GetColor(value);
     }

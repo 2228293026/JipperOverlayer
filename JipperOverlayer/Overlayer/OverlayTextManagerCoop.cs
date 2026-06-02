@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using UnityEngine;
 
 namespace JipperOverlayer.Overlayer;
@@ -146,5 +147,139 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         public string ProgressString;
         public string AccuracyString;
         public string XAccuracyString;
+    }
+
+    // ===== Jongyeol-mode helpers (coop, per-player) =====
+
+    private int[] _playerDeath;
+    private int[] _lastPlayerDeath;
+
+    public void UpdateDeath(Overlay overlay)
+    {
+        var s = Main.Settings;
+        if (!s.ShowDeath || !overlay.GameObject.activeSelf || overlay.DeathText == null) return;
+        int count = VersionSafe.GetPlayerCount();
+        if (_playerDeath == null || _playerDeath.Length != count)
+        {
+            _playerDeath = new int[count];
+            _lastPlayerDeath = new int[count];
+            for (int i = 0; i < count; i++) _lastPlayerDeath[i] = -1;
+        }
+        var sb = new StringBuilder();
+        sb.Append("<color=white>");
+        sb.Append(s.Labels.Death);
+        sb.Append("</color>");
+        bool changed = false;
+        for (int i = 0; i < count; i++)
+        {
+            int[] hits = VersionSafe.GetHitMarginsCountForPlayer(i);
+            int death = hits[8] + hits[9];
+            _playerDeath[i] = death;
+            if (_lastPlayerDeath[i] != death) { _lastPlayerDeath[i] = death; changed = true; }
+            string hex = VersionSafe.GetPlayerColorHex(i);
+            sb.Append(" | <color=#");
+            sb.Append(hex);
+            sb.Append(">");
+            sb.Append(death);
+            sb.Append("</color>");
+        }
+        if (changed) overlay.DeathText.text = sb.ToString();
+        overlay.DeathText.color = Color.white;
+    }
+
+    public void UpdateState(Overlay overlay, bool _)
+    {
+        var s = Main.Settings;
+        if (!s.ShowState || !overlay.GameObject.activeSelf || overlay.StateText == null) return;
+        var labels = s.Labels;
+        int count = VersionSafe.GetPlayerCount();
+        var sb = new StringBuilder();
+        sb.Append("<color=white>");
+        sb.Append(labels.State);
+        sb.Append("</color>");
+        for (int i = 0; i < count; i++)
+        {
+            int[] hits = VersionSafe.GetHitMarginsCountForPlayer(i);
+            var p = scrPlayerManager.instance.allPlayers[i];
+            string state = GetPlayerState(p, hits, overlay);
+            string hex = VersionSafe.GetPlayerColorHex(i);
+            sb.Append(" | <color=#");
+            sb.Append(hex);
+            sb.Append(">");
+            sb.Append(state);
+            sb.Append("</color>");
+        }
+        if (overlay.StartTile != 0) { sb.Append("  "); sb.Append(labels.StateMidStart); }
+        overlay.StateText.text = sb.ToString();
+        overlay.StateText.color = Color.white;
+    }
+
+    private static string GetPlayerState(scrPlayer player, int[] hits, Overlay overlay)
+    {
+        var labels = Main.Settings.Labels;
+        string state;
+
+        if (scrController.instance.currentSeqID == overlay.StartTile)
+            state = labels.StateWaiting;
+        else if (!RDC.auto && player.auto)
+            state = labels.StateAuto;  // respawn waiting
+        else
+        {
+            var curFloor = player.planetarySystem?.chosenPlanet?.currfloor;
+            if (curFloor != null && curFloor.nextfloor is { auto: true })
+                state = labels.StateAutoTile;
+            else if (RDC.auto)
+                state = labels.StateAuto;
+            else if (IsPurePerfect(hits))
+                state = labels.StatePerfectPlay;
+            else
+            {
+                int death = hits[8] + hits[9];
+                if (death != 0) state = labels.StateComplete;
+                else if (hits[0] != 0) state = labels.StateClear;
+                else if (hits[1] != 0 || hits[5] != 0) state = labels.StateNoMiss;
+                else state = labels.StatePerfectionist;
+            }
+        }
+        if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count)
+            state += labels.StateSuffix;
+        return state;
+    }
+
+    private static bool IsPurePerfect(int[] hits)
+    {
+        for (int i = 0; i < hits.Length && i < 10; i++)
+        {
+            if (i is 3 or 7) continue;
+            if (hits[i] != 0) return false;
+        }
+        return true;
+    }
+
+    public bool CheckPurePerfect(Overlay overlay)
+    {
+        int count = VersionSafe.GetPlayerCount();
+        for (int p = 0; p < count; p++)
+        {
+            int[] hits = VersionSafe.GetHitMarginsCountForPlayer(p);
+            for (int i = 0; i < hits.Length && i < 10; i++)
+            {
+                if (i is 3 or 7) continue;
+                if (hits[i] != 0) return false;
+            }
+        }
+        return true;
+    }
+
+    public int GetTooJudgement(Overlay overlay)
+    {
+        int total = 0;
+        int count = VersionSafe.GetPlayerCount();
+        for (int i = 0; i < count; i++)
+        {
+            int[] hits = VersionSafe.GetHitMarginsCountForPlayer(i);
+            total += hits[0] + hits[6];
+        }
+        return total;
     }
 }
