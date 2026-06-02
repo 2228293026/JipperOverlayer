@@ -782,14 +782,19 @@ public class Overlay
         LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;
     }
 
+    public void DirtyBpmCache() { LastTileBpm = LastCurBpm = -1; }
+
     public static string BuildBpmText(int[] order, string hex, Settings s, double tileBpm, double curBpm, double kps, string kpsPrefix = "", string kpsSuffix = "")
     {
         var sb = new StringBuilder();
         var labels = s.Labels;
+        var vis = s.BpmLineVisibility;
         for (int i = 0; i < order.Length; i++)
         {
-            if (i > 0) sb.Append('\n');
-            switch (order[i])
+            int id = order[i];
+            if (vis == null || id >= vis.Length || !vis[id]) continue;
+            if (sb.Length > 0) sb.Append('\n');
+            switch (id)
             {
                 case 0: // Tile BPM
                     sb.Append($"<color=white>{labels.TBPM} | <color=#{hex}>{Math.Round(tileBpm, 2)}</color></color>");

@@ -55,6 +55,7 @@ public class Settings : UnityModManager.ModSettings
     public int[] GeneralDisplayOrder = [0, 1, 2, 3, 4, 5, 6];
     public int[] JongyeolDisplayOrder = [10, 11, 0, 1, 2, 3, 4, 5, 6, 12, 13, 14, 15];
     public int[] BpmLineOrder = [0, 1, 2];
+    public bool[] BpmLineVisibility = [true, true, true];
     public int[] AttemptLineOrder = [0, 1];
 
     [JsonIgnore] public ColorConfig Colors;
@@ -352,7 +353,9 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.Label("─── " + Tr.Get(Tr.Key.BpmSection) + " " + Tr.Get(Tr.Key.DisplayOrder) + " ───");
         GUILayout.EndHorizontal();
         DrawReorderList(BpmLineOrder, id => id switch { 0 => Tr.Get(Tr.Key.BpmLineTile), 1 => Tr.Get(Tr.Key.BpmLineCur), _ => Tr.Get(Tr.Key.BpmLineKps) }, [0, 1, 2],
-            arr => { BpmLineOrder = arr; Save(Main.Mod); Overlay.Instance?.UpdateBPM(); });
+            arr => { BpmLineOrder = arr; Save(Main.Mod); var o = Overlay.Instance; o?.DirtyBpmCache(); o?.UpdateBPM(); },
+            id => id < BpmLineVisibility.Length && BpmLineVisibility[id],
+            (id, v) => { if (id < BpmLineVisibility.Length) { BpmLineVisibility[id] = v; Save(Main.Mod); var o = Overlay.Instance; o?.DirtyBpmCache(); o?.UpdateBPM(); } });
     }
 
     void DrawAttemptLineOrder()
@@ -361,16 +364,30 @@ public class Settings : UnityModManager.ModSettings
             arr => { AttemptLineOrder = arr; Save(Main.Mod); Overlay.Instance?.UpdateAttempts(); });
     }
 
-    void DrawReorderList(int[] order, Func<int, string> getName, int[] defaultOrder, Action<int[]> onSave)
+    void DrawReorderList(int[] order, Func<int, string> getName, int[] defaultOrder, Action<int[]> onSave,
+        Func<int, bool> isVisible = null, Action<int, bool> setVisible = null)
     {
         var list = new List<int>(order);
         bool changed = false;
 
         for (int i = 0; i < list.Count; i++)
         {
+            int id = list[i];
+
             GUILayout.BeginHorizontal();
             GUILayout.Space(36);
 
+            // Visibility toggle
+            bool hasVis = isVisible != null && setVisible != null;
+            if (hasVis)
+            {
+                bool vis = isVisible(id);
+                bool newVis = GUILayout.Toggle(vis, GUIContent.none, GUILayout.Width(16), GUILayout.Height(16));
+                if (newVis != vis) { setVisible(id, newVis); }
+            }
+            else GUILayout.Space(16);
+
+            // ▲
             if (i > 0 && GUILayout.Button("▲", GUILayout.Width(24), GUILayout.Height(20)))
             {
                 (list[i], list[i - 1]) = (list[i - 1], list[i]);
@@ -378,6 +395,7 @@ public class Settings : UnityModManager.ModSettings
             }
             else GUILayout.Space(24);
 
+            // ▼
             if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(24), GUILayout.Height(20)))
             {
                 (list[i], list[i + 1]) = (list[i + 1], list[i]);
@@ -385,7 +403,7 @@ public class Settings : UnityModManager.ModSettings
             }
             else GUILayout.Space(24);
 
-            GUILayout.Label($"  {i + 1}. {getName(list[i])}");
+            GUILayout.Label($"  {i + 1}. {getName(id)}");
             GUILayout.EndHorizontal();
         }
 
@@ -797,6 +815,8 @@ public class Settings : UnityModManager.ModSettings
             s.JongyeolDisplayOrder = s.JongyeolDisplayOrder.Where(x => IsValidJongyeolElement(x)).ToArray();
         if (s.BpmLineOrder == null || s.BpmLineOrder.Length == 0)
             s.BpmLineOrder = [0, 1, 2];
+        if (s.BpmLineVisibility == null || s.BpmLineVisibility.Length != 3)
+            s.BpmLineVisibility = [true, true, true];
         if (s.AttemptLineOrder == null || s.AttemptLineOrder.Length == 0)
             s.AttemptLineOrder = [0, 1];
         return s;
