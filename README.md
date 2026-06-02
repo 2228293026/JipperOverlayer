@@ -18,6 +18,7 @@ A Unity Mod Manager mod for **A Dance of Fire and Ice (ADOFAI)** that provides a
 - **Jongyeol Mode** — Extended overlay with FPS, State, Death count, Start position, Timing analysis, Debug text hiding
 - **Co-op Support** — Per-player display for multiplayer
 - **Color Editor** — Interactive gradient editor for all overlay colors
+- **XPerfect Integration** — Optional enhanced perfect display via [XPerfect](https://github.com/8100print/XPerfect)
 
 ## Settings UI Languages
 
