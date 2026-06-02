@@ -58,7 +58,7 @@ ADOFAI/Mods/JipperOverlayer/
 - Visual Studio 2022+ with .NET Framework 4.8.1 SDK
 - Steam installation of ADOFAI (for reference DLLs in `Libs/`)
 
-> **Note:** `Libs/` is `.gitignore`d. Run `cp -r "$ADOFAI/A Dance of Fire and Ice_Data/Managed/"* Libs/` to populate it from your game installation (requires one-time setup). CI fetches Libs from the [adofai-libs](https://github.com/2228293026/adofai-libs) private repo automatically.
+> **Note:** `Libs/` is `.gitignore`d. Run `cp -r "$ADOFAI/A Dance of Fire and Ice_Data/Managed/"* Libs/` to populate it from your game installation (requires one-time setup).
 
 ### Build
 
