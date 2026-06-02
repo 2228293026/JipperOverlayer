@@ -17,6 +17,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Restore game DLLs from git history
+        run: git checkout a4baa7c -- Libs/
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
