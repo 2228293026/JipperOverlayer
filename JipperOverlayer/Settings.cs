@@ -274,20 +274,20 @@ public class Settings : UnityModManager.ModSettings
 
             GUILayout.BeginHorizontal();
             // ▲
-            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(22), GUILayout.Height(18)))
+            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(24), GUILayout.Height(20)))
             {
                 (list[i], list[i - 1]) = (list[i - 1], list[i]);
                 changed = true;
             }
-            else GUILayout.Space(22);
+            else GUILayout.Space(24);
 
             // ▼
-            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(22), GUILayout.Height(18)))
+            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(24), GUILayout.Height(20)))
             {
                 (list[i], list[i + 1]) = (list[i + 1], list[i]);
                 changed = true;
             }
-            else GUILayout.Space(22);
+            else GUILayout.Space(24);
 
             GUILayout.Label($"  {i + 1}. {GetElementName(elem)}");
             GUILayout.EndHorizontal();
@@ -371,19 +371,19 @@ public class Settings : UnityModManager.ModSettings
             GUILayout.BeginHorizontal();
             GUILayout.Space(36);
 
-            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(22), GUILayout.Height(18)))
+            if (i > 0 && GUILayout.Button("▲", GUILayout.Width(24), GUILayout.Height(20)))
             {
                 (list[i], list[i - 1]) = (list[i - 1], list[i]);
                 changed = true;
             }
-            else GUILayout.Space(22);
+            else GUILayout.Space(24);
 
-            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(22), GUILayout.Height(18)))
+            if (i < list.Count - 1 && GUILayout.Button("▼", GUILayout.Width(24), GUILayout.Height(20)))
             {
                 (list[i], list[i + 1]) = (list[i + 1], list[i]);
                 changed = true;
             }
-            else GUILayout.Space(22);
+            else GUILayout.Space(24);
 
             GUILayout.Label($"  {i + 1}. {getName(list[i])}");
             GUILayout.EndHorizontal();
