@@ -4,6 +4,7 @@ JipperOverlayer/obj/
 
 # ===== Game reference DLLs (not part of source) =====
 JipperOverlayer/2.9.8/
+Libs/
 
 # ===== Visual Studio =====
 .vs/
