@@ -34,7 +34,6 @@ public class Overlay
     public TextMeshProUGUI BPMText;
     public TextMeshProUGUI[] JudgementTexts = new TextMeshProUGUI[4];
     public TextMeshProUGUI TimingScaleText;
-    public TextMeshProUGUI XPerfectText;
     public ProgressBar ProgressBar;
     public static readonly Color PurePerfectColor = new(1, 0.8549019607843137f, 0);
     public int[] Hit;
@@ -90,7 +89,6 @@ public class Overlay
         InitializeProgressBar();
         InitializeTimingScale();
         InitializeAttempt();
-        InitializeXPerfect();
         Jongyeol?.InitializeExtraTexts();
         OnChangePlayers();
         UpdateSize();
@@ -526,18 +524,6 @@ public class Overlay
     }
 
 
-    private void InitializeXPerfect()
-    {
-        var go = new GameObject("XPerfect");
-        var t = go.AddComponent<RectTransform>();
-        t.SetParent(_mainContainer.transform);
-        t.anchorMin = t.anchorMax = new Vector2(0, 1);
-        t.sizeDelta = new Vector2(456, 30);
-        XPerfectText = go.AddComponent<TextMeshProUGUI>();
-        XPerfectText.font = BundleLoader.FontAsset;
-        XPerfectText.fontSize = 25;
-        ShadowManager.ApplyShadow(XPerfectText);
-    }
 
     public void UpdateAccuracy(int index = -1)
     {
