@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.1.0 — 2026.06.02
+
+### Features
+- Full Jongyeol color customization: 3 gradients (JCombo/JDeath/JTiming) + 11 static colors (8 states + FPS/Author/Start)
+- Display order: reorder main stack elements with ▲▼ (General 7 items, Jongyeol 13 items)
+- BPM line order: reorder TBPM/CBPM/KPS lines independently
+- BPM line visibility: per-line ✓ toggle to show/hide each BPM line
+- Attempt line order: swap Attempt/Full Attempt display order
+- 14 new Tr keys for state colors + 23 keys for display order (EN/KO/CN)
+
+### Refactors
+- Settings folder namespace: JipperOverlayer.Overlayer.Settings → JipperOverlayer.Overlayer (fixes Settings type collision)
+- DrawReorderList helper: unified ▲▼/✓ UI for all order lists, 3 callers share 1 implementation (-45 lines)
+- BPM text building: extracted shared BuildBpmText() static method, used by both General and Jongyeol mode
+
+### Bug Fixes
+- ColorPerDictionary.GetColor cache: added noCache parameter for static color updates
+- EnsureDefaults() migration: detect stale colors.json and reset transparent (a==0) colors
+- FPS/Author/Start text: label white via <color=white>, value takes configured color
+- BPM/Combo colors: added missing reset buttons in General section
+- State colors: all 8 conditions fully translated with "Color"/"색상"/"颜色" suffix
+- Empty reference guard: null-check in SetupLocationMain to prevent NRE from stale config
+- Config migration: auto-filter invalid IDs from display order arrays on load
+- BPM cache: DirtyBpmCache() forces text rebuild when visibility/order changes
+
 ## v1.0.8 — 2026.06.02
 
 feat: integrate XPerfect counter into judgement display
