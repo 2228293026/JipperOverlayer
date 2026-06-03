@@ -57,6 +57,7 @@ public class Settings : UnityModManager.ModSettings
     public int[] BpmLineOrder = [0, 1, 2];
     public bool[] BpmLineVisibility = [true, true, true];
     public int[] AttemptLineOrder = [0, 1];
+    public bool ComboLineReversed;
 
     [JsonIgnore] public ColorConfig Colors;
     [JsonIgnore] public LabelConfig Labels;
@@ -202,6 +203,9 @@ public class Settings : UnityModManager.ModSettings
                 ComboColorMax = (int)Slide(Tr.Get(Tr.Key.ComboColorMax), ComboColorMax, 1, 5000, () => { });
                 Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.ComboColor),
                     () => { Colors.Combo = new([(0f, new Color(0.8745f, 0.7098f, 1f)), (1f, new Color(0.7176f, 0.3490f, 1f))]); Colors.Save(Main.Mod); });
+                bool prevReversed = ComboLineReversed;
+                ComboLineReversed = Tog(Tr.Get(Tr.Key.ComboLineReversed), ComboLineReversed);
+                if (prevReversed != ComboLineReversed) Overlayer.Overlay.Instance?.RefreshVisibility();
             }
         });
 

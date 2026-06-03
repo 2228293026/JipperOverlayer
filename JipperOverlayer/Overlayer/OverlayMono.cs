@@ -37,6 +37,7 @@ public class OverlayMono : MonoBehaviour
     private IEnumerator ComboAnim()
     {
         double elapsed = 0;
+        bool reversed = Main.Settings.ComboLineReversed;
         while (elapsed < 500)
         {
             float t = (float)(elapsed / 500);
@@ -44,7 +45,17 @@ public class OverlayMono : MonoBehaviour
             Overlay.ComboText.fontSize = (int)(30 * OutExpoChange(t) + 78);
             if (Overlay._comboTitleTransform)
             {
-                try { Overlay._comboTitleTransform.anchoredPosition = new Vector2(0, Overlay.ComboTextTransform.sizeDelta.y / 2); }
+                try
+                {
+                    if (reversed)
+                    {
+                        Overlay._comboTitleTransform.anchoredPosition = new Vector2(0, -40f - OutExpoChange(t) * 15f);
+                    }
+                    else
+                    {
+                        Overlay._comboTitleTransform.anchoredPosition = new Vector2(0, 43.505f + OutExpoChange(t) * 15f);
+                    }
+                }
                 catch { }
             }
             yield return null;

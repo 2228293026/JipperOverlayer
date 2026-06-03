@@ -755,8 +755,23 @@ public class Overlay
         if (!GameObject.activeSelf) return;
         ComboText.text = combo.ToString();
         ComboText.color = UpdateComboColor(combo);
+        bool reversed = Main.Settings.ComboLineReversed;
         if (bump) { var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StartComboBump(); }
-        else { var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StopComboBump(); ComboText.fontSize = 78; if (_comboTitleTransform) _comboTitleTransform.anchoredPosition = new Vector2(0, 43.505f); }
+        else
+        {
+            var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StopComboBump();
+            ComboText.fontSize = 78;
+            if (reversed)
+            {
+                ComboTextTransform.anchoredPosition = new Vector2(0, 43.505f);
+                if (_comboTitleTransform) _comboTitleTransform.anchoredPosition = new Vector2(0, -40f);
+            }
+            else
+            {
+                ComboTextTransform.anchoredPosition = Vector2.zero;
+                if (_comboTitleTransform) _comboTitleTransform.anchoredPosition = new Vector2(0, 43.505f);
+            }
+        }
     }
 
     public Color UpdateComboColor(int combo)
