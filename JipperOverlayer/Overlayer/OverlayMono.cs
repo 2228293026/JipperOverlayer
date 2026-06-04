@@ -11,7 +11,7 @@ public class OverlayMono : MonoBehaviour
 
     private void Update()
     {
-        if (Overlay == null) return;
+        if (Overlay == null || !Overlay.GameObject.activeSelf) return;
         Overlay.UpdateTime();
         bool paused = ADOBase.controller?.paused ?? _lastPaused;
         if (paused != _lastPaused)
@@ -65,5 +65,22 @@ public class OverlayMono : MonoBehaviour
         _comboAnim = null;
     }
 
-    private static float OutExpoChange(double t) => (float)(t == 1 ? 0 : System.Math.Pow(2, -10 * t));
+    private static readonly float[] _expTable = BuildExpoTable();
+
+    private static float[] BuildExpoTable()
+    {
+        var t = new float[31];
+        for (int i = 0; i < t.Length; i++)
+        {
+            float p = i / 30f;
+            t[i] = p >= 1f ? 0f : (float)System.Math.Pow(2.0, -10.0 * p);
+        }
+        return t;
+    }
+
+    private static float OutExpoChange(double t)
+    {
+        int idx = (int)(t * 30.0 + 0.5);
+        return idx >= _expTable.Length ? 0f : _expTable[idx];
+    }
 }

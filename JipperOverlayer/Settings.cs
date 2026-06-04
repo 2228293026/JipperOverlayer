@@ -52,6 +52,7 @@ public class Settings : UnityModManager.ModSettings
     public float AttemptOffsetX, AttemptOffsetY, AttemptCoopOffsetX, AttemptCoopOffsetY, ProgBarOffsetX, ProgBarOffsetY;
     public int ConfigVersion;
     public bool ShowXPerfectInJudgement;
+    public bool ShowAutoInXPerfect;
     public int[] GeneralDisplayOrder = [0, 1, 2, 3, 4, 5, 6];
     public int[] JongyeolDisplayOrder = [10, 11, 0, 1, 2, 3, 4, 5, 6, 12, 13, 14, 15];
     public int[] BpmLineOrder = [0, 1, 2];
@@ -226,6 +227,7 @@ public class Settings : UnityModManager.ModSettings
             ShowJudgement = Tog(Tr.Get(Tr.Key.ShowJudgement), ShowJudgement);
             if (ShowJudgement) JudgementLocationUp = Tog(Tr.Get(Tr.Key.JudgementUp), JudgementLocationUp);
             if (XPerfectIntegration.IsAvailable && ShowJudgement) ShowXPerfectInJudgement = Tog(Tr.Get(Tr.Key.ShowXPerfectInJudgement), ShowXPerfectInJudgement);
+            if (XPerfectIntegration.IsAvailable && ShowJudgement && ShowXPerfectInJudgement) ShowAutoInXPerfect = Tog(Tr.Get(Tr.Key.ShowAutoInXPerfect), ShowAutoInXPerfect);
             ShowTimingScale = Tog(Tr.Get(Tr.Key.ShowTimingScale), ShowTimingScale);
             ShowAttempt = Tog(Tr.Get(Tr.Key.ShowAttempt), ShowAttempt);
             ShowFullAttempt = Tog(Tr.Get(Tr.Key.ShowFullAttempt), ShowFullAttempt);

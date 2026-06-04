@@ -8,7 +8,6 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityModManagerNet;
 using Object = UnityEngine.Object;
 
 namespace JipperOverlayer.Overlayer;
@@ -69,6 +68,13 @@ public class Overlay
     internal string _mapTimeLabel;
     public JongyeolModule Jongyeol;
     internal static readonly StringBuilder _textSb = new(256);
+    private static readonly StringBuilder _judgementSb = new(128);
+    private static readonly StringBuilder _attemptSb = new(64);
+    private static readonly StringBuilder _bpmSb = new(128);
+    private static readonly StringBuilder _comboSb = new(16);
+    private static readonly StringBuilder _timingSb = new(64);
+    private float _lastTimingScale = -1f;
+    private OverlayMono _mono;
 
     private static readonly IReadOnlyList<TextMeshProUGUI> _emptyTexts = Array.Empty<TextMeshProUGUI>();
     protected IReadOnlyList<TextMeshProUGUI> ExtraTexts => Jongyeol?.ExtraTexts ?? _emptyTexts;
@@ -95,9 +101,9 @@ public class Overlay
         Jongyeol?.InitializeExtraTexts();
         OnChangePlayers();
         UpdateSize();
-        var mono = GameObject.AddComponent<OverlayMono>();
-        mono.Overlay = this;
-        mono.enabled = false;
+        _mono = GameObject.AddComponent<OverlayMono>();
+        _mono.Overlay = this;
+        _mono.enabled = false;
         RefreshTimeLabels();
         Object.DontDestroyOnLoad(GameObject);
         if (ADOBase.controller is { paused: false } && ADOBase.conductor is { isGameWorld: true })
@@ -597,22 +603,22 @@ public class Overlay
         int fullAttemptCount = PlayCount.GetData(LastHash)?.GetAttempts() ?? 0;
         bool showA = s.ShowAttempt;
         bool showF = s.ShowFullAttempt;
-        var sb = new StringBuilder();
+        _attemptSb.Clear();
         for (int i = 0; i < order.Length; i++)
         {
             int line = order[i];
             if (line == 0 && showA)
             {
-                if (sb.Length > 0) sb.Append('\n');
-                sb.Append($"{labels.Attempt} {attemptCount}");
+                if (_attemptSb.Length > 0) _attemptSb.Append('\n');
+                _attemptSb.Append($"{labels.Attempt} {attemptCount}");
             }
             else if (line == 1 && showF)
             {
-                if (sb.Length > 0) sb.Append('\n');
-                sb.Append($"{labels.FullAttempt} {fullAttemptCount}");
+                if (_attemptSb.Length > 0) _attemptSb.Append('\n');
+                _attemptSb.Append($"{labels.FullAttempt} {fullAttemptCount}");
             }
         }
-        AttemptText.text = sb.ToString();
+        AttemptText.SetText(_attemptSb);
     }
 
     private static void AppendJudgementLine(StringBuilder sb, int[] h)
@@ -664,11 +670,12 @@ public class Overlay
 
     private string BuildJudgementString(int[] h, bool useXPerfect, string prefix = "", string suffix = "")
     {
-        var sb = new StringBuilder(prefix);
+        _judgementSb.Clear();
+        _judgementSb.Append(prefix);
 
         if (!useXPerfect)
         {
-            AppendJudgementLine(sb, h);
+            AppendJudgementLine(_judgementSb, h);
         }
         else
         {
@@ -677,34 +684,39 @@ public class Overlay
             int minus = XPerfectIntegration.MinusPerfect;
 
             // 完全复用原版的嵌套颜色结构，仅替换绿色数字为 + X -
-            sb.Append(h[9]);                          // FailOverload (默认紫色)
-            sb.Append(" <color=red>");
-            sb.Append(h[0]);                          // TooEarly (红)
-            sb.Append(" <color=#FF6F4E>");
-            sb.Append(h[1]);                          // VeryEarly (橙)
-            sb.Append(" <color=#A0FF4E>");
-            sb.Append(h[2]);                          // EarlyPerfect (黄绿) ← 保留
-            sb.Append(" <color=#60FF4E>");
+            _judgementSb.Append(h[9]);                          // FailOverload (默认紫色)
+            _judgementSb.Append(" <color=red>");
+            _judgementSb.Append(h[0]);                          // TooEarly (红)
+            _judgementSb.Append(" <color=#FF6F4E>");
+            _judgementSb.Append(h[1]);                          // VeryEarly (橙)
+            _judgementSb.Append(" <color=#A0FF4E>");
+            _judgementSb.Append(h[2]);                          // EarlyPerfect (黄绿) ← 保留
+            _judgementSb.Append(" <color=#60FF4E>");
 
             // 替换掉原 h[3]+h[10] 的绿色数字
-            sb.Append(plus);                          // +Perfect (绿)
-            sb.Append("</color> <color=#4DCCFF>");
-            sb.Append(x);                             // X-Perfect (蓝)
-            sb.Append("</color> <color=#60FF4E>");
-            sb.Append(minus);                         // -Perfect (绿)
-
-            sb.Append("</color> ");                  // 关闭绿色，栈顶回到黄绿
-            sb.Append(h[4]);                          // LatePerfect (黄绿) ← 保留
-            sb.Append("</color> ");                  // 关闭黄绿，栈顶回到橙
-            sb.Append(h[5]);                          // VeryLate (橙)
-            sb.Append("</color> ");                  // 关闭橙，栈顶回到红
-            sb.Append(h[6]);                          // TooLate (红)
-            sb.Append("</color> ");                  // 关闭红，栈顶回到默认紫
-            sb.Append(h[8]);                          // FailMiss (默认紫色)
+            _judgementSb.Append(plus);                          // +Perfect (绿)
+            _judgementSb.Append("</color> <color=#4DCCFF>");
+            _judgementSb.Append(x);                             // X-Perfect (蓝)
+            _judgementSb.Append("</color> <color=#60FF4E>");
+            _judgementSb.Append(minus);                         // -Perfect (绿)
+            if (Main.Settings.ShowAutoInXPerfect && h.Length > 10 && h[10] > 0)
+            {
+                _judgementSb.Append(" <color=#FF8000>");
+                _judgementSb.Append(h[10]);
+                _judgementSb.Append("</color>");
+            }
+            _judgementSb.Append("</color> ");                  // 关闭绿色，栈顶回到黄绿
+            _judgementSb.Append(h[4]);                          // LatePerfect (黄绿) ← 保留
+            _judgementSb.Append("</color> ");                  // 关闭黄绿，栈顶回到橙
+            _judgementSb.Append(h[5]);                          // VeryLate (橙)
+            _judgementSb.Append("</color> ");                  // 关闭橙，栈顶回到红
+            _judgementSb.Append(h[6]);                          // TooLate (红)
+            _judgementSb.Append("</color> ");                  // 关闭红，栈顶回到默认紫
+            _judgementSb.Append(h[8]);                          // FailMiss (默认紫色)
         }
 
-        sb.Append(suffix);
-        return sb.ToString();
+        _judgementSb.Append(suffix);
+        return _judgementSb.ToString();
     }
 
     public void UpdateTime()
@@ -753,13 +765,15 @@ public class Overlay
     public void UpdateCombo(int combo, bool bump)
     {
         if (!GameObject.activeSelf) return;
-        ComboText.text = combo.ToString();
+        _comboSb.Clear();
+        _comboSb.Append(combo);
+        ComboText.SetText(_comboSb);
         ComboText.color = UpdateComboColor(combo);
         bool reversed = Main.Settings.ComboLineReversed;
-        if (bump) { var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StartComboBump(); }
+        if (bump) { if (_mono) _mono.StartComboBump(); }
         else
         {
-            var m = GameObject.GetComponent<OverlayMono>(); if (m) m.StopComboBump();
+            if (_mono) _mono.StopComboBump();
             ComboText.fontSize = 78;
             if (reversed)
             {
@@ -803,28 +817,28 @@ public class Overlay
 
     public static string BuildBpmText(int[] order, string hex, Settings s, double tileBpm, double curBpm, double kps, string kpsPrefix = "", string kpsSuffix = "")
     {
-        var sb = new StringBuilder();
+        _bpmSb.Clear();
         var labels = s.Labels;
         var vis = s.BpmLineVisibility;
         for (int i = 0; i < order.Length; i++)
         {
             int id = order[i];
             if (vis == null || id >= vis.Length || !vis[id]) continue;
-            if (sb.Length > 0) sb.Append('\n');
+            if (_bpmSb.Length > 0) _bpmSb.Append('\n');
             switch (id)
             {
                 case 0: // Tile BPM
-                    sb.Append($"<color=white>{labels.TBPM} | <color=#{hex}>{Math.Round(tileBpm, 2)}</color></color>");
+                    _bpmSb.Append($"<color=white>{labels.TBPM} | <color=#{hex}>{Math.Round(tileBpm, 2)}</color></color>");
                     break;
                 case 1: // Current BPM
-                    sb.Append($"<color=white>{labels.CBPM} |</color> {Math.Round(curBpm, 2)}");
+                    _bpmSb.Append($"<color=white>{labels.CBPM} |</color> {Math.Round(curBpm, 2)}");
                     break;
                 case 2: // KPS
-                    sb.Append($"<color=white>{labels.KPS} |</color> {kpsPrefix}{Math.Round(kps, 2)}{kpsSuffix}");
+                    _bpmSb.Append($"<color=white>{labels.KPS} |</color> {kpsPrefix}{Math.Round(kps, 2)}{kpsSuffix}");
                     break;
             }
         }
-        return sb.ToString();
+        return _bpmSb.ToString();
     }
 
     internal void RefreshTimeLabels()
@@ -865,7 +879,15 @@ public class Overlay
     public void UpdateTimingScale()
     {
         if (!GameObject.activeSelf || scrController.instance?.currFloor == null) return;
-        TimingScaleText.text = $"{Main.Settings.Labels.TimingScale} - {Math.Round(scrController.instance.currFloor.marginScale * 100, 2)}%";
+        float cur = (float)Math.Round(scrController.instance.currFloor.marginScale * 100, 2);
+        if (Math.Abs(cur - _lastTimingScale) < 0.001f) return;
+        _lastTimingScale = cur;
+        _timingSb.Clear();
+        _timingSb.Append(Main.Settings.Labels.TimingScale);
+        _timingSb.Append(" - ");
+        _timingSb.Append(cur);
+        _timingSb.Append('%');
+        TimingScaleText.SetText(_timingSb);
     }
 
     public void Show(int floor, bool suppressNativeUI = false)
@@ -891,8 +913,7 @@ public class Overlay
         SetupTextManager();
         ApplyFontToAll();
         GameObject.SetActive(true);
-        var mono = GameObject.GetComponent<OverlayMono>();
-        if (mono) mono.enabled = true;
+        if (_mono) _mono.enabled = true;
         SongPlaying = false; IsDeath = false;
 
         if (s.ShowProgress || s.ShowMusicTime || s.ShowCheckpoint || s.ShowBest || Jongyeol != null)
@@ -938,7 +959,7 @@ public class Overlay
         _autoTextOriginalPos = null;
         if (GameObject == null || !GameObject.activeSelf) return;
         GameObject.SetActive(false);
-        if (GameObject.TryGetComponent<OverlayMono>(out var mono)) mono.enabled = false;
+        if (_mono) _mono.enabled = false;
         try
         {
             if (!AutoOnceEnabled && _lastSavedStartProgress != -1)

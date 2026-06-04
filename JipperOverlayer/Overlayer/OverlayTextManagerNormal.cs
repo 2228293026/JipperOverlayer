@@ -1,9 +1,11 @@
 using System;
+using System.Text;
 
 namespace JipperOverlayer.Overlayer;
 
 public class OverlayTextManagerNormal : IOverlayTextManager
 {
+    private static readonly StringBuilder _sb = new(128);
     public float Progress;
     public int CurCheck;
     public int LastCheckpoint = -1;
@@ -26,12 +28,24 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         {
             float acc = VersionSafe.GetPercentAcc();
             float maxAcc = 1 + (scrController.instance.currentSeqID - overlay.NoCheckStartTile + 1) * 0.0001f;
-            overlay.AccuracyText.text = $"<color=white>{labels.Accuracy} |</color> {Math.Round(acc * 100, DecimalPrecision)}%";
+            _sb.Clear();
+            _sb.Append("<color=white>");
+            _sb.Append(labels.Accuracy);
+            _sb.Append(" |</color> ");
+            _sb.Append(Math.Round(acc * 100, DecimalPrecision));
+            _sb.Append('%');
+            overlay.AccuracyText.SetText(_sb);
             overlay.AccuracyText.color = Main.Settings.Colors.GetAccuracyColor(xacc == 1 ? 1 : acc / maxAcc, xacc == 1);
         }
         if (Main.Settings.ShowXAccuracy)
         {
-            overlay.XAccuracyText.text = $"<color=white>{labels.XAccuracy} |</color> {Math.Round(xacc * 100, DecimalPrecision)}%";
+            _sb.Clear();
+            _sb.Append("<color=white>");
+            _sb.Append(labels.XAccuracy);
+            _sb.Append(" |</color> ");
+            _sb.Append(Math.Round(xacc * 100, DecimalPrecision));
+            _sb.Append('%');
+            overlay.XAccuracyText.SetText(_sb);
             overlay.XAccuracyText.color = Main.Settings.Colors.GetAccuracyColor(xacc, xacc == 1);
         }
     }
@@ -46,7 +60,15 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {cur} / {last}{(cur == last ? "" : $" [-{last - cur}]")} ({Math.Round(Progress * 100, DecimalPrecision)}%)";
         }
         else
-            overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {Math.Round(Progress * 100, DecimalPrecision)}%";
+        {
+            _sb.Clear();
+            _sb.Append("<color=white>");
+            _sb.Append(labels.Progress);
+            _sb.Append(" |</color> ");
+            _sb.Append(Math.Round(Progress * 100, DecimalPrecision));
+            _sb.Append('%');
+            overlay.ProgressText.SetText(_sb);
+        }
         overlay.ProgressText.color = Main.Settings.Colors.GetProgressColor(Progress);
     }
 
@@ -67,7 +89,17 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             CurCheck++; updated = true;
         }
         if (LastCheckpoint == scrController.checkpointsUsed && !updated) return;
-        overlay.CheckpointText.text = $"<color=white>{Main.Settings.Labels.Checkpoint} |</color> {scrController.checkpointsUsed} ({CurCheck}/{overlay.Checkpoints.Length})";
+        _sb.Clear();
+        _sb.Append("<color=white>");
+        _sb.Append(Main.Settings.Labels.Checkpoint);
+        _sb.Append(" |</color> ");
+        _sb.Append(scrController.checkpointsUsed);
+        _sb.Append(" (");
+        _sb.Append(CurCheck);
+        _sb.Append('/');
+        _sb.Append(overlay.Checkpoints.Length);
+        _sb.Append(')');
+        overlay.CheckpointText.SetText(_sb);
         LastCheckpoint = scrController.checkpointsUsed;
     }
 
@@ -85,7 +117,13 @@ public class OverlayTextManagerNormal : IOverlayTextManager
     public void UpdateBestText(Overlay overlay)
     {
         float best = CurBest > Progress || overlay.AutoOnceEnabled ? CurBest : Progress;
-        overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, DecimalPrecision)}%";
+        _sb.Clear();
+        _sb.Append("<color=white>");
+        _sb.Append(Main.Settings.Labels.Best);
+        _sb.Append(" |</color> ");
+        _sb.Append(Math.Round(best * 100, DecimalPrecision));
+        _sb.Append('%');
+        overlay.BestText.SetText(_sb);
         overlay.BestText.color = Main.Settings.Colors.GetBestColor(best);
     }
 
@@ -101,7 +139,12 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         int[] hits = overlay.Hit;
         if (_lastDeath != (_deathCount = hits[8] + hits[9]))
         {
-            overlay.DeathText.text = $"<color=white>{s.Labels.Death} |</color> {_deathCount}";
+            _sb.Clear();
+            _sb.Append("<color=white>");
+            _sb.Append(s.Labels.Death);
+            _sb.Append(" |</color> ");
+            _sb.Append(_deathCount);
+            overlay.DeathText.SetText(_sb);
             _lastDeath = _deathCount;
         }
         float max = (scrController.instance.currentSeqID - overlay.StartTile) * 0.05f;
@@ -135,7 +178,12 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         }
         if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count) state += labels.StateSuffix;
         if (overlay.StartTile != 0) state += labels.StateMidStart;
-        overlay.StateText.text = $"<color=white>{labels.State} |</color> {state}";
+        _sb.Clear();
+        _sb.Append("<color=white>");
+        _sb.Append(labels.State);
+        _sb.Append(" |</color> ");
+        _sb.Append(state);
+        overlay.StateText.SetText(_sb);
     }
 
     public bool CheckPurePerfect(Overlay overlay)
