@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.1.1 — 2026.06.04
+
+### Features
+
+- **ComboLineReversed**: new toggle to swap the vertical order of the combo number and combo title label; animation anchor adapts to both orientations (3 Tr keys: EN/KO/CN)
+- **ShowAutoInXPerfect**: when XPerfect mode is active, optionally show the auto-tile perfect count in orange (`#FF8000`) after the `−Perfect` value
+
+### Refactors
+
+- **Jongyeol State/Death/PurePerfect via `IOverlayTextManager`**: moved all three Jongyeol-mode helper methods (`UpdateDeath`, `UpdateState`, `CheckPurePerfect`, `GetTooJudgement`) out of `JongyeolModule` and into `IOverlayTextManager`; both `OverlayTextManagerNormal` and `OverlayTextManagerCoop` now implement them, enabling full coop-aware Jongyeol display
+- **Coop Jongyeol Death/State**: `OverlayTextManagerCoop` now renders per-player death counts and state labels in each player's color, with `IsPurePerfect` checked independently per player
+- **`_mono` field cache**: `OverlayMono` component reference stored as `_mono` field at construction; replaces repeated `GetComponent<OverlayMono>()` calls in `UpdateCombo`, `Show()`, and `Hide()`
+- **Static `StringBuilder` pools**: `_judgementSb`, `_attemptSb`, `_bpmSb`, `_comboSb`, `_timingSb` declared as static fields; eliminates per-frame heap allocations across `BuildJudgementString`, `UpdateAttempts`, `BuildBpmText`, `UpdateCombo`, and `UpdateTimingScale`
+- **`UpdateTimingScale` early-exit**: value cached in `_lastTimingScale`; text rebuild skipped when scale changes less than 0.001%
+- **`OutExpoChange` lookup table**: combo animation easing replaced with a 31-entry pre-built float array (`_expTable`), removing `Math.Pow` calls per animation frame
+- **`OverlayMono.Update` guard**: added `!Overlay.GameObject.activeSelf` check to skip update loop when overlay is hidden
+
 ## v1.1.0 — 2026.06.02
 
 ### Features
