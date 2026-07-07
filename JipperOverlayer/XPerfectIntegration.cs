@@ -14,9 +14,9 @@ namespace JipperOverlayer
         public static int XPerfect => _getXPerfect?.Invoke() ?? 0;
         public static int MinusPerfect => _getMinusPerfect?.Invoke() ?? 0;
 
-        public static int GetPlayerXPerfect(int player) => _getPlayerXPerfect?.Invoke(player) ?? (_getXPerfect?.Invoke() ?? 0);
-        public static int GetPlayerPlusPerfect(int player) => _getPlayerPlusPerfect?.Invoke(player) ?? (_getPlusPerfect?.Invoke() ?? 0);
-        public static int GetPlayerMinusPerfect(int player) => _getPlayerMinusPerfect?.Invoke(player) ?? (_getMinusPerfect?.Invoke() ?? 0);
+        public static int GetPlayerXPerfect(int player) => _getPlayerXPerfect?.Invoke(player) ?? 0;
+        public static int GetPlayerPlusPerfect(int player) => _getPlayerPlusPerfect?.Invoke(player) ?? 0;
+        public static int GetPlayerMinusPerfect(int player) => _getPlayerMinusPerfect?.Invoke(player) ?? 0;
 
         public static (int plus, int x, int minus) GetPlayer(int player) =>
             (GetPlayerPlusPerfect(player), GetPlayerXPerfect(player), GetPlayerMinusPerfect(player));
@@ -65,6 +65,13 @@ namespace JipperOverlayer
                     _getPlayerXPerfect = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), mPlayerX);
                     _getPlayerPlusPerfect = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), mPlayerPlus);
                     _getPlayerMinusPerfect = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), mPlayerMinus);
+                }
+                else
+                {
+                    // v136 XPerfect 没有 per-player 方法，回退到主值
+                    _getPlayerXPerfect = _ => XPerfect;
+                    _getPlayerPlusPerfect = _ => PlusPerfect;
+                    _getPlayerMinusPerfect = _ => MinusPerfect;
                 }
 
                 IsAvailable = true;

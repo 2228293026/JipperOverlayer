@@ -63,6 +63,15 @@ public class ColorCache {
         if (Math.Abs(bs - b) > 0.001f) { b = bs; changed = true; bString = null; }
         GUILayout.EndHorizontal();
 
+        // A
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("A", GUILayout.Width(14));
+        string na = GUILayout.TextField(aString, GUILayout.Width(45));
+        if (na != aString) { aString = na; if (float.TryParse(na, out float av) && Math.Abs(av - a) > 0.001f) { a = Mathf.Clamp01(av); changed = true; aString = null; } }
+        float a_s = GUILayout.HorizontalSlider(a, 0, 1);
+        if (Math.Abs(a_s - a) > 0.001f) { a = a_s; changed = true; aString = null; }
+        GUILayout.EndHorizontal();
+
         // Color preview (solid color using DrawTexture)
         GUILayout.Space(2);
         GUILayout.BeginHorizontal();
