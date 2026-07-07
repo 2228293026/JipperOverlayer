@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -784,10 +785,10 @@ public class Settings : UnityModManager.ModSettings
     }
 
     public void OnSaveGUI(UnityModManager.ModEntry modEntry) { Save(modEntry); Colors?.Save(modEntry); Labels?.Save(modEntry); }
-    public override void Save(UnityModManager.ModEntry modEntry) { UnityModManagerNet.UnityModManager.ModSettings.Save<Settings>(this, modEntry); }
+    public override void Save(UnityModManager.ModEntry modEntry) { SaveJson(modEntry); }
     public static Settings Load(UnityModManager.ModEntry modEntry)
     {
-        var s = UnityModManagerNet.UnityModManager.ModSettings.Load<Settings>(modEntry);
+        var s = LoadJson(modEntry) ?? LoadXmlFallback(modEntry);
         if (s.ConfigVersion < 2)
         {
             float Sw = 1920, Sh = 1080;
@@ -824,6 +825,76 @@ public class Settings : UnityModManager.ModSettings
             s.BpmLineVisibility = [true, true, true];
         if (s.AttemptLineOrder == null || s.AttemptLineOrder.Length == 0)
             s.AttemptLineOrder = [0, 1];
+        return s;
+    }
+
+    // ===== JSON 持久化（替代 UMM 默认 XML） =====
+
+    private static string SettingsPath(UnityModManager.ModEntry entry) =>
+        Path.Combine(entry.Path, "Settings.json");
+
+    private static string OldXmlPath(UnityModManager.ModEntry entry) =>
+        Path.Combine(entry.Path, "Settings.xml");
+
+    private void SaveJson(UnityModManager.ModEntry entry)
+    {
+        try
+        {
+            var json = JsonConvert.SerializeObject(this, Formatting.Indented);
+            File.WriteAllText(SettingsPath(entry), json);
+        }
+        catch (Exception e)
+        {
+            Main.Mod?.Logger.Warning($"Failed to save Settings.json: {e.Message}");
+        }
+    }
+
+    private static Settings LoadJson(UnityModManager.ModEntry entry)
+    {
+        try
+        {
+            var path = SettingsPath(entry);
+            if (!File.Exists(path)) return null;
+            var json = File.ReadAllText(path);
+            return JsonConvert.DeserializeObject<Settings>(json);
+        }
+        catch (Exception e)
+        {
+            Main.Mod?.Logger.Warning($"Failed to load Settings.json: {e.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>从旧的 UMM XML 加载，迁移后删除 XML 文件。</summary>
+    private static Settings LoadXmlFallback(UnityModManager.ModEntry entry)
+    {
+        var path = OldXmlPath(entry);
+        if (!File.Exists(path)) return new Settings();
+
+        Settings s;
+        try
+        {
+            s = UnityModManagerNet.UnityModManager.ModSettings.Load<Settings>(entry);
+            Main.Mod?.Logger.Log("Settings: migrated from XML to JSON");
+        }
+        catch (Exception e)
+        {
+            Main.Mod?.Logger.Warning($"Failed to load Settings.xml: {e.Message}");
+            return new Settings();
+        }
+
+        // 立即写回 JSON 并删除旧 XML
+        try
+        {
+            var json = JsonConvert.SerializeObject(s, Formatting.Indented);
+            File.WriteAllText(SettingsPath(entry), json);
+            File.Delete(path);
+        }
+        catch (Exception e)
+        {
+            Main.Mod?.Logger.Warning($"Settings migration write failed: {e.Message}");
+        }
+
         return s;
     }
 }
