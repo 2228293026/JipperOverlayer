@@ -659,7 +659,7 @@ public class Overlay
                 string hex = VersionSafe.GetPlayerColorHex(p);
                 string prefix = $"<color=#{hex}>P{p + 1}</color> ";
                 string suffix = $" <color=#{hex}>P{p + 1}</color>";
-                JudgementTexts[p].text = BuildJudgementString(h, useXPerfect, prefix, suffix);
+                JudgementTexts[p].text = BuildJudgementString(h, useXPerfect, prefix, suffix, p);
             }
         }
         else
@@ -668,7 +668,7 @@ public class Overlay
         }
     }
 
-    private string BuildJudgementString(int[] h, bool useXPerfect, string prefix = "", string suffix = "")
+    private string BuildJudgementString(int[] h, bool useXPerfect, string prefix = "", string suffix = "", int player = 0)
     {
         _judgementSb.Clear();
         _judgementSb.Append(prefix);
@@ -679,9 +679,9 @@ public class Overlay
         }
         else
         {
-            int plus = XPerfectIntegration.PlusPerfect;
-            int x = XPerfectIntegration.XPerfect;
-            int minus = XPerfectIntegration.MinusPerfect;
+            int plus = XPerfectIntegration.GetPlayerPlusPerfect(player);
+            int x = XPerfectIntegration.GetPlayerXPerfect(player);
+            int minus = XPerfectIntegration.GetPlayerMinusPerfect(player);
 
             // 完全复用原版的嵌套颜色结构，仅替换绿色数字为 + X -
             _judgementSb.Append(h[9]);                          // FailOverload (默认紫色)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using UnityModManagerNet;
 
@@ -7,20 +7,28 @@ namespace JipperOverlayer
     public static class XPerfectIntegration
     {
         private static Func<int> _getXPerfect, _getPlusPerfect, _getMinusPerfect;
+        private static Func<int, int> _getPlayerXPerfect, _getPlayerPlusPerfect, _getPlayerMinusPerfect;
         public static bool IsAvailable { get; private set; }
 
         public static int PlusPerfect => _getPlusPerfect?.Invoke() ?? 0;
         public static int XPerfect => _getXPerfect?.Invoke() ?? 0;
         public static int MinusPerfect => _getMinusPerfect?.Invoke() ?? 0;
 
+        public static int GetPlayerXPerfect(int player) => _getPlayerXPerfect?.Invoke(player) ?? 0;
+        public static int GetPlayerPlusPerfect(int player) => _getPlayerPlusPerfect?.Invoke(player) ?? 0;
+        public static int GetPlayerMinusPerfect(int player) => _getPlayerMinusPerfect?.Invoke(player) ?? 0;
+
+        public static (int plus, int x, int minus) GetPlayer(int player) =>
+            (GetPlayerPlusPerfect(player), GetPlayerXPerfect(player), GetPlayerMinusPerfect(player));
+
         private static bool _subscribedToToggle;
 
         /// <summary>懒加载：在需要时调用（如 UpdateJudgement 或 OnUpdate）</summary>
         public static void EnsureInitialized()
         {
-            if (IsAvailable) return;            // 已就绪，无需操作
-            TryCache();                         // 尝试缓存委托
-            SubscribeToToggle();                // 尝试订阅事件
+            if (IsAvailable) return;
+            TryCache();
+            SubscribeToToggle();
         }
 
         private static void TryCache()
@@ -48,6 +56,17 @@ namespace JipperOverlayer
                 _getPlusPerfect = (Func<int>)Delegate.CreateDelegate(typeof(Func<int>), plusProp.GetGetMethod());
                 _getMinusPerfect = (Func<int>)Delegate.CreateDelegate(typeof(Func<int>), minusProp.GetGetMethod());
 
+                // Per-player methods (nullable — optional for single-player only overlays)
+                var mPlayerX = type.GetMethod("GetPlayerXPerfectCount", BindingFlags.Public | BindingFlags.Static);
+                var mPlayerPlus = type.GetMethod("GetPlayerPlusPerfectCount", BindingFlags.Public | BindingFlags.Static);
+                var mPlayerMinus = type.GetMethod("GetPlayerMinusPerfectCount", BindingFlags.Public | BindingFlags.Static);
+                if (mPlayerX != null && mPlayerPlus != null && mPlayerMinus != null)
+                {
+                    _getPlayerXPerfect = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), mPlayerX);
+                    _getPlayerPlusPerfect = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), mPlayerPlus);
+                    _getPlayerMinusPerfect = (Func<int, int>)Delegate.CreateDelegate(typeof(Func<int, int>), mPlayerMinus);
+                }
+
                 IsAvailable = true;
                 Main.Mod.Logger.Log("[XPerfectIntegration] Integration ready.");
             }
@@ -70,8 +89,8 @@ namespace JipperOverlayer
         {
             if (enabled)
             {
-                TryCache();                     // 重新尝试缓存
-                if (!IsAvailable)               // 缓存失败 → 重置订阅标记，允许下次重试
+                TryCache();
+                if (!IsAvailable)
                     _subscribedToToggle = false;
             }
             else
@@ -80,10 +99,11 @@ namespace JipperOverlayer
                 {
                     IsAvailable = false;
                     _getXPerfect = _getPlusPerfect = _getMinusPerfect = null;
+                    _getPlayerXPerfect = _getPlayerPlusPerfect = _getPlayerMinusPerfect = null;
                     Main.Mod.Logger.Log("[XPerfectIntegration] XPerfect disabled.");
                     Overlayer.Overlay.Instance?.UpdateJudgement();
                 }
-                _subscribedToToggle = false;    // 重置订阅，下次可以重新绑定
+                _subscribedToToggle = false;
             }
             return true;
         }

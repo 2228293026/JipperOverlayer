@@ -46,7 +46,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             _sb.Append(Math.Round(xacc * 100, DecimalPrecision));
             _sb.Append('%');
             overlay.XAccuracyText.SetText(_sb);
-            overlay.XAccuracyText.color = Main.Settings.Colors.GetAccuracyColor(xacc, xacc == 1);
+            overlay.XAccuracyText.color = Main.Settings.Colors.GetXAccuracyColor(xacc, xacc == 1);
         }
     }
 
