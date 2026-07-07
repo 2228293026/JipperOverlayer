@@ -18,6 +18,7 @@ public class JongyeolModule
     private int _pseudoFloor = -1;
     private float _lastCurKps = -1, _fpsTime, _timingsSum;
     private bool _perToCom;
+    private int _lastMusicTimeSec = -1;
     public int DecimalPrecision = 2;
 
     public JongyeolModule(Overlay overlay)
@@ -202,6 +203,8 @@ public class JongyeolModule
         if (!_overlay.GameObject.activeSelf || _overlay.IsDeath) return;
         bool requireMusicToMap = false;
         var s = Main.Settings;
+
+        // --- Music Time ---
         if (s.ShowMusicTime)
         {
             var song = scrConductor.instance.song;
@@ -210,15 +213,28 @@ public class JongyeolModule
             {
                 float time = song!.time;
                 float totalTime = song.clip?.length ?? 0;
-                if (time > 0) _overlay.SongPlaying = true;
-                else if (time == 0 && _overlay.SongPlaying) time = totalTime;
+
+                // Early exit: prevent per-frame access of song.time (which spams warnings when clip is null)
+                int curSec = (int)time;
+                if (_lastMusicTimeSec == curSec) return;
+                _lastMusicTimeSec = curSec;
+
                 bool hourNeed = totalTime >= 3600;
                 _overlay.MusicTimeCache ??= TimeFormatter.FormatWithDecimals(totalTime, hourNeed);
-                string timeStr = time == 0 && _overlay.SongPlaying ? _overlay.MusicTimeCache : TimeFormatter.FormatWithDecimals(time, hourNeed);
+
+                if (time > 0) _overlay.SongPlaying = true;
+                else if (time == 0 && _overlay.SongPlaying) time = totalTime;
+
+                string timeStr = time == 0 && _overlay.SongPlaying
+                    ? _overlay.MusicTimeCache
+                    : TimeFormatter.FormatWithDecimals(time, hourNeed);
+
                 _overlay.TimeText.text = $"{_overlay._musicTimeLabel} {timeStr}~{_overlay.MusicTimeCache}";
                 _overlay.TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
             }
         }
+
+        // --- Map Time (with music-time fallback when song has no clip) ---
         if (s.ShowMapTime || requireMusicToMap)
         {
             float time = (float)(scrConductor.instance.addoffset + scrConductor.instance.songposition_minusi);
@@ -281,6 +297,7 @@ public class JongyeolModule
     {
         _perToCom = false; _purePerfect = true; _pseudoFloor = -1;
         _timingsSum = 0;
+        _lastMusicTimeSec = -1;
         if (scrController.checkpointsUsed == 0) _overlay.ComboTitle.text = Main.Settings.Labels.ComboTitle;
     }
 
