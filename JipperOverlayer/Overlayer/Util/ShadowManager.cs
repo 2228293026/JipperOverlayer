@@ -7,7 +7,7 @@ namespace JipperOverlayer.Overlayer.Util;
 
 internal static class ShadowManager
 {
-    internal static readonly Shader ShaderRef = (Shader)typeof(ShaderUtilities).GetProperty("ShaderRef_MobileSDF", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null);
+    internal static readonly Shader ShaderRef = PatchManager.CreateStaticPropertyGetter<Shader>(typeof(ShaderUtilities), "ShaderRef_MobileSDF")();
 
     private static readonly Dictionary<TMP_FontAsset, Material> MaterialCache = new();
     private static System.Reflection.MemberInfo _cachedMaterialMember;

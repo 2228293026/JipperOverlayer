@@ -40,7 +40,7 @@ public static class VersionSafe
     private static bool DetectApiVersion()
     {
         try { return AccessTools.TypeByName("scrMarginTracker") != null
-                    && typeof(ADOBase).GetProperty("playerManager") != null; }
+                    && PatchManager.CreateStaticPropertyGetter<object>(typeof(ADOBase), "playerManager") != null; }
         catch { return false; }
     }
 
@@ -108,25 +108,48 @@ public static class VersionSafe
     {
         var mmType = typeof(scrMistakesManager);
 
-        var hitField = mmType.GetField("hitMarginsCount", BindingFlags.Public | BindingFlags.Static);
-        _getHitMarginsCount = () => (int[])(hitField?.GetValue(null)) ?? new int[11];
+        // Try zero-reflection IL getter; fall back to original GetValue lambda
+        {
+            var getter = TryStaticFieldGetter<int[]>(mmType, "hitMarginsCount");
+            _getHitMarginsCount = getter ?? (() => new int[11]);
+        }
 
-        var speedField = typeof(scrController).GetField("speed", BindingFlags.Public | BindingFlags.Instance);
-        _getPlanetSpeed = ctrl => { var v = speedField?.GetValue(ctrl); return v is double d ? d : v is float f ? f : 1.0; };
+        // Instance field: cached FieldInfo (field type varies by version)
+        var speedField = TryFieldInfo(typeof(scrController), "speed");
+        _getPlanetSpeed = ctrl =>
+        {
+            if (speedField == null) return 1.0;
+            var v = speedField.GetValue(ctrl);
+            return v is double d ? d : v is float f ? f : 1.0;
+        };
 
-        // Resolve mistakesManager via FieldInfo.GetValue
-        var mmField = typeof(scrController).GetField("mistakesManager", BindingFlags.Public | BindingFlags.Instance);
-        var instanceField = typeof(scrController).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
-        object GetMM() => mmField?.GetValue(instanceField?.GetValue(null));
+        // Resolve mistakesManager via cached FieldInfo + cached static getter
+        var mmField = TryFieldInfo(typeof(scrController), "mistakesManager");
+        var instanceGetter = TryStaticFieldGetter<scrController>(typeof(scrController), "_instance");
+        scrMistakesManager GetMM()
+        {
+            if (mmField == null || instanceGetter == null) return null;
+            var ctrl = instanceGetter();
+            return ctrl != null ? (scrMistakesManager)mmField.GetValue(ctrl) : null;
+        }
 
-        var calcAcc = mmType.GetMethod("CalculatePercentAcc", BindingFlags.Public | BindingFlags.Instance);
+        var calcAcc = TryMethodInfo(mmType, "CalculatePercentAcc");
         _calculatePercentAcc = () => calcAcc?.Invoke(GetMM(), null);
 
-        var accField = mmType.GetField("percentAcc", BindingFlags.Public | BindingFlags.Instance);
-        _getPercentAcc = () => (float?)(accField?.GetValue(GetMM())) ?? 1f;
+        // Instance fields on mistakesManager
+        var accField = TryFieldInfo(mmType, "percentAcc");
+        _getPercentAcc = () =>
+        {
+            var mm = GetMM();
+            return mm != null && accField != null ? (float)accField.GetValue(mm) : 1f;
+        };
 
-        var xAccField = mmType.GetField("percentXAcc", BindingFlags.Public | BindingFlags.Instance);
-        _getPercentXAcc = () => (float?)(xAccField?.GetValue(GetMM())) ?? 1f;
+        var xAccField = TryFieldInfo(mmType, "percentXAcc");
+        _getPercentXAcc = () =>
+        {
+            var mm = GetMM();
+            return mm != null && xAccField != null ? (float)xAccField.GetValue(mm) : 1f;
+        };
 
         _isCoopMode = () => false;
         _getHideWithNoAuto = _ => true;
@@ -134,6 +157,25 @@ public static class VersionSafe
         _getPlayerIndex = _ => 0;
         _getHitMarginsCountForPlayer = (_) => GetHitMarginsCount();
         _getPlayerColorHex = (_) => "";
+    }
+
+    // ===== Safe wrappers — return null on miss instead of throwing =====
+    private static Func<TField> TryStaticFieldGetter<TField>(Type type, string name)
+    {
+        try { return PatchManager.CreateStaticFieldGetter<TField>(type, name); }
+        catch (Exception e) { Main.Mod.Logger.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
+    }
+
+    private static FieldInfo TryFieldInfo(Type type, string name)
+    {
+        try { return PatchManager.GetFieldInfo(type, name); }
+        catch (Exception e) { Main.Mod.Logger.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
+    }
+
+    private static MethodInfo TryMethodInfo(Type type, string name)
+    {
+        try { return PatchManager.GetMethodInfo(type, name); }
+        catch (Exception e) { Main.Mod.Logger.Warning($"VersionSafe: 方法 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
     }
 
     // ========== Public API ==========
