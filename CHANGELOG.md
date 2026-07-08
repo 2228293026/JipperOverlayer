@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.1.2 — 2026.07.08
+
+### Features
+
+- **Alpha slider in color editor**: RGBA four-slider layout replaces the previous RGB-only UI; hex input already supported 8-char alpha values
+
+### Bug Fixes
+
+- **Jongyeol `song.time` log spam**: added `_lastMusicTimeSec` guard to `UpdateTime()`, preventing per-frame `AudioSource.time` access when `song.clip` is null (r142+ levels without standard audio clips); log no longer flooded with Unity warnings
+- **v136 XPerfect per-player fallback**: when XPerfect doesn't provide `GetPlayerXPerfectCount` methods (v136), per-player getters now redirect to main static values instead of always returning 0
+- **DetectApiVersion static property binding**: fixed `CreatePropertyGetter<T, F>` → `CreateStaticPropertyGetter<TField>` for `ADOBase.playerManager` (was throwing on r14x, causing version detection to fall back to v136 path and breaking judgement/XAccuracy display)
+
+### Refactors
+
+- **PatchManager thread safety**: added `lock (_lock)` to all public methods; `List<Type>` → `HashSet<Type>` for O(1) `Contains` lookups
+- **Cached reflection utilities**: added 9 helper methods (`GetMethodInfo`, `GetFieldInfo`, `CreateFieldRef`, `CreatePropertyGetter/Setter`, `CreateStaticFieldGetter/Setter`, `CreateStaticPropertyGetter/Setter`) with dictionary caching; used by `VersionSafe` v136 path and `ShadowManager`
+- **VersionSafe v136 bindings**: replaced bare `GetField`/`GetValue` reflection with PatchManager cached variants; missing fields now log a warning before falling back to defaults
+- **Settings JSON migration**: replaced UMM default XML serialization with `Newtonsoft.Json`; existing `Settings.xml` auto-migrates to `Settings.json` on first load, then deletes the old XML file
+
 ## v1.1.1 — 2026.06.04
 
 ### Features
