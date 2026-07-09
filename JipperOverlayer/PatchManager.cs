@@ -4,12 +4,14 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using UnityEngine;
 
 namespace JipperOverlayer;
 
 internal static class PatchManager
 {
     private static Harmony _harmony;
+    private static string _harmonyId;
     private static readonly Dictionary<string, object> _delegateCache = new();
     private static readonly Dictionary<string, MethodInfo> _methodCache = new();
     private static readonly Dictionary<string, FieldInfo> _fieldCache = new();
@@ -23,6 +25,7 @@ internal static class PatchManager
         lock (_lock)
         {
             _harmony = harmony;
+            _harmonyId = harmony.Id;
             _registeredPatches.Clear();
             _appliedPatches.Clear();
             _delegateCache.Clear();
@@ -54,7 +57,7 @@ internal static class PatchManager
             _harmony.Patch(targetMethod, postfix: new HarmonyMethod(postfixMethod));
             _appliedManualPatches.Add(targetMethod);
         }
-        Main.Mod.Logger.Log($"Applied manual patch: {targetMethod.DeclaringType.Name}.{targetMethod.Name} -> {postfixMethod.Name}");
+        Debug.Log($"Applied manual patch: {targetMethod.DeclaringType.Name}.{targetMethod.Name} -> {postfixMethod.Name}");
     }
 
     public static void ApplyAll()
@@ -73,7 +76,7 @@ internal static class PatchManager
                 }
                 catch (Exception e)
                 {
-                    Main.Mod.Logger.Warning($"Failed to apply patch {registration.PatchType.Name}: {e.Message}");
+                    Debug.LogWarning($"Failed to apply patch {registration.PatchType.Name}: {e.Message}");
                 }
             }
         }
@@ -97,7 +100,7 @@ internal static class PatchManager
                     }
                     catch (Exception e)
                     {
-                        Main.Mod.Logger.Warning($"Failed to apply patch {registration.PatchType.Name}: {e.Message}");
+                        Debug.LogWarning($"Failed to apply patch {registration.PatchType.Name}: {e.Message}");
                     }
                 }
                 else if (!shouldBeEnabled && isApplied)
@@ -109,7 +112,7 @@ internal static class PatchManager
                     }
                     catch (Exception e)
                     {
-                        Main.Mod.Logger.Warning($"Failed to unpatch {registration.PatchType.Name}: {e.Message}");
+                        Debug.LogWarning($"Failed to unpatch {registration.PatchType.Name}: {e.Message}");
                     }
                 }
             }
@@ -120,7 +123,7 @@ internal static class PatchManager
     {
         lock (_lock)
         {
-            _harmony?.UnpatchAll(Main.Mod.Info.Id);
+            _harmony?.UnpatchAll(_harmonyId);
             _appliedPatches.Clear();
             _appliedManualPatches.Clear();
         }
