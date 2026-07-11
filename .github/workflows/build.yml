@@ -61,6 +61,7 @@ jobs:
         with:
           name: JipperOverlayer
           path: ./build
+          merge-multiple: true
 
       - name: Prepare UMM mod package
         run: |
