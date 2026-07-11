@@ -4,8 +4,8 @@
   "Author": "HitMargin",
   "Version": "1.1.2",
   "Requirements": [],
-  "AssemblyName": "JipperOverlayer.dll",
-  "EntryMethod": "JipperOverlayer.Main.Load",
+  "AssemblyName": "JipperOverlayer.Loader.UMM.dll",
+  "EntryMethod": "JipperOverlayer.Loader.UmmEntry.Load",
   "HomePage": "https://github.com/2228293026/JipperOverlayer",
   "Repository": "https://raw.githubusercontent.com/2228293026/JipperOverlayer/refs/heads/master/Repository.json"
 }

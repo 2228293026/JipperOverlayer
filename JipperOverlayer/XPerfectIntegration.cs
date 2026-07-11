@@ -75,11 +75,11 @@ namespace JipperOverlayer
                 }
 
                 IsAvailable = true;
-                Main.Mod.Logger.Log("[XPerfectIntegration] Integration ready.");
+                Loader.Log("[XPerfectIntegration] Integration ready.");
             }
             catch (Exception ex)
             {
-                Main.Mod.Logger.Log($"[XPerfectIntegration] Failed: {ex}");
+                Loader.Log($"[XPerfectIntegration] Failed: {ex}");
             }
         }
 
@@ -107,7 +107,7 @@ namespace JipperOverlayer
                     IsAvailable = false;
                     _getXPerfect = _getPlusPerfect = _getMinusPerfect = null;
                     _getPlayerXPerfect = _getPlayerPlusPerfect = _getPlayerMinusPerfect = null;
-                    Main.Mod.Logger.Log("[XPerfectIntegration] XPerfect disabled.");
+                    Loader.Log("[XPerfectIntegration] XPerfect disabled.");
                     Overlayer.Overlay.Instance?.UpdateJudgement();
                 }
                 _subscribedToToggle = false;

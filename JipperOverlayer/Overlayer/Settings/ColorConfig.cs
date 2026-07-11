@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityModManagerNet;
 
 namespace JipperOverlayer.Overlayer;
 
@@ -57,10 +56,10 @@ public class ColorConfig
     public Color GetProgressBarBackgroundColor(float t) { return ProgressBarBackground.GetColor(t); }
     public Color GetProgressBarBorderColor(float t) { return ProgressBarBorder.GetColor(t); }
 
-    public void Save(UnityModManager.ModEntry entry)
+    public void Save()
     {
-        try { File.WriteAllText(Path.Combine(entry.Path, "colors.json"), JsonConvert.SerializeObject(this, Formatting.Indented)); }
-        catch (Exception e) { Main.Mod?.Logger.Warning($"Save colors failed: {e.Message}"); }
+        try { File.WriteAllText(Path.Combine(Loader.ModPath, "colors.json"), JsonConvert.SerializeObject(this, Formatting.Indented)); }
+        catch (Exception e) { Loader.Warning($"Save colors failed: {e.Message}"); }
     }
 
     void EnsureDefaults()
@@ -78,17 +77,17 @@ public class ColorConfig
         if (JStart.a == 0) JStart = new(Color.white);
     }
 
-    public static ColorConfig Load(UnityModManager.ModEntry entry)
+    public static ColorConfig Load()
     {
         try {
-            string p = Path.Combine(entry.Path, "colors.json");
+            string p = Path.Combine(Loader.ModPath, "colors.json");
             if (File.Exists(p)) {
                 var jsonSettings = new JsonSerializerSettings { ObjectCreationHandling = ObjectCreationHandling.Replace };
                 var cc = JsonConvert.DeserializeObject<ColorConfig>(File.ReadAllText(p), jsonSettings);
                 if (cc != null) { cc.EnsureSorted(); cc.EnsureDefaults(); return cc; }
             }
         }
-        catch (Exception e) { Main.Mod?.Logger.Warning($"Load colors failed: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"Load colors failed: {e.Message}"); }
         return new ColorConfig();
     }
 }

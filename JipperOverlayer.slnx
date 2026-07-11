@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="JipperOverlayer/JipperOverlayer.csproj" Id="38aeb58b-a5de-44bf-ac1e-180b20543f5f" />
+  <Project Path="JipperOverlayer.Loader.UMM/JipperOverlayer.Loader.UMM.csproj" Id="B8A3C2D1-E5F4-4D3C-B2A1-9F8E7D6C5B4A" />
+  <Project Path="JipperOverlayer.Loader.Melon/JipperOverlayer.Loader.Melon.csproj" Id="C9B4D3E2-F6A5-4E4D-C3B2-A0A9F8E7D6C5" />
 </Solution>

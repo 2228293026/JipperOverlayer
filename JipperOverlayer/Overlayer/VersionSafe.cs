@@ -29,7 +29,7 @@ public static class VersionSafe
         IsInitialized = true;
 
         IsV141OrLater = DetectApiVersion();
-        Main.Mod.Logger.Log($"API version: {(IsV141OrLater ? "v141+" : "v136")}");
+        Loader.Log($"API version: {(IsV141OrLater ? "v141+" : "v136")}");
 
         if (IsV141OrLater)
             BindV141Delegates();
@@ -163,19 +163,19 @@ public static class VersionSafe
     private static Func<TField> TryStaticFieldGetter<TField>(Type type, string name)
     {
         try { return PatchManager.CreateStaticFieldGetter<TField>(type, name); }
-        catch (Exception e) { Main.Mod.Logger.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
+        catch (Exception e) { Loader.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
     }
 
     private static FieldInfo TryFieldInfo(Type type, string name)
     {
         try { return PatchManager.GetFieldInfo(type, name); }
-        catch (Exception e) { Main.Mod.Logger.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
+        catch (Exception e) { Loader.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
     }
 
     private static MethodInfo TryMethodInfo(Type type, string name)
     {
         try { return PatchManager.GetMethodInfo(type, name); }
-        catch (Exception e) { Main.Mod.Logger.Warning($"VersionSafe: 方法 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
+        catch (Exception e) { Loader.Warning($"VersionSafe: 方法 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
     }
 
     // ========== Public API ==========

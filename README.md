@@ -4,7 +4,7 @@
 [![Downloads](https://img.shields.io/github/downloads/2228293026/JipperOverlayer/total)](https://github.com/2228293026/JipperOverlayer/releases/latest)
 [![Build](https://github.com/2228293026/JipperOverlayer/actions/workflows/build.yml/badge.svg)](https://github.com/2228293026/JipperOverlayer/actions/workflows/build.yml)
 
-A Unity Mod Manager mod for **A Dance of Fire and Ice (ADOFAI)** that provides an in-game overlay with progress, accuracy, BPM, combo, judgement, and more.
+An in-game overlay mod for **A Dance of Fire and Ice (ADOFAI)** that displays progress, accuracy, BPM, combo, judgement, and more. Supports both **Unity Mod Manager** and **MelonLoader**.
 
 ## Features
 
@@ -28,27 +28,42 @@ A Unity Mod Manager mod for **A Dance of Fire and Ice (ADOFAI)** that provides a
 
 ## Installation
 
+### Unity Mod Manager
 1. Install [Unity Mod Manager (UMM)](https://www.nexusmods.com/site/mods/21)
-2. Download the latest release from [Releases](https://github.com/2228293026/JipperOverlayer/releases)
+2. Download the **UMM** variant from [Releases](https://github.com/2228293026/JipperOverlayer/releases)
 3. Install the mod via UMM, or extract the zip to `ADOFAI/Mods/JipperOverlayer/`
 
-### Manual Installation
+### MelonLoader
+1. Install [MelonLoader](https://melonwiki.xyz/)
+2. Download the **MelonLoader** variant from [Releases](https://github.com/2228293026/JipperOverlayer/releases)
+3. Extract to `ADOFAI/Mods/JipperOverlayer-melon/`
+4. Press **F7** in-game to open settings (rebindable)
 
+## Manual Installation
+
+### UMM variant
 ```
 ADOFAI/Mods/JipperOverlayer/
 ├── Info.json
 ├── JipperOverlayer.dll
-├── jipperoverlayerbundle
+├── JipperOverlayer.Loader.UMM.dll
 ├── jipperoverlayerbundle2022
 ├── jipperoverlayerbundle6000
-├── Linux/
-└── Mac/
+```
+
+### MelonLoader variant
+```
+ADOFAI/Mods/JipperOverlayer-melon/
+├── JipperOverlayer.dll
+├── JipperOverlayer.Loader.Melon.dll
+├── jipperoverlayerbundle2022
+├── jipperoverlayerbundle6000
 ```
 
 ## Requirements
 
 - A Dance of Fire and Ice (Steam version)
-- Unity Mod Manager 0.22.14+
+- One of: Unity Mod Manager 0.22.14+ **or** MelonLoader
 - Supports game versions v136 and v141+
 
 ## Build from Source
@@ -58,15 +73,24 @@ ADOFAI/Mods/JipperOverlayer/
 - Visual Studio 2022+ with .NET Framework 4.8.1 SDK
 - Steam installation of ADOFAI (for reference DLLs in `Libs/`)
 
-> **Note:** `Libs/` is `.gitignore`d. Run `cp -r "$ADOFAI/A Dance of Fire and Ice_Data/Managed/"* Libs/` to populate it from your game installation (requires one-time setup).
+> **Note:** `Libs/` is `.gitignore`d. Run `cp -r "$ADOFAI/A Dance of Fire and Ice_Data/Managed/"* Libs/` to populate it from your game installation (requires one-time setup). Additional dependencies (`UnityModManager.dll`, `MelonLoader.dll`) are pulled from [adofai-libs](https://github.com/2228293026/adofai-libs) in CI.
 
 ### Build
 
 ```bash
+# Solution (core + both loaders)
+msbuild -restore -p:Configuration=Release
+
+# Or individual projects
 msbuild JipperOverlayer/JipperOverlayer.csproj -restore -p:Configuration=Release
+msbuild JipperOverlayer.Loader.UMM/JipperOverlayer.Loader.UMM.csproj -restore -p:Configuration=Release
+msbuild JipperOverlayer.Loader.Melon/JipperOverlayer.Loader.Melon.csproj -restore -p:Configuration=Release
 ```
 
-The compiled DLL will be at `JipperOverlayer/bin/Release/JipperOverlayer.dll`.
+Compiled outputs:
+- `JipperOverlayer/bin/Release/JipperOverlayer.dll`
+- `JipperOverlayer.Loader.UMM/bin/Release/JipperOverlayer.Loader.UMM.dll`
+- `JipperOverlayer.Loader.Melon/bin/Release/JipperOverlayer.Loader.Melon.dll`
 
 ## CI/CD
 

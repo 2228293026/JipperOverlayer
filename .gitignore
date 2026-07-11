@@ -1,6 +1,10 @@
 # ===== Build outputs =====
 JipperOverlayer/bin/
 JipperOverlayer/obj/
+JipperOverlayer.Loader.UMM/bin/
+JipperOverlayer.Loader.UMM/obj/
+JipperOverlayer.Loader.Melon/bin/
+JipperOverlayer.Loader.Melon/obj/
 
 # ===== Game reference DLLs (not part of source) =====
 JipperOverlayer/2.9.8/

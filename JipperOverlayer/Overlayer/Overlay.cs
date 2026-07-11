@@ -585,7 +585,7 @@ public class Overlay
     public void UpdateProgressBar()
     {
         try { if (ProgressBar?.LineTransform != null) OverlayTextManager?.UpdateProgressBar(this); }
-        catch (Exception e) { Main.Mod.Logger.Warning($"ProgressBar: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"ProgressBar: {e.Message}"); }
     }
 
     public void UpdateCheckPointText()
@@ -978,7 +978,7 @@ public class Overlay
             if (StartProgress == OverlayTextManager.GetProgress() && !AutoOnceEnabled)
                 PlayCount.RemoveAttempts(LastHash, StartProgress);
         }
-        catch (Exception e) { Main.Mod.Logger.Warning($"Hide: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"Hide: {e.Message}"); }
         PlayCount.Save();
         StartProgress = StartTile = NoCheckStartTile = -1;
         OverlayTextManager = null;

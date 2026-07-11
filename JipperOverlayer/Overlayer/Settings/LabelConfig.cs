@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Newtonsoft.Json;
-using UnityModManagerNet;
 using JipperOverlayer.Overlayer.Localization;
 
 namespace JipperOverlayer.Overlayer;
@@ -45,21 +44,21 @@ public class LabelConfig
     public string StateSuffix = " (playing)";
     public string StateMidStart = " (mid start)";
 
-    public void Save(UnityModManager.ModEntry entry)
+    public void Save()
     {
-        try { File.WriteAllText(Path.Combine(entry.Path, "labels.json"), JsonConvert.SerializeObject(this, Formatting.Indented)); }
-        catch (Exception e) { Main.Mod?.Logger.Warning($"Save labels failed: {e.Message}"); }
+        try { File.WriteAllText(Path.Combine(Loader.ModPath, "labels.json"), JsonConvert.SerializeObject(this, Formatting.Indented)); }
+        catch (Exception e) { Loader.Warning($"Save labels failed: {e.Message}"); }
     }
 
-    public static LabelConfig Load(UnityModManager.ModEntry entry)
+    public static LabelConfig Load()
     {
         try {
-            string p = Path.Combine(entry.Path, "labels.json");
+            string p = Path.Combine(Loader.ModPath, "labels.json");
             if (File.Exists(p)) {
                 return JsonConvert.DeserializeObject<LabelConfig>(File.ReadAllText(p)) ?? new LabelConfig();
             }
         }
-        catch (Exception e) { Main.Mod?.Logger.Warning($"Load labels failed: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"Load labels failed: {e.Message}"); }
         return new LabelConfig();
     }
 

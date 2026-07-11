@@ -10,7 +10,7 @@ namespace JipperOverlayer.Overlayer;
 public class PlayCount
 {
     public static Dictionary<Hash, PlayData> Datas;
-    private static string FilePath => Path.Combine(Main.Mod.Path, "Plays.dat");
+    private static string FilePath => Path.Combine(Loader.ModPath, "Plays.dat");
     private static readonly MD5 Md5 = MD5.Create();
 
     public static float Multiplier => (float)(ADOBase.conductor?.song?.pitch ?? 1.0);
@@ -22,12 +22,12 @@ public class PlayCount
         if (File.Exists(path))
         {
             try { LoadFile(path); return; }
-            catch (Exception e) { Main.Mod.Logger.Warning($"Error loading play data: {e.Message}"); Datas.Clear(); }
+            catch (Exception e) { Loader.Warning($"Error loading play data: {e.Message}"); Datas.Clear(); }
         }
         path += ".bak";
         if (!File.Exists(path)) return;
         try { LoadFile(path); }
-        catch (Exception e) { Main.Mod.Logger.Warning($"Error loading backup: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"Error loading backup: {e.Message}"); }
     }
 
     private static void LoadFile(string path)
@@ -57,7 +57,7 @@ public class PlayCount
         try
         {
             string path = FilePath;
-            if (Datas == null) { Main.Mod.Logger.Warning("Save skipped: Datas is null"); return; }
+            if (Datas == null) { Loader.Warning("Save skipped: Datas is null"); return; }
             string tmpPath = path + ".tmp";
             using (FileStream fs = new(tmpPath, FileMode.Create))
             using (MemoryStream ms = new())
@@ -79,7 +79,7 @@ public class PlayCount
             File.Delete(path);
             File.Move(tmpPath, path);
         }
-        catch (Exception e) { Main.Mod.Logger.Warning($"Error saving play data: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"Error saving play data: {e.Message}"); }
     }
 
     public static PlayData GetData(Hash hash)

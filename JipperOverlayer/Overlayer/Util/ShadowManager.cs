@@ -29,7 +29,7 @@ internal static class ShadowManager
                 var fontMat = GetFontMaterial(font);
                 if (fontMat == null)
                 {
-                    Main.Mod.Logger.Warning($"Shadow: Cannot get material from font '{font.name}', skipping");
+                    Loader.Warning($"Shadow: Cannot get material from font '{font.name}', skipping");
                     return;
                 }
                 mat = new Material(fontMat);
@@ -47,7 +47,7 @@ internal static class ShadowManager
             }
             text.fontSharedMaterial = mat;
         }
-        catch (Exception e) { Main.Mod.Logger.Warning($"Shadow error: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"Shadow error: {e.Message}"); }
     }
 
     private static Material GetFontMaterial(TMP_FontAsset font)
@@ -77,7 +77,7 @@ internal static class ShadowManager
             string foundBy = _cachedMaterialMember != null
                 ? $"{_cachedMaterialMember.MemberType} \"{_cachedMaterialMember.Name}\""
                 : "none";
-            Main.Mod.Logger.Log($"Overlay: Font material resolved via {foundBy}");
+            Loader.Log($"Overlay: Font material resolved via {foundBy}");
         }
         return result;
     }

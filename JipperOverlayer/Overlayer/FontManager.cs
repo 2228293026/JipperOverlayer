@@ -44,13 +44,13 @@ public static class FontManager
         // 3. Custom fonts from CustomFonts directory
         try
         {
-            string customDir = Path.Combine(Main.Mod.Path, "CustomFonts");
+            string customDir = Path.Combine(Loader.ModPath, "CustomFonts");
             if (!Directory.Exists(customDir))
                 Directory.CreateDirectory(customDir);
             ScanCustomDir(customDir, "*.ttf");
             ScanCustomDir(customDir, "*.otf");
         }
-        catch (Exception e) { Main.Mod.Logger.Warning($"CustomFonts: {e.Message}"); }
+        catch (Exception e) { Loader.Warning($"CustomFonts: {e.Message}"); }
 
         FontNames = new string[FontList.Count];
         for (int i = 0; i < FontList.Count; i++)
@@ -78,7 +78,7 @@ public static class FontManager
             }
         }
 
-        Main.Mod.Logger.Log($"FontManager: {FontList.Count} fonts");
+        Loader.Log($"FontManager: {FontList.Count} fonts");
     }
 
     static void ScanCustomDir(string dir, string pattern)
@@ -95,7 +95,7 @@ public static class FontManager
                     if (e.name.Equals(entryName, StringComparison.OrdinalIgnoreCase)) { exists = true; break; }
                 if (exists)
                 {
-                    Main.Mod.Logger.Log($"FontManager: Custom font '{fileName}' already loaded, skipping");
+                    Loader.Log($"FontManager: Custom font '{fileName}' already loaded, skipping");
                     continue;
                 }
 
@@ -104,14 +104,14 @@ public static class FontManager
                 if (tmpFont != null)
                 {
                     FontList.Add(new FontEntry { name = entryName, font = tmpFont, sourceFontName = fileName });
-                    Main.Mod.Logger.Log($"FontManager: Loaded custom font '{fileName}'");
+                    Loader.Log($"FontManager: Loaded custom font '{fileName}'");
                 }
                 else
                 {
-                    Main.Mod.Logger.Warning($"FontManager: Failed to create TMP_FontAsset from '{fileName}'");
+                    Loader.Warning($"FontManager: Failed to create TMP_FontAsset from '{fileName}'");
                 }
             }
-            catch (Exception e) { Main.Mod.Logger.Warning($"FontManager: Skip {Path.GetFileName(file)}: {e.Message}"); }
+            catch (Exception e) { Loader.Warning($"FontManager: Skip {Path.GetFileName(file)}: {e.Message}"); }
         }
     }
 

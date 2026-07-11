@@ -11,6 +11,8 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PROJECT_PATH: JipperOverlayer/JipperOverlayer.csproj
+  UMM_PROJECT_PATH: JipperOverlayer.Loader.UMM/JipperOverlayer.Loader.UMM.csproj
+  MELON_PROJECT_PATH: JipperOverlayer.Loader.Melon/JipperOverlayer.Loader.Melon.csproj
 
 jobs:
   build:
@@ -29,13 +31,15 @@ jobs:
         uses: microsoft/setup-msbuild@v3
 
       - name: Build (Release)
-        run: msbuild $env:PROJECT_PATH -restore -p:Configuration=Release
+        run: |
+          msbuild ${{ env.PROJECT_PATH }} -restore -p:Configuration=Release
+          msbuild ${{ env.UMM_PROJECT_PATH }} -restore -p:Configuration=Release
+          msbuild ${{ env.MELON_PROJECT_PATH }} -restore -p:Configuration=Release
 
-      - name: Upload DLL
-        uses: actions/upload-artifact@v7
-        with:
-          name: JipperOverlayer
-          path: JipperOverlayer/bin/Release/JipperOverlayer.dll
+    outputs:
+      core: JipperOverlayer/bin/Release/JipperOverlayer.dll
+      umm_loader: JipperOverlayer.Loader.UMM/bin/Release/JipperOverlayer.Loader.UMM.dll
+      melon_loader: JipperOverlayer.Loader.Melon/bin/Release/JipperOverlayer.Loader.Melon.dll
 
   package:
     if: github.event_name != 'pull_request'
@@ -47,29 +51,41 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: JipperOverlayer
-          path: ./
+          path: ./build
 
-      - name: Prepare mod package
+      - name: Prepare UMM mod package
         run: |
-          mkdir -p output
+          mkdir -p output-umm
+          cp build/JipperOverlayer.dll output-umm/
+          cp build/JipperOverlayer.Loader.UMM.dll output-umm/
+          cp Info.json output-umm/
+          cp JipperOverlayer-Unity/Assets/AssetBundles2022/jipperoverlayerbundle output-umm/jipperoverlayerbundle2022
+          cp JipperOverlayer-Unity/Assets/AssetBundles6000/jipperoverlayerbundle output-umm/jipperoverlayerbundle6000
 
-          # Core mod files
-          cp JipperOverlayer.dll output/
-          cp Info.json output/
-
-          # Asset bundles (rename for runtime version detection)
-          cp JipperOverlayer-Unity/Assets/AssetBundles2022/jipperoverlayerbundle output/jipperoverlayerbundle2022
-          cp JipperOverlayer-Unity/Assets/AssetBundles6000/jipperoverlayerbundle output/jipperoverlayerbundle6000
-
-      - name: Create zip
+      - name: Prepare MelonLoader mod package
         run: |
-          cd output && zip -r ../JipperOverlayer.zip . && cd ..
+          mkdir -p output-melon
+          cp build/JipperOverlayer.dll output-melon/
+          cp build/JipperOverlayer.Loader.Melon.dll output-melon/
+          cp Info.json output-melon/
 
-      - name: Upload package artifact
+      - name: Create UMM zip
+        run: cd output-umm && zip -r ../JipperOverlayer-UMM.zip . && cd ..
+
+      - name: Create MelonLoader zip
+        run: cd output-melon && zip -r ../JipperOverlayer-Melon.zip . && cd ..
+
+      - name: Upload UMM package artifact
         uses: actions/upload-artifact@v7
         with:
-          name: JipperOverlayer-Package
-          path: JipperOverlayer.zip
+          name: JipperOverlayer-UMM
+          path: JipperOverlayer-UMM.zip
+
+      - name: Upload MelonLoader package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: JipperOverlayer-Melon
+          path: JipperOverlayer-Melon.zip
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -77,12 +93,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    strategy:
+      matrix:
+        variant: [UMM, Melon]
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/download-artifact@v8
         with:
-          name: JipperOverlayer-Package
+          name: JipperOverlayer-${{ matrix.variant }}
           path: ./
 
       - name: Extract release notes
@@ -104,7 +123,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
-          files: JipperOverlayer.zip
+          files: JipperOverlayer-${{ matrix.variant }}.zip
           prerelease: ${{ contains(github.ref, '-') }}
           body_path: relnotes.md
           generate_release_notes: true

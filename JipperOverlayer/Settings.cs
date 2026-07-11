@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityModManagerNet;
 using JipperOverlayer.Overlayer;
 using JipperOverlayer.Overlayer.Features;
 using JipperOverlayer.Overlayer.Localization;
 
 namespace JipperOverlayer;
 
-public class Settings : UnityModManager.ModSettings
+public class Settings
 {
     public bool ShowProgress = true, ShowAccuracy, ShowXAccuracy = true;
     public bool ShowMusicTime = true, ShowMapTime, ShowMapTimeIfNotMusic = true;
@@ -64,7 +64,7 @@ public class Settings : UnityModManager.ModSettings
     [JsonIgnore] public ColorConfig Colors;
     [JsonIgnore] public LabelConfig Labels;
 
-    public void OnGUI(UnityModManager.ModEntry modEntry)
+    public void OnGUI()
     {
         DrawGeneralSection();
         DrawDisplaySection();
@@ -153,26 +153,26 @@ public class Settings : UnityModManager.ModSettings
         {
             ShowProgress = Tog(Tr.Get(Tr.Key.ShowProgress), ShowProgress);
             if (ShowProgress) Colors.Progress.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.ProgressColor),
-                () => { Colors.Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
+                () => { Colors.Progress = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(); });
 
             ShowAccuracy = Tog(Tr.Get(Tr.Key.ShowAccuracy), ShowAccuracy);
             if (ShowAccuracy) Colors.Accuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.AccuracyColor),
-                () => { Colors.Accuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
+                () => { Colors.Accuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(); });
 
             ShowXAccuracy = Tog(Tr.Get(Tr.Key.ShowXAccuracy), ShowXAccuracy);
             if (ShowXAccuracy) Colors.XAccuracy.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateAccuracy()), Tr.Get(Tr.Key.XaccuracyColor),
-                () => { Colors.XAccuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
+                () => { Colors.XAccuracy = new([(0.98f, Color.magenta), (1f, Color.white)], new Color(1, 0.8549f, 0)); Colors.Save(); });
         });
 
         DrawDisplaySub("time", Tr.Get(Tr.Key.TimeSection), () =>
         {
             ShowMusicTime = Tog(Tr.Get(Tr.Key.ShowMusicTime), ShowMusicTime);
             if (ShowMusicTime) Colors.MusicTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MusicTimeColor),
-                () => { Colors.MusicTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
+                () => { Colors.MusicTime = new([(1f, Color.white)]); Colors.Save(); });
 
             ShowMapTime = Tog(Tr.Get(Tr.Key.ShowMapTime), ShowMapTime);
             if (ShowMapTime) Colors.MapTime.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.MapTimeColor),
-                () => { Colors.MapTime = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
+                () => { Colors.MapTime = new([(1f, Color.white)]); Colors.Save(); });
 
             ShowMapTimeIfNotMusic = Tog(Tr.Get(Tr.Key.ShowMapIfNo), ShowMapTimeIfNotMusic);
         });
@@ -182,17 +182,17 @@ public class Settings : UnityModManager.ModSettings
             ShowCheckpoint = Tog(Tr.Get(Tr.Key.ShowCheckpoint), ShowCheckpoint);
             ShowBest = Tog(Tr.Get(Tr.Key.ShowBest), ShowBest);
             if (ShowBest) Colors.Best.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.BestColor),
-                () => { Colors.Best = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(Main.Mod); });
+                () => { Colors.Best = new([(0f, Color.white), (1f, new Color(0.8745f, 0.7098f, 1f))]); Colors.Save(); });
 
             ShowProgressBar = Tog(Tr.Get(Tr.Key.ShowProgressBar), ShowProgressBar);
             if (ShowProgressBar)
             {
                 Colors.ProgressBar.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarColor),
-                    () => { Colors.ProgressBar = new([(1f, new Color(0.9216f, 0.8039f, 0.9765f))]); Colors.Save(Main.Mod); });
+                    () => { Colors.ProgressBar = new([(1f, new Color(0.9216f, 0.8039f, 0.9765f))]); Colors.Save(); });
                 Colors.ProgressBarBackground.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBgColor),
-                    () => { Colors.ProgressBarBackground = new([(1f, Color.white)]); Colors.Save(Main.Mod); });
+                    () => { Colors.ProgressBarBackground = new([(1f, Color.white)]); Colors.Save(); });
                 Colors.ProgressBarBorder.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateProgressBar()), Tr.Get(Tr.Key.ProgressBarBorderColor),
-                    () => { Colors.ProgressBarBorder = new([(1f, Color.black)]); Colors.Save(Main.Mod); });
+                    () => { Colors.ProgressBarBorder = new([(1f, Color.black)]); Colors.Save(); });
             }
         });
 
@@ -204,7 +204,7 @@ public class Settings : UnityModManager.ModSettings
                 EnableAutoCombo = Tog(Tr.Get(Tr.Key.EnableAutoCombo), EnableAutoCombo);
                 ComboColorMax = (int)Slide(Tr.Get(Tr.Key.ComboColorMax), ComboColorMax, 1, 5000, () => { });
                 Colors.Combo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.ComboColor),
-                    () => { Colors.Combo = new([(0f, new Color(0.8745f, 0.7098f, 1f)), (1f, new Color(0.7176f, 0.3490f, 1f))]); Colors.Save(Main.Mod); });
+                    () => { Colors.Combo = new([(0f, new Color(0.8745f, 0.7098f, 1f)), (1f, new Color(0.7176f, 0.3490f, 1f))]); Colors.Save(); });
                 bool prevReversed = ComboLineReversed;
                 ComboLineReversed = Tog(Tr.Get(Tr.Key.ComboLineReversed), ComboLineReversed);
                 if (prevReversed != ComboLineReversed) Overlayer.Overlay.Instance?.RefreshVisibility();
@@ -218,7 +218,7 @@ public class Settings : UnityModManager.ModSettings
             {
                 BpmColorMax = Slide(Tr.Get(Tr.Key.BpmColorMax), BpmColorMax, 100, 20000, () => { });
                 Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor),
-                    () => { Colors.Bpm = new([(0f, Color.white), (1f, Color.magenta)]); Colors.Save(Main.Mod); });
+                    () => { Colors.Bpm = new([(0f, Color.white), (1f, Color.magenta)]); Colors.Save(); });
                 DrawBpmLineOrder();
             }
         });
@@ -316,7 +316,7 @@ public class Settings : UnityModManager.ModSettings
             var newArr = list.ToArray();
             if (isJongyeol) JongyeolDisplayOrder = newArr;
             else GeneralDisplayOrder = newArr;
-            Save(Main.Mod);
+            Save();
             var o = Overlay.Instance;
             if (o != null) { o.SetupLocationMain(); o.RefreshVisibility(); }
         }
@@ -360,15 +360,15 @@ public class Settings : UnityModManager.ModSettings
         GUILayout.Label("─── " + Tr.Get(Tr.Key.BpmSection) + " " + Tr.Get(Tr.Key.DisplayOrder) + " ───");
         GUILayout.EndHorizontal();
         DrawReorderList(BpmLineOrder, id => id switch { 0 => Tr.Get(Tr.Key.BpmLineTile), 1 => Tr.Get(Tr.Key.BpmLineCur), _ => Tr.Get(Tr.Key.BpmLineKps) }, [0, 1, 2],
-            arr => { BpmLineOrder = arr; Save(Main.Mod); var o = Overlay.Instance; o?.DirtyBpmCache(); o?.UpdateBPM(); },
+            arr => { BpmLineOrder = arr; Save(); var o = Overlay.Instance; o?.DirtyBpmCache(); o?.UpdateBPM(); },
             id => id < BpmLineVisibility.Length && BpmLineVisibility[id],
-            (id, v) => { if (id < BpmLineVisibility.Length) { BpmLineVisibility[id] = v; Save(Main.Mod); var o = Overlay.Instance; o?.DirtyBpmCache(); o?.UpdateBPM(); } });
+            (id, v) => { if (id < BpmLineVisibility.Length) { BpmLineVisibility[id] = v; Save(); var o = Overlay.Instance; o?.DirtyBpmCache(); o?.UpdateBPM(); } });
     }
 
     void DrawAttemptLineOrder()
     {
         DrawReorderList(AttemptLineOrder, id => id == 0 ? Tr.Get(Tr.Key.AttemptLineAttempt) : Tr.Get(Tr.Key.AttemptLineFull), [0, 1],
-            arr => { AttemptLineOrder = arr; Save(Main.Mod); Overlay.Instance?.UpdateAttempts(); });
+            arr => { AttemptLineOrder = arr; Save(); Overlay.Instance?.UpdateAttempts(); });
     }
 
     void DrawReorderList(int[] order, Func<int, string> getName, int[] defaultOrder, Action<int[]> onSave,
@@ -478,42 +478,42 @@ public class Settings : UnityModManager.ModSettings
                 FPSRefreshRate = Slide(Tr.Get(Tr.Key.FPSRefreshRate), FPSRefreshRate, 0.05f, 1f, () => { });
                 GUILayout.EndHorizontal();
                 DrawJColorFoldout("jFps", Tr.Get(Tr.Key.FpsColor), Colors.JFps,
-                    () => { Colors.JFps = new(Color.white); Colors.Save(Main.Mod); });
+                    () => { Colors.JFps = new(Color.white); Colors.Save(); });
             }
             ShowAuthor = Tog(Tr.Get(Tr.Key.ShowAuthor), ShowAuthor);
             if (ShowAuthor) DrawJColorFoldout("jAuthor", Tr.Get(Tr.Key.AuthorColor), Colors.JAuthor,
-                () => { Colors.JAuthor = new(Color.white); Colors.Save(Main.Mod); });
+                () => { Colors.JAuthor = new(Color.white); Colors.Save(); });
             ShowState = Tog(Tr.Get(Tr.Key.ShowState), ShowState);
             if (ShowState)
             {
                 DrawJColorFoldout("jStWaiting", Tr.Get(Tr.Key.StateDefaultColor), Colors.JStateWaiting,
-                    () => { Colors.JStateWaiting = new(Color.white); Colors.Save(Main.Mod); });
+                    () => { Colors.JStateWaiting = new(Color.white); Colors.Save(); });
                 DrawJColorFoldout("jStAutoTile", Tr.Get(Tr.Key.StateAutoTileColor), Colors.JStateAutoTile,
-                    () => { Colors.JStateAutoTile = new(new Color(1, 0.5f, 0)); Colors.Save(Main.Mod); });
+                    () => { Colors.JStateAutoTile = new(new Color(1, 0.5f, 0)); Colors.Save(); });
                 DrawJColorFoldout("jStAuto", Tr.Get(Tr.Key.StateAutoColor), Colors.JStateAuto,
-                    () => { Colors.JStateAuto = new(new Color(0.1058824f, 1f, 0)); Colors.Save(Main.Mod); });
+                    () => { Colors.JStateAuto = new(new Color(0.1058824f, 1f, 0)); Colors.Save(); });
                 DrawJColorFoldout("jStPerfect", Tr.Get(Tr.Key.StatePerfectColor), Colors.JStatePerfectPlay,
-                    () => { Colors.JStatePerfectPlay = new(new Color(1, 0.8549f, 0)); Colors.Save(Main.Mod); });
+                    () => { Colors.JStatePerfectPlay = new(new Color(1, 0.8549f, 0)); Colors.Save(); });
                 DrawJColorFoldout("jStComplete", Tr.Get(Tr.Key.StateCompleteColor), Colors.JStateComplete,
-                    () => { Colors.JStateComplete = new(Color.white); Colors.Save(Main.Mod); });
+                    () => { Colors.JStateComplete = new(Color.white); Colors.Save(); });
                 DrawJColorFoldout("jStClear", Tr.Get(Tr.Key.StateClearColor), Colors.JStateClear,
-                    () => { Colors.JStateClear = new(Color.white); Colors.Save(Main.Mod); });
+                    () => { Colors.JStateClear = new(Color.white); Colors.Save(); });
                 DrawJColorFoldout("jStNoMiss", Tr.Get(Tr.Key.StateNoMissColor), Colors.JStateNoMiss,
-                    () => { Colors.JStateNoMiss = new(Color.white); Colors.Save(Main.Mod); });
+                    () => { Colors.JStateNoMiss = new(Color.white); Colors.Save(); });
                 DrawJColorFoldout("jStPerf", Tr.Get(Tr.Key.StatePerfectionistColor), Colors.JStatePerfectionist,
-                    () => { Colors.JStatePerfectionist = new(Color.white); Colors.Save(Main.Mod); });
+                    () => { Colors.JStatePerfectionist = new(Color.white); Colors.Save(); });
             }
             ShowDeath = Tog(Tr.Get(Tr.Key.ShowDeath), ShowDeath);
             if (ShowDeath) Colors.JDeath.SettingGUI(ColorChanged(() => Overlay.Instance?.UpdateProgress()), Tr.Get(Tr.Key.DeathColor),
-                () => { Colors.JDeath = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(Main.Mod); });
+                () => { Colors.JDeath = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(); });
             ShowStart = Tog(Tr.Get(Tr.Key.ShowStart), ShowStart);
             if (ShowStart) DrawJColorFoldout("jStart", Tr.Get(Tr.Key.StartColor), Colors.JStart,
-                () => { Colors.JStart = new(Color.white); Colors.Save(Main.Mod); });
+                () => { Colors.JStart = new(Color.white); Colors.Save(); });
             ShowTiming = Tog(Tr.Get(Tr.Key.ShowTiming), ShowTiming);
             if (ShowTiming) Colors.JTiming.SettingGUI(ColorChanged(() => Overlay.Instance?.UpdateTime()), Tr.Get(Tr.Key.TimingColor),
-                () => { Colors.JTiming = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(Main.Mod); });
+                () => { Colors.JTiming = new([(0f, Color.red), (1f, Color.green)]); Colors.Save(); });
             Colors.JCombo.SettingGUI(ColorChanged(null), Tr.Get(Tr.Key.JComboColor),
-                () => { Colors.JCombo = new([(0f, Color.red), (0.2f, new Color(0.9882f, 1, 0.302f)), (1f, new Color(0.3725f, 1, 0.3119f))]); Colors.Save(Main.Mod); });
+                () => { Colors.JCombo = new([(0f, Color.red), (0.2f, new Color(0.9882f, 1, 0.302f)), (1f, new Color(0.3725f, 1, 0.3119f))]); Colors.Save(); });
             GUILayout.BeginHorizontal();
             GUILayout.Label(Tr.Get(Tr.Key.DecimalPrecision), GUILayout.Width(120));
             JongyeolDecimalPrecision = (int)GUILayout.HorizontalSlider(JongyeolDecimalPrecision, 0, 5);
@@ -647,9 +647,9 @@ public class Settings : UnityModManager.ModSettings
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(16);
-        if (GUILayout.Button("English Preset", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.English); Labels.Save(Main.Mod); }
-        if (GUILayout.Button("한국어", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Korean); Labels.Save(Main.Mod); }
-        if (GUILayout.Button("中文", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Chinese); Labels.Save(Main.Mod); }
+        if (GUILayout.Button("English Preset", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.English); Labels.Save(); }
+        if (GUILayout.Button("한국어", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Korean); Labels.Save(); }
+        if (GUILayout.Button("中文", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Chinese); Labels.Save(); }
         GUILayout.EndHorizontal();
 
         GUILayout.Space(5);
@@ -784,11 +784,11 @@ public class Settings : UnityModManager.ModSettings
         if (newIdx != idx) { align = AlignValues[newIdx]; Overlayer.Overlay.Instance?.ApplyAlignment(); }
     }
 
-    public void OnSaveGUI(UnityModManager.ModEntry modEntry) { Save(modEntry); Colors?.Save(modEntry); Labels?.Save(modEntry); }
-    public override void Save(UnityModManager.ModEntry modEntry) { SaveJson(modEntry); }
-    public static Settings Load(UnityModManager.ModEntry modEntry)
+    public void OnSaveGUI() { Save(); Colors?.Save(); Labels?.Save(); }
+    public void Save() { SaveJson(); }
+    public static Settings Load()
     {
-        var s = LoadJson(modEntry) ?? LoadXmlFallback(modEntry);
+        var s = LoadJson() ?? LoadXmlFallback() ?? new Settings();
         if (s.ConfigVersion < 2)
         {
             float Sw = 1920, Sh = 1080;
@@ -807,10 +807,10 @@ public class Settings : UnityModManager.ModSettings
             s.ProgBarOffsetX = (s.ProgBarPX - 0.5f) * Sw;
             s.ProgBarOffsetY = (s.ProgBarPY - 1f) * Sh + 10f;
             s.ConfigVersion = 2;
-            s.Save(modEntry);
+            s.Save();
         }
-        s.Colors = ColorConfig.Load(modEntry);
-        s.Labels = LabelConfig.Load(modEntry);
+        s.Colors = ColorConfig.Load();
+        s.Labels = LabelConfig.Load();
         if (s.GeneralDisplayOrder == null || s.GeneralDisplayOrder.Length == 0)
             s.GeneralDisplayOrder = GetDefaultGeneralOrder();
         else
@@ -828,73 +828,65 @@ public class Settings : UnityModManager.ModSettings
         return s;
     }
 
-    // ===== JSON 持久化（替代 UMM 默认 XML） =====
+    // ===== JSON 持久化 =====
 
-    private static string SettingsPath(UnityModManager.ModEntry entry) =>
-        Path.Combine(entry.Path, "Settings.json");
+    private static string SettingsPath() =>
+        Path.Combine(Loader.ModPath, "Settings.json");
 
-    private static string OldXmlPath(UnityModManager.ModEntry entry) =>
-        Path.Combine(entry.Path, "Settings.xml");
+    private static string OldXmlPath() =>
+        Path.Combine(Loader.ModPath, "Settings.xml");
 
-    private void SaveJson(UnityModManager.ModEntry entry)
+    private void SaveJson()
     {
         try
         {
             var json = JsonConvert.SerializeObject(this, Formatting.Indented);
-            File.WriteAllText(SettingsPath(entry), json);
+            File.WriteAllText(SettingsPath(), json);
         }
         catch (Exception e)
         {
-            Main.Mod?.Logger.Warning($"Failed to save Settings.json: {e.Message}");
+            Loader.Warning($"Failed to save Settings.json: {e.Message}");
         }
     }
 
-    private static Settings LoadJson(UnityModManager.ModEntry entry)
+    private static Settings LoadJson()
     {
         try
         {
-            var path = SettingsPath(entry);
+            var path = SettingsPath();
             if (!File.Exists(path)) return null;
             var json = File.ReadAllText(path);
             return JsonConvert.DeserializeObject<Settings>(json);
         }
         catch (Exception e)
         {
-            Main.Mod?.Logger.Warning($"Failed to load Settings.json: {e.Message}");
+            Loader.Warning($"Failed to load Settings.json: {e.Message}");
             return null;
         }
     }
 
     /// <summary>从旧的 UMM XML 加载，迁移后删除 XML 文件。</summary>
-    private static Settings LoadXmlFallback(UnityModManager.ModEntry entry)
+    private static Settings LoadXmlFallback()
     {
-        var path = OldXmlPath(entry);
-        if (!File.Exists(path)) return new Settings();
+        var path = OldXmlPath();
+        if (!File.Exists(path)) return null;
 
-        Settings s;
         try
         {
-            s = UnityModManagerNet.UnityModManager.ModSettings.Load<Settings>(entry);
-            Main.Mod?.Logger.Log("Settings: migrated from XML to JSON");
-        }
-        catch (Exception e)
-        {
-            Main.Mod?.Logger.Warning($"Failed to load Settings.xml: {e.Message}");
-            return new Settings();
-        }
-
-        // 立即写回 JSON 并删除旧 XML
-        try
-        {
+            using var reader = new StreamReader(path);
+            var xml = new XmlSerializer(typeof(Settings));
+            var s = (Settings)xml.Deserialize(reader);
+            // 立即写回 JSON 并删除旧 XML
             var json = JsonConvert.SerializeObject(s, Formatting.Indented);
-            File.WriteAllText(SettingsPath(entry), json);
+            File.WriteAllText(SettingsPath(), json);
             File.Delete(path);
+            Loader.Log("Settings: migrated from XML to JSON");
+            return s;
         }
         catch (Exception e)
         {
-            Main.Mod?.Logger.Warning($"Settings migration write failed: {e.Message}");
+            Loader.Warning($"Failed to migrate Settings.xml: {e.Message}");
+            return null;
         }
-
-        return s;
     }
 }
