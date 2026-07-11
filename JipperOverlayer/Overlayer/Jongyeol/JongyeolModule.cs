@@ -18,7 +18,7 @@ public class JongyeolModule
     private int _pseudoFloor = -1;
     private float _lastCurKps = -1, _fpsTime, _timingsSum;
     private bool _perToCom;
-    private int _lastMusicTimeSec = -1;
+    private int _lastMusicTimeTick = -1;
     public int DecimalPrecision = 2;
 
     public JongyeolModule(Overlay overlay)
@@ -212,12 +212,19 @@ public class JongyeolModule
             else
             {
                 float time = song!.time;
-                float totalTime = song.clip?.length ?? 0;
+                float totalTime = song.clip?.length > 0 ? song.clip.length : 0;
 
-                // Early exit: prevent per-frame access of song.time (which spams warnings when clip is null)
-                int curSec = (int)time;
-                if (_lastMusicTimeSec == curSec) return;
-                _lastMusicTimeSec = curSec;
+                // Fallback: when song has no clip, use map total time
+                if (totalTime <= 0)
+                {
+                    var floors = scrLevelMaker.instance.listFloors;
+                    totalTime = (float)floors[floors.Count - 1].entryTime;
+                }
+
+                // Throttle: update at ~10fps to avoid per-frame song.time access
+                int curTick = (int)(time * 10);
+                if (_lastMusicTimeTick == curTick) return;
+                _lastMusicTimeTick = curTick;
 
                 bool hourNeed = totalTime >= 3600;
                 _overlay.MusicTimeCache ??= TimeFormatter.FormatWithDecimals(totalTime, hourNeed);
@@ -297,7 +304,7 @@ public class JongyeolModule
     {
         _perToCom = false; _purePerfect = true; _pseudoFloor = -1;
         _timingsSum = 0;
-        _lastMusicTimeSec = -1;
+        _lastMusicTimeTick = -1;
         if (scrController.checkpointsUsed == 0) _overlay.ComboTitle.text = Main.Settings.Labels.ComboTitle;
     }
 

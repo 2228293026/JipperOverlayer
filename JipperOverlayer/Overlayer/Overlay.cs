@@ -732,7 +732,15 @@ public class Overlay
             else
             {
                 float time = song!.time;
-                float totalTime = song.clip?.length ?? 0;
+                float totalTime = song.clip?.length > 0 ? song.clip.length : 0;
+
+                // Fallback: when song has no clip, use map total time
+                if (totalTime <= 0)
+                {
+                    var floors = scrLevelMaker.instance.listFloors;
+                    totalTime = (float)floors[floors.Count - 1].entryTime;
+                }
+
                 if (LastTime == (int)time) return;
                 bool hourNeed = totalTime >= 3600;
                 MusicTimeCache ??= TimeFormatter.Format(totalTime, hourNeed);
