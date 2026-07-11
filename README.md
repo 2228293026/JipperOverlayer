@@ -73,7 +73,7 @@ ADOFAI/Mods/JipperOverlayer-melon/
 - Visual Studio 2022+ with .NET Framework 4.8.1 SDK
 - Steam installation of ADOFAI (for reference DLLs in `Libs/`)
 
-> **Note:** `Libs/` is `.gitignore`d. Run `cp -r "$ADOFAI/A Dance of Fire and Ice_Data/Managed/"* Libs/` to populate it from your game installation (requires one-time setup). Additional dependencies (`UnityModManager.dll`, `MelonLoader.dll`) are pulled from [adofai-libs](https://github.com/2228293026/adofai-libs) in CI.
+> **Note:** `Libs/` is `.gitignore`d. Run `cp -r "$ADOFAI/A Dance of Fire and Ice_Data/Managed/"* Libs/` to populate it from your game installation (requires one-time setup).
 
 ### Build
 
