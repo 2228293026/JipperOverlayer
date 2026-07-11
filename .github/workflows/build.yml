@@ -36,6 +36,15 @@ jobs:
           msbuild ${{ env.UMM_PROJECT_PATH }} -restore -p:Configuration=Release
           msbuild ${{ env.MELON_PROJECT_PATH }} -restore -p:Configuration=Release
 
+      - name: Upload DLLs
+        uses: actions/upload-artifact@v7
+        with:
+          name: JipperOverlayer
+          path: |
+            JipperOverlayer/bin/Release/JipperOverlayer.dll
+            JipperOverlayer.Loader.UMM/bin/Release/JipperOverlayer.Loader.UMM.dll
+            JipperOverlayer.Loader.Melon/bin/Release/JipperOverlayer.Loader.Melon.dll
+
     outputs:
       core: JipperOverlayer/bin/Release/JipperOverlayer.dll
       umm_loader: JipperOverlayer.Loader.UMM/bin/Release/JipperOverlayer.Loader.UMM.dll
