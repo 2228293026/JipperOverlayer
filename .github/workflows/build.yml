@@ -61,13 +61,15 @@ jobs:
         with:
           name: JipperOverlayer
           path: ./build
-          merge-multiple: true
+
+      - name: List artifact structure
+        run: find build -type f
 
       - name: Prepare UMM mod package
         run: |
           mkdir -p output-umm
-          cp build/JipperOverlayer.dll output-umm/
-          cp build/JipperOverlayer.Loader.UMM.dll output-umm/
+          cp build/JipperOverlayer/bin/Release/JipperOverlayer.dll output-umm/
+          cp build/JipperOverlayer.Loader.UMM/bin/Release/JipperOverlayer.Loader.UMM.dll output-umm/
           cp Info.json output-umm/
           cp JipperOverlayer-Unity/Assets/AssetBundles2022/jipperoverlayerbundle output-umm/jipperoverlayerbundle2022
           cp JipperOverlayer-Unity/Assets/AssetBundles6000/jipperoverlayerbundle output-umm/jipperoverlayerbundle6000
@@ -75,8 +77,8 @@ jobs:
       - name: Prepare MelonLoader mod package
         run: |
           mkdir -p output-melon
-          cp build/JipperOverlayer.dll output-melon/
-          cp build/JipperOverlayer.Loader.Melon.dll output-melon/
+          cp build/JipperOverlayer/bin/Release/JipperOverlayer.dll output-melon/
+          cp build/JipperOverlayer.Loader.Melon/bin/Release/JipperOverlayer.Loader.Melon.dll output-melon/
           cp Info.json output-melon/
 
       - name: Create UMM zip
