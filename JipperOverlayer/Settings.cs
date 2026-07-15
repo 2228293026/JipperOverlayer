@@ -27,6 +27,7 @@ public class Settings
     public int JongyeolDecimalPrecision = 5;
     public bool HideDebugText = true, ShowDeath = true, ShowStart = true, ShowTiming = true;
     public bool RemoveNotRequireInAuto = true, CheckPseudo = true, AllowELCombo = true, AllowOrangeCombo = true;
+    public bool PatchBetaWatermark = true, PatchLevelName = true, RepositionAutoText = true;
     public Language CurrentLanguage;
     public int FontIndex;
     public string FontName;
@@ -322,6 +323,11 @@ public class Settings
 
         GUILayout.Space(5);
         DrawOrderSection("generalOrder", GeneralDisplayOrder, false);
+
+        GUILayout.Space(3);
+        PatchBetaWatermark = Tog(Tr.Get(Tr.Key.PatchBetaWatermark), PatchBetaWatermark);
+        PatchLevelName = Tog(Tr.Get(Tr.Key.PatchLevelName), PatchLevelName);
+        RepositionAutoText = Tog(Tr.Get(Tr.Key.RepositionAutoText), RepositionAutoText);
     }
 
     void DrawDisplaySub(string key, string label, Action content)

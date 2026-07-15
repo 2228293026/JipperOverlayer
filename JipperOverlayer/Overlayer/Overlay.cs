@@ -356,7 +356,33 @@ public class Overlay
         _attemptObject = go;
     }
 
-    private static float? _originalLevelNameWidth;
+    internal static float? _originalLevelNameSizeX;
+    internal static Vector2? _originalLevelNamePos;
+    internal static Vector3? _originalLevelNameScale;
+    internal static string _originalLevelNameText;
+
+    internal static void ResetLevelName()
+    {
+        var levelName = ADOBase.controller?.txtLevelName;
+        if (levelName == null) return;
+        if (_originalLevelNamePos != null)
+        {
+            var rt = levelName.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchoredPosition = _originalLevelNamePos.Value;
+                rt.localScale = _originalLevelNameScale ?? Vector3.one;
+            if (_originalLevelNameSizeX != null)
+                rt.sizeDelta = new Vector2(_originalLevelNameSizeX.Value, rt.sizeDelta.y);
+            }
+        }
+        if (_originalLevelNameText != null)
+            levelName.text = _originalLevelNameText;
+        _originalLevelNameSizeX = null;
+        _originalLevelNamePos = null;
+        _originalLevelNameScale = null;
+        _originalLevelNameText = null;
+    }
 
     public void UpdateSize()
     {
@@ -366,23 +392,22 @@ public class Overlay
         for (int i = 0; i < t.childCount; i++) t.GetChild(i).localScale = scale;
         if (TimingScaleText) TimingScaleText.rectTransform.anchoredPosition = new Vector2(0, 90 + 40 * size);
         var levelName = ADOBase.controller?.txtLevelName;
-        if (levelName)
+        if (levelName && Main.Settings.PatchLevelName)
         {
             var rt = levelName.GetComponent<RectTransform>();
+            if (_originalLevelNamePos == null)
+            {
+                _originalLevelNamePos = rt.anchoredPosition;
+                _originalLevelNameScale = rt.localScale;
+                _originalLevelNameSizeX = rt.sizeDelta.x;
+                _originalLevelNameText = levelName.text;
+            }
             rt.anchoredPosition = new Vector2(0, -20 - 7 * size);
             rt.localScale = new Vector3(0.5f * size, 0.5f * size);
-            // Track original width once for idempotent 2.5x widening
-            if (_originalLevelNameWidth == null)
-                _originalLevelNameWidth = Math.Abs(rt.sizeDelta.x);
-            rt.sizeDelta = new Vector2(_originalLevelNameWidth.Value * 2.5f, rt.sizeDelta.y);
+            rt.sizeDelta = new Vector2(Math.Abs(_originalLevelNameSizeX.Value) * 2.5f, rt.sizeDelta.y);
             levelName.text = levelName.text.Replace('\n', ' ');
         }
         if (ComboTransform) ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * size);
-        if (GameObject.activeSelf)
-        {
-            AdjustBetaWatermark(size);
-            RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf, size);
-        }
     }
 
     public void ApplyFontToAll()
@@ -552,13 +577,20 @@ public class Overlay
         if (_timingScaleObject) { _timingScaleObject.SetActive(s.ShowTimingScale); if (s.ShowTimingScale && GameObject.activeSelf) UpdateTimingScale(); }
         if (_attemptObject) { _attemptObject.SetActive(s.ShowAttempt || s.ShowFullAttempt); if (_attemptObject.activeSelf) UpdateAttempts(); }
         if (_progressBarObject) { _progressBarObject.SetActive(s.ShowProgressBar); if (s.ShowProgressBar && GameObject.activeSelf) UpdateProgressBar(); }
-        if (GameObject != null && GameObject.activeSelf) SetupLocationMain();
-        if (GameObject != null && GameObject.activeSelf && ADOBase.controller is { paused: false }) AdjustBetaWatermark(s.Size);
+        if (GameObject != null && GameObject.activeSelf)
+        {
+            SetupLocationMain();
+            if (s.PatchBetaWatermark) AdjustBetaWatermark(s.Size);
+            else ResetBetaWatermark();
+            if (s.PatchLevelName) UpdateSize();
+            else ResetLevelName();
+            if (s.RepositionAutoText) RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf, s.Size);
+            else ResetAutoTextPosition();
+        }
         ApplyPositionOffsets();
         ApplyAlignment();
         ApplyFontStyle();
         ApplyFontSizes();
-        RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf, s.Size);
         RefreshTimeLabels();
     }
 
@@ -574,7 +606,7 @@ public class Overlay
         rt.anchoredPosition = pos;
     }
 
-    private static void ResetBetaWatermark()
+    internal static void ResetBetaWatermark()
     {
         if (BetaWatermark == null || BetaWatermarkOriginalPos == null) return;
         var rt = BetaWatermark.GetComponent<RectTransform>();
@@ -920,6 +952,16 @@ public class Overlay
         rt.anchoredPosition = pos;
     }
 
+    internal static void ResetAutoTextPosition()
+    {
+        if (_autoText != null && _autoTextOriginalPos != null)
+        {
+            var rt = _autoText.GetComponent<RectTransform>();
+            if (rt != null) rt.anchoredPosition = _autoTextOriginalPos.Value;
+        }
+        _autoText = null;
+        _autoTextOriginalPos = null;
+    }
 
     public void UpdateTimingScale()
     {
@@ -966,14 +1008,34 @@ public class Overlay
         if (s.ShowJudgement) { SetupLocationJudgement(); UpdateJudgement(); }
         if (s.ShowCombo) UpdateCombo(0, false);
         if (s.ShowBPM) UpdateBPM();
-        if (!suppressNativeUI) AdjustBetaWatermark(s.Size);
+        if (!suppressNativeUI && s.PatchBetaWatermark) AdjustBetaWatermark(s.Size);
+        if (s.PatchLevelName && _originalLevelNamePos == null)
+        {
+            var ln = ADOBase.controller?.txtLevelName;
+            if (ln)
+            {
+                var rt = ln.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    _originalLevelNamePos = rt.anchoredPosition;
+                    _originalLevelNameScale = rt.localScale;
+                    _originalLevelNameSizeX = rt.sizeDelta.x;
+                    _originalLevelNameText = ln.text;
+                    float size = s.Size;
+                    rt.anchoredPosition = new Vector2(0, -20 - 7 * size);
+                    rt.localScale = new Vector3(0.5f * size, 0.5f * size);
+                    rt.sizeDelta = new Vector2(Math.Abs(_originalLevelNameSizeX.Value) * 2.5f, rt.sizeDelta.y);
+                    ln.text = ln.text.Replace('\n', ' ');
+                }
+            }
+        }
         if (s.ShowTimingScale) UpdateTimingScale();
         if (s.ShowAttempt) UpdateAttempts();
         ApplyPositionOffsets();
         ApplyAlignment();
         ApplyFontStyle();
         Features.GameLifecycleHelper.ComboCount = 0;
-        if (!suppressNativeUI) RepositionAutoText(s.ShowProgress || s.ShowAccuracy || s.ShowXAccuracy || s.ShowMusicTime || s.ShowMapTime || s.ShowCheckpoint || s.ShowBest, s.Size);
+        if (!suppressNativeUI && s.RepositionAutoText) RepositionAutoText(s.ShowProgress || s.ShowAccuracy || s.ShowXAccuracy || s.ShowMusicTime || s.ShowMapTime || s.ShowCheckpoint || s.ShowBest, s.Size);
         RefreshTimeLabels();
     }
 
@@ -998,10 +1060,14 @@ public class Overlay
     public void Hide()
     {
         Jongyeol?.OnHide();
-        ResetBetaWatermark();
-        RepositionAutoText(false);
+        if (Main.Settings.PatchBetaWatermark) ResetBetaWatermark();
+        if (Main.Settings.RepositionAutoText) RepositionAutoText(false);
         _autoText = null;
         _autoTextOriginalPos = null;
+        _originalLevelNamePos = null;
+        _originalLevelNameScale = null;
+        _originalLevelNameSizeX = null;
+        _originalLevelNameText = null;
         if (GameObject == null || !GameObject.activeSelf) return;
         GameObject.SetActive(false);
         if (_mono) _mono.enabled = false;
@@ -1023,7 +1089,7 @@ public class Overlay
 
     public void Destroy()
     {
-        ResetBetaWatermark();
+        if (Main.Settings.PatchBetaWatermark) ResetBetaWatermark();
         Object.Destroy(GameObject);
         GC.SuppressFinalize(this);
     }

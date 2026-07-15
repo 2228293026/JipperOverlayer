@@ -41,6 +41,7 @@ public static class Tr
         BpmLineTile, BpmLineCur, BpmLineKps,
         AttemptLineAttempt, AttemptLineFull,
         ComboLineReversed,
+        PatchBetaWatermark, PatchLevelName, RepositionAutoText,
         Count
     }
 
@@ -78,7 +79,8 @@ public static class Tr
             "Checkpoint", "Best", "BPM", "Attempt", "Timing Scale",
             "FPS", "Author", "State", "Death", "Start", "Timing",
             "Tile BPM", "Cur BPM", "KPS",
-            "Attempt", "Full Attempt", "Reverse Combo Order" ],
+            "Attempt", "Full Attempt", "Reverse Combo Order",
+            "Patch Beta Watermark", "Patch Level Name", "Reposition Auto Text" ],
 
         /* 1  Korean */ [ "크기", "진행도 표시", "정확도 표시", "X정확도 표시",
             "음악 시간 표시", "맵 시간 표시", "음악 없을 때 맵 시간",
@@ -112,7 +114,8 @@ public static class Tr
             "체크포인트", "최고 기록", "BPM", "시도", "타이밍 스케일",
             "FPS", "제작자", "상태", "사망", "시작", "타이밍",
             "타일 BPM", "현재 BPM", "KPS",
-            "시도 횟수", "전체 시도", "콤보 순서 반전" ],
+            "시도 횟수", "전체 시도", "콤보 순서 반전",
+            "베타 워터마크 패치", "레벨 이름 패치", "오토 텍스트 재배치" ],
 
         /* 2  Chinese */ [ "大小", "显示进度", "显示准确率", "显示X准确率",
             "显示音乐时间", "显示地图时间", "无音乐时显示地图时间",
@@ -146,7 +149,8 @@ public static class Tr
             "检查点", "最佳", "BPM", "尝试", "判定区间",
             "FPS", "作者", "状态", "死亡", "开始", "时机",
             "Tile BPM", "当前 BPM", "KPS",
-            "尝试", "总尝试", "反转连击顺序" ],
+            "尝试", "总尝试", "反转连击顺序",
+            "Beta水印调整", "关卡名调整", "自动播放文本重定位" ],
     ];
 
     public static string Get(Key key)

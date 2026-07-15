@@ -16,7 +16,6 @@ internal static class GameLifecyclePatches
             typeof(UIControllerWipeToBlackPatch),
             typeof(ScnEditorResetScenePatch),
             typeof(ControllerStartLoadingScenePatch),
-            typeof(ControllerAwakeRewindPatch),
             typeof(ControllerChangeStatePatch)
         );
 
@@ -91,20 +90,6 @@ internal static class ControllerStartLoadingScenePatch
     static void Postfix() => GameLifecycleHelper.GetOverlay()?.Hide();
 }
 
-[HarmonyPatch(typeof(scrController), nameof(scrController.Awake_Rewind))]
-internal static class ControllerAwakeRewindPatch
-{
-    static void Postfix(Text ___txtLevelName)
-    {
-        if (!___txtLevelName) return;
-        RectTransform t = ___txtLevelName.GetComponent<RectTransform>();
-        float size = Main.Settings.Size;
-        t.anchoredPosition = new Vector2(0, -20 - 7 * size);
-        t.localScale = new Vector3(0.5f * size, 0.5f * size);
-        ___txtLevelName.text = ___txtLevelName.text.Replace('\n', ' ');
-    }
-}
-
 // ========== Progress / Timing / Attempt (version-agnostic, merged) ==========
 
 [HarmonyPatch(typeof(scrPlanet), "MoveToNextFloor")]
@@ -139,6 +124,7 @@ internal static class ScrShowIfDebugAwakePatch
 {
     static void Postfix(scrShowIfDebug __instance)
     {
+        if (!Main.Settings.RepositionAutoText) return;
         var t = __instance.GetComponent<RectTransform>();
         if (t) t.anchoredPosition = new Vector2(300, t.anchoredPosition.y);
     }
