@@ -30,6 +30,84 @@ public class Settings
     public Language CurrentLanguage;
     public int FontIndex;
     public string FontName;
+    // Per-region font indices (-1 = use global FontIndex)
+    public int MainFontIndex = -1;
+    public int BPMFontIndex = -1;
+    public int JudgeFontIndex = -1;
+    public int ComboTitleFontIndex = -1;
+    public int ComboValFontIndex = -1;
+    public int TimingFontIndex = -1;
+    public int AttemptFontIndex = -1;
+    // Per-region font sizes (ignored in combo bump, used as base size)
+    public int MainFontSize = 25;
+    public int BPMFontSize = 25;
+    public int JudgeFontSize = 25;
+    public int ComboTitleFontSize = 40;
+    public int ComboValFontSize = 108;
+    public int TimingFontSize = 20;
+    public int AttemptFontSize = 25;
+
+    public enum FontSlot
+    {
+        Main, BPM, Judgement, ComboTitle, ComboVal, Timing, Attempt
+    }
+
+    public int GetRawSlotFontIndex(FontSlot slot) => slot switch
+    {
+        FontSlot.Main => MainFontIndex,
+        FontSlot.BPM => BPMFontIndex,
+        FontSlot.Judgement => JudgeFontIndex,
+        FontSlot.ComboTitle => ComboTitleFontIndex,
+        FontSlot.ComboVal => ComboValFontIndex,
+        FontSlot.Timing => TimingFontIndex,
+        FontSlot.Attempt => AttemptFontIndex,
+        _ => -1,
+    };
+
+    public void SetSlotFontIndex(FontSlot slot, int index)
+    {
+        switch (slot)
+        {
+            case FontSlot.Main: MainFontIndex = index; break;
+            case FontSlot.BPM: BPMFontIndex = index; break;
+            case FontSlot.Judgement: JudgeFontIndex = index; break;
+            case FontSlot.ComboTitle: ComboTitleFontIndex = index; break;
+            case FontSlot.ComboVal: ComboValFontIndex = index; break;
+            case FontSlot.Timing: TimingFontIndex = index; break;
+            case FontSlot.Attempt: AttemptFontIndex = index; break;
+        }
+    }
+
+    public int GetFontIndexForSlot(FontSlot slot)
+    {
+        int idx = GetRawSlotFontIndex(slot);
+        return idx >= 0 ? idx : FontIndex;
+    }
+
+    public int GetFontSize(FontSlot slot) => slot switch
+    {
+        FontSlot.Main => MainFontSize,
+        FontSlot.BPM => BPMFontSize,
+        FontSlot.Judgement => JudgeFontSize,
+        FontSlot.ComboTitle => ComboTitleFontSize,
+        FontSlot.ComboVal => ComboValFontSize,
+        FontSlot.Timing => TimingFontSize,
+        FontSlot.Attempt => AttemptFontSize,
+        _ => 25,
+    };
+
+    public static string GetSlotLabel(FontSlot slot) => slot switch
+    {
+        FontSlot.Main => Tr.Get(Tr.Key.AlignMain),
+        FontSlot.BPM => Tr.Get(Tr.Key.AlignBpm),
+        FontSlot.Judgement => Tr.Get(Tr.Key.AlignJudge),
+        FontSlot.ComboTitle => Tr.Get(Tr.Key.AlignCombo),
+        FontSlot.ComboVal => Tr.Get(Tr.Key.AlignComboVal),
+        FontSlot.Timing => Tr.Get(Tr.Key.AlignTiming),
+        FontSlot.Attempt => Tr.Get(Tr.Key.AlignAttempt),
+        _ => slot.ToString(),
+    };
+
     public bool CustomPositionsEnabled;
     public int MainAlign = 257, BPMAlign = 260, JudgeAlign = 1026;
     public int ComboAlign = 514, ComboValAlign = 258;
@@ -96,6 +174,7 @@ public class Settings
             _fontFold = !_fontFold;
         if (_fontFold && FontManager.FontNames != null)
         {
+            GUILayout.Label("  -- Global --");
             for (int i = 0; i < FontManager.FontNames.Length; i++)
             {
                 GUILayout.BeginHorizontal();
@@ -106,6 +185,12 @@ public class Settings
                 GUILayout.EndHorizontal();
                 if (now && !sel) { FontIndex = i; FontName = FontManager.FontNames[i]; Overlayer.Overlay.Instance?.ApplyFontToAll(); }
             }
+
+            GUILayout.Space(5);
+
+            // Per-region font overrides
+            foreach (FontSlot slot in Enum.GetValues(typeof(FontSlot)))
+                DrawFontSlotSelector(slot);
         }
 
         CustomPositionsEnabled = Tog(Tr.Get(Tr.Key.CustomPositions), CustomPositionsEnabled);
@@ -592,9 +677,21 @@ public class Settings
         string newText = GUILayout.TextField(text, GUILayout.Width(55));
         if (newText != text)
         {
-            _slideFields[label] = newText;
-            if (float.TryParse(newText, out float parsed))
+            float parsed;
+            if (float.TryParse(newText, out parsed))
+            {
                 nv = Mathf.Clamp(parsed, min, max);
+                _slideFields[label] = Math.Abs(nv - parsed) > 0.0001f
+                    ? nv.ToString("F2") : newText;
+            }
+            else if (newText.StartsWith(text) && newText.Length > text.Length
+                && float.TryParse(newText.Substring(text.Length), out parsed))
+            {
+                nv = Mathf.Clamp(parsed, min, max);
+                _slideFields[label] = Math.Abs(nv - parsed) > 0.0001f
+                    ? nv.ToString("F2") : newText;
+            }
+            else _slideFields[label] = v.ToString("F2");
         }
         else if (newText == text && Math.Abs(nv - v) > 0.001f)
             _slideFields[label] = nv.ToString("F2");
@@ -635,8 +732,105 @@ public class Settings
     };
     private static bool _generalFold, _displayFold, _fontFold, _alignFold;
     private static string _expandedAlign, _expandedDisplaySub, _expandedPos;
-    private static string _expandedOrder;
+    private static string _expandedOrder, _expandedFontSlot;
     private static bool _labelsFold;
+
+    void DrawFontSlotSelector(FontSlot slot)
+    {
+        string label = GetSlotLabel(slot);
+        string key = $"FontSlot_{slot}";
+        bool expanded = _expandedFontSlot == key;
+
+        int rawIdx = GetRawSlotFontIndex(slot);
+        bool useGlobal = rawIdx < 0;
+        int resolvedIdx = GetFontIndexForSlot(slot);
+        string fontName = useGlobal
+            ? $"{FontManager.FontNames[resolvedIdx]} ({Tr.Get(Tr.Key.AlignMain)})"
+            : FontManager.FontNames[resolvedIdx];
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(20);
+        GUILayout.Label(label, GUILayout.Width(80));
+        if (GUILayout.Button(fontName, GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _expandedFontSlot = expanded ? null : key;
+        GUILayout.EndHorizontal();
+
+        if (!expanded) return;
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(30);
+        GUILayout.BeginVertical();
+
+        // "Use Global" option
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(20);
+            bool now = GUILayout.Toggle(useGlobal, GUIContent.none, GUILayout.ExpandWidth(false));
+            GUILayout.Label(Tr.Get(Tr.Key.Font) + " (" + Tr.Get(Tr.Key.AlignMain) + ")");
+            GUILayout.EndHorizontal();
+            if (now && !useGlobal) { SetSlotFontIndex(slot, -1); Overlayer.Overlay.Instance?.ApplyFontToAll(); }
+        }
+
+        for (int i = 0; i < FontManager.FontNames.Length; i++)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(20);
+            bool sel = resolvedIdx == i && !useGlobal;
+            bool now = GUILayout.Toggle(sel, GUIContent.none, GUILayout.ExpandWidth(false));
+            GUILayout.Label(FontManager.FontNames[i], GUILayout.ExpandWidth(true));
+            GUILayout.EndHorizontal();
+            if (now && !sel) { SetSlotFontIndex(slot, i); Overlayer.Overlay.Instance?.ApplyFontToAll(); _expandedFontSlot = null; }
+        }
+
+        // Font size slider + text input
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(20);
+        GUILayout.Label("Font Size", GUILayout.Width(60));
+        float curF = GetFontSize(slot);
+        float nv = GUILayout.HorizontalSlider(curF, 8, 200, GUILayout.ExpandWidth(true));
+        string sizeKey = $"FontSize_{slot}";
+        if (!_slideFields.TryGetValue(sizeKey, out var sizeText))
+            _slideFields[sizeKey] = sizeText = curF.ToString("F0");
+        string newSizeText = GUILayout.TextField(sizeText, GUILayout.Width(42));
+        if (newSizeText != sizeText)
+        {
+            if (float.TryParse(newSizeText, out float parsed))
+            {
+                nv = Mathf.Clamp(parsed, 8, 200);
+                _slideFields[sizeKey] = Math.Abs(nv - parsed) > 0.0001f
+                    ? ((int)Math.Round(nv)).ToString() : newSizeText;
+            }
+            else if (newSizeText.StartsWith(sizeText) && newSizeText.Length > sizeText.Length
+                && float.TryParse(newSizeText.Substring(sizeText.Length), out parsed))
+            {
+                nv = Mathf.Clamp(parsed, 8, 200);
+                _slideFields[sizeKey] = Math.Abs(nv - parsed) > 0.0001f
+                    ? ((int)Math.Round(nv)).ToString() : newSizeText;
+            }
+            else _slideFields[sizeKey] = curF.ToString("F0");
+        }
+        else if (Math.Abs(nv - curF) > 0.5f)
+            _slideFields[sizeKey] = ((int)Math.Round(nv)).ToString();
+        GUILayout.EndHorizontal();
+        int newSize = (int)Math.Round(nv);
+        if (Math.Abs(newSize - GetFontSize(slot)) > 0.001f)
+        {
+            switch (slot)
+            {
+                case FontSlot.Main: MainFontSize = newSize; break;
+                case FontSlot.BPM: BPMFontSize = newSize; break;
+                case FontSlot.Judgement: JudgeFontSize = newSize; break;
+                case FontSlot.ComboTitle: ComboTitleFontSize = newSize; break;
+                case FontSlot.ComboVal: ComboValFontSize = newSize; break;
+                case FontSlot.Timing: TimingFontSize = newSize; break;
+                case FontSlot.Attempt: AttemptFontSize = newSize; break;
+            }
+            Overlayer.Overlay.Instance?.ApplyFontSizes();
+        }
+
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+    }
 
     void DrawLabelsSection()
     {

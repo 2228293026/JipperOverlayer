@@ -156,7 +156,7 @@ public class Overlay
         t.sizeDelta = new Vector2(456, 30);
         text = go.AddComponent<TextMeshProUGUI>();
         text.font = BundleLoader.FontAsset;
-        text.fontSize = 25;
+        text.fontSize = Main.Settings?.MainFontSize ?? 25;
         ShadowManager.ApplyShadow(text);
     }
 
@@ -244,7 +244,7 @@ public class Overlay
         BPMText.font = BundleLoader.FontAsset;
         BPMText.alignment = TextAlignmentOptions.TopRight;
         BPMText.lineSpacing = 30;
-        BPMText.fontSize = 25;
+        BPMText.fontSize = Main.Settings?.BPMFontSize ?? 25;
         ShadowManager.ApplyShadow(BPMText);
         _bpmObject = go;
     }
@@ -260,7 +260,7 @@ public class Overlay
             t.sizeDelta = new Vector2(1000, 30);
             JudgementTexts[i] = go.AddComponent<TextMeshProUGUI>();
             JudgementTexts[i].font = BundleLoader.FontAsset;
-            JudgementTexts[i].fontSize = 25;
+            JudgementTexts[i].fontSize = Main.Settings?.JudgeFontSize ?? 25;
             JudgementTexts[i].color = new Color(0.8509804f, 0.345098f, 1);
             ShadowManager.ApplyShadow(JudgementTexts[i]);
             _judgementObjects[i] = go;
@@ -286,7 +286,7 @@ public class Overlay
         _comboTitleTransform = t;
         ComboTitle = title.AddComponent<TextMeshProUGUI>();
         ComboTitle.font = BundleLoader.FontAsset;
-        ComboTitle.fontSize = 40;
+        ComboTitle.fontSize = Main.Settings?.ComboTitleFontSize ?? 40;
         ComboTitle.text = Main.Settings.Labels.ComboTitle;
         ComboTitle.alignment = TextAlignmentOptions.Center;
         var fitter = title.AddComponent<ContentSizeFitter>();
@@ -303,7 +303,7 @@ public class Overlay
         ComboTextTransform = t;
         ComboText = val.AddComponent<TextMeshProUGUI>();
         ComboText.font = BundleLoader.FontAsset;
-        ComboText.fontSize = 108;
+        ComboText.fontSize = Main.Settings?.ComboValFontSize ?? 108;
         ComboText.alignment = TextAlignmentOptions.Top;
         fitter = val.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
@@ -334,7 +334,7 @@ public class Overlay
         t.sizeDelta = new Vector2(300, 30);
         TimingScaleText = go.AddComponent<TextMeshProUGUI>();
         TimingScaleText.font = BundleLoader.FontAsset;
-        TimingScaleText.fontSize = 20;
+        TimingScaleText.fontSize = Main.Settings?.TimingFontSize ?? 20;
         TimingScaleText.alignment = TextAlignmentOptions.Bottom;
         ShadowManager.ApplyShadow(TimingScaleText);
         _timingScaleObject = go;
@@ -350,7 +350,7 @@ public class Overlay
         t.sizeDelta = new Vector2(300, 30);
         AttemptText = go.AddComponent<TextMeshProUGUI>();
         AttemptText.font = BundleLoader.FontAsset;
-        AttemptText.fontSize = 25;
+        AttemptText.fontSize = Main.Settings?.AttemptFontSize ?? 25;
         AttemptText.alignment = TextAlignmentOptions.BottomLeft;
         ShadowManager.ApplyShadow(AttemptText);
         _attemptObject = go;
@@ -387,24 +387,38 @@ public class Overlay
 
     public void ApplyFontToAll()
     {
-        var font = FontManager.GetFont(Main.Settings.FontIndex);
-        if (font == null) return;
+        var s = Main.Settings;
         ShadowManager.ClearCache();
-        if (ProgressText) ProgressText.font = font;
-        if (AccuracyText) AccuracyText.font = font;
-        if (XAccuracyText) XAccuracyText.font = font;
-        if (TimeText) TimeText.font = font;
-        if (MapTimeText) MapTimeText.font = font;
-        if (CheckpointText) CheckpointText.font = font;
-        if (BestText) BestText.font = font;
-        if (BPMText) BPMText.font = font;
-        foreach (var jt in JudgementTexts) if (jt) jt.font = font;
-        if (ComboTitle) ComboTitle.font = font;
-        if (ComboText) ComboText.font = font;
-        if (TimingScaleText) TimingScaleText.font = font;
-        if (AttemptText) AttemptText.font = font;
+
+        var mainFont = FontManager.GetFont(s.GetFontIndexForSlot(Settings.FontSlot.Main));
+        if (ProgressText) ProgressText.font = mainFont;
+        if (AccuracyText) AccuracyText.font = mainFont;
+        if (XAccuracyText) XAccuracyText.font = mainFont;
+        if (TimeText) TimeText.font = mainFont;
+        if (MapTimeText) MapTimeText.font = mainFont;
+        if (CheckpointText) CheckpointText.font = mainFont;
+        if (BestText) BestText.font = mainFont;
+
+        var bpmFont = FontManager.GetFont(s.GetFontIndexForSlot(Settings.FontSlot.BPM));
+        if (BPMText) BPMText.font = bpmFont;
+
+        var judgeFont = FontManager.GetFont(s.GetFontIndexForSlot(Settings.FontSlot.Judgement));
+        foreach (var jt in JudgementTexts) if (jt) jt.font = judgeFont;
+
+        var ctFont = FontManager.GetFont(s.GetFontIndexForSlot(Settings.FontSlot.ComboTitle));
+        if (ComboTitle) ComboTitle.font = ctFont;
+
+        var cvFont = FontManager.GetFont(s.GetFontIndexForSlot(Settings.FontSlot.ComboVal));
+        if (ComboText) ComboText.font = cvFont;
+
+        var timingFont = FontManager.GetFont(s.GetFontIndexForSlot(Settings.FontSlot.Timing));
+        if (TimingScaleText) TimingScaleText.font = timingFont;
+
+        var attemptFont = FontManager.GetFont(s.GetFontIndexForSlot(Settings.FontSlot.Attempt));
+        if (AttemptText) AttemptText.font = attemptFont;
+
         foreach (var t in ExtraTexts)
-            if (t) t.font = font;
+            if (t) t.font = mainFont;
         foreach (var t in new[] { ProgressText, AccuracyText, XAccuracyText, TimeText, MapTimeText, CheckpointText, BestText,
             BPMText, TimingScaleText, AttemptText })
         { if (t) ShadowManager.ApplyShadow(t); }
@@ -414,6 +428,28 @@ public class Overlay
         { if (t) ShadowManager.ApplyShadow(t); }
         if (ComboTitle) ShadowManager.ApplyDarkShadow(ComboTitle);
         if (ComboText) ShadowManager.ApplyDarkShadow(ComboText);
+        ApplyFontSizes();
+    }
+
+    public void ApplyFontSizes()
+    {
+        var s = Main.Settings;
+        int mainSize = s.MainFontSize;
+        if (ProgressText) ProgressText.fontSize = mainSize;
+        if (AccuracyText) AccuracyText.fontSize = mainSize;
+        if (XAccuracyText) XAccuracyText.fontSize = mainSize;
+        if (TimeText) TimeText.fontSize = mainSize;
+        if (MapTimeText) MapTimeText.fontSize = mainSize;
+        if (CheckpointText) CheckpointText.fontSize = mainSize;
+        if (BestText) BestText.fontSize = mainSize;
+        if (BPMText) BPMText.fontSize = s.BPMFontSize;
+        foreach (var jt in JudgementTexts) if (jt) jt.fontSize = s.JudgeFontSize;
+        if (ComboTitle) ComboTitle.fontSize = s.ComboTitleFontSize;
+        if (ComboText) ComboText.fontSize = s.ComboValFontSize;
+        if (TimingScaleText) TimingScaleText.fontSize = s.TimingFontSize;
+        if (AttemptText) AttemptText.fontSize = s.AttemptFontSize;
+        foreach (var t in ExtraTexts)
+            if (t) t.fontSize = mainSize;
     }
 
     public void ApplyAlignment()
@@ -521,6 +557,7 @@ public class Overlay
         ApplyPositionOffsets();
         ApplyAlignment();
         ApplyFontStyle();
+        ApplyFontSizes();
         RepositionAutoText(_mainContainer != null && _mainContainer.activeSelf, s.Size);
         RefreshTimeLabels();
     }
@@ -782,7 +819,7 @@ public class Overlay
         else
         {
             if (_mono) _mono.StopComboBump();
-            ComboText.fontSize = 78;
+            ComboText.fontSize = Main.Settings.ComboValFontSize;
             if (reversed)
             {
                 ComboTextTransform.anchoredPosition = new Vector2(0, 43.505f);

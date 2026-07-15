@@ -38,11 +38,12 @@ public class OverlayMono : MonoBehaviour
     {
         double elapsed = 0;
         bool reversed = Main.Settings.ComboLineReversed;
+        int baseSize = Main.Settings.ComboValFontSize;
         while (elapsed < 500)
         {
             float t = (float)(elapsed / 500);
             if (t > 1) t = 1;
-            Overlay.ComboText.fontSize = (int)(30 * OutExpoChange(t) + 78);
+            Overlay.ComboText.fontSize = (int)(30 * OutExpoChange(t) + baseSize);
             if (Overlay._comboTitleTransform)
             {
                 try
@@ -61,7 +62,7 @@ public class OverlayMono : MonoBehaviour
             yield return null;
             elapsed += Time.deltaTime * 1000;
         }
-        Overlay.ComboText.fontSize = 78;
+        Overlay.ComboText.fontSize = Main.Settings.ComboValFontSize;
         _comboAnim = null;
     }
 
