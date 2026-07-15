@@ -661,8 +661,7 @@ public class Settings
     {
         GUILayout.BeginHorizontal();
         if (indent > 0) GUILayout.Space(indent);
-        v = GUILayout.Toggle(v, GUIContent.none, GUILayout.ExpandWidth(false));
-        GUILayout.Label(label, GUILayout.ExpandWidth(true));
+        v = GUILayout.Toggle(v, label, GUILayout.ExpandWidth(true));
         GUILayout.EndHorizontal();
         return v;
     }
