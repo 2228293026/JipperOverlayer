@@ -376,6 +376,9 @@ public class Overlay
                     if (_originalLevelNameSizeX != null)
                         rt.sizeDelta = new Vector2(_originalLevelNameSizeX.Value, rt.sizeDelta.y);
                 }
+                // Restore the game's original-position reference to match.
+                if (ADOBase.controller != null)
+                    ADOBase.controller.txtLevelNameOriginalPosition = _originalLevelNamePos;
             }
             if (_originalLevelNameText != null)
                 levelName.text = _originalLevelNameText;
@@ -406,6 +409,11 @@ public class Overlay
         rt.localScale = new Vector3(0.5f * size, 0.5f * size);
         rt.sizeDelta = new Vector2(Math.Abs(_originalLevelNameSizeX.Value) * 2.5f, rt.sizeDelta.y);
         ln.text = ln.text.Replace('\n', ' ');
+        // Keep the game's internal original-position reference in sync so that
+        // SetDefaultText events (which compute a delta from that baseline) don't
+        // yank the title back to its pre-patch position.
+        if (ADOBase.controller != null)
+            ADOBase.controller.txtLevelNameOriginalPosition = rt.anchoredPosition;
     }
 
     public void UpdateSize()
