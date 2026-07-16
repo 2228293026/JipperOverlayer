@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.1.3 — 2026.07.16
+
+### Features
+
+- **Per-section fonts & font sizes**: separate font and font-size configuration for each overlay section (Main, BPM, Judgement, ComboTitle, ComboVal, Timing, Attempt); "Use Global Font" toggle per slot (ac9a396)
+- **UI patch toggles**: independent boolean toggles in Settings — Patch Beta Watermark, Patch Level Name, Reposition Auto Text — each can be enabled/disabled and dynamically reset (46b9dcc)
+- **Text effects panel**: global shadow (TMP Underlay) and outline (TMP Outline keyword) with toggles, RGBA color pickers, Width/Softness sliders; changes apply live via `ApplyFontToAll()` + `ShadowManager.ClearCache()`
+- **Trilingual localization**: all new UI sections fully translated (EN/KO/CN) via `Tr.Get()` — Text Effects (session) + Section-level font options + UI toggle labels (46b9dcc)
+- **Dual-loader architecture**: support for both MelonLoader and UMM via `IModLoader` interface; separate entry assemblies (`JipperOverlayer.Loader.Melon` / `.UMM`); platform-specific build artifacts (e985450)
+
+### Performance
+
+- **Music time throttle**: update interval tightened from 1s → 0.1s (`_lastMusicTimeTick`) for smoother display at minimal CPU cost; added clip‑null/zero‑length fallback using last floor `entryTime` as total duration (71d73ec)
+
+### Bug Fixes
+
+- **Toggle UI**: checkbox and label merged into a single clickable area (c2e80a4)
+- **Level name position drifts after death**: `Hide()` now calls `ResetLevelName()` to restore original position/scale/size before nulling cache fields, preventing cumulative offset on scene restart
+- **Level name size not restored on mod disable**: `Destroy()` now calls `ResetLevelName()` so scale/sizeDelta revert when mod unloads
+
+### Refactors
+
+- **PatchManager**: removed `Main` dependency; `HarmonyId` stored internally instead of requiring assembly‑scoped id (9f989fc)
+- **Awake_Rewind patch removed**: level‑name positioning moved from Harmony patch into `Overlay.UpdateSize()` / `Show()`, giving finer control over when and whether the patch applies (46b9dcc)
+- **Extracted `ApplyLevelNamePatch()`**: unified level-name positioning logic from `Show()` and `UpdateSize()` into a single method; always applies patch on `Show()` regardless of cache state (separated save-once from apply-always)
+- `ResetLevelName()`: always nulls cache fields at exit (removed early-return skip), ensuring clean state
+
 ## v1.1.2 — 2026.07.08
 
 ### Features

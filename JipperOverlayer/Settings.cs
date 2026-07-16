@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using JipperOverlayer.Overlayer;
 using JipperOverlayer.Overlayer.Features;
+using JipperOverlayer.Overlayer.Util;
 using JipperOverlayer.Overlayer.Localization;
 
 namespace JipperOverlayer;
@@ -19,6 +20,7 @@ public class Settings
     public bool ShowBPM = true, ShowCombo = true, ShowJudgement = true, ShowTimingScale = true;
     public bool ShowAttempt = true, ShowFullAttempt = true;
     public float Size = 1f;
+    public TextEffectConfig TextEffects = new();
     public bool JudgementLocationUp, EnableAutoCombo = true;
     public float BpmColorMax = 8000f;
     public int ComboColorMax = 1000;
@@ -149,6 +151,7 @@ public class Settings
         DrawDisplaySection();
         DrawJongyeolSection();
         DrawTextSettings();
+        DrawTextEffectsSection();
         DrawLabelsSection();
         Overlay.Instance?.RefreshVisibility();
     }
@@ -552,6 +555,80 @@ public class Settings
         GUILayout.EndHorizontal();
     }
 
+    void DrawTextEffectsSection()
+    {
+        if (GUILayout.Button($"{( _textEffectsFold ? "▼" : "▷")} {Tr.Get(Tr.Key.TextEffects)}", GUI.skin.label, GUILayout.ExpandWidth(true)))
+            _textEffectsFold = !_textEffectsFold;
+        if (!_textEffectsFold) return;
+
+        var fx = TextEffects;
+        bool changed = false;
+
+        // Shadow
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        bool shadowOn = GUILayout.Toggle(fx.ShadowEnabled, Tr.Get(Tr.Key.TextEffectShadow), GUILayout.ExpandWidth(true));
+        if (shadowOn != fx.ShadowEnabled) { fx.ShadowEnabled = shadowOn; changed = true; }
+        GUILayout.EndHorizontal();
+
+        if (fx.ShadowEnabled)
+        {
+            changed |= DrawFloatField(Tr.Get(Tr.Key.TextEffectShadowOffsetX), ref fx.ShadowOffsetX, -5f, 5f);
+            changed |= DrawFloatField(Tr.Get(Tr.Key.TextEffectShadowOffsetY), ref fx.ShadowOffsetY, -5f, 5f);
+            changed |= DrawColorCacheField(Tr.Get(Tr.Key.TextEffectShadowColor), fx.ShadowColor);
+            changed |= DrawFloatField(Tr.Get(Tr.Key.TextEffectShadowSoftness), ref fx.ShadowSoftness, 0f, 1f);
+        }
+
+        // Outline
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        bool outlineOn = GUILayout.Toggle(fx.OutlineEnabled, Tr.Get(Tr.Key.TextEffectOutline), GUILayout.ExpandWidth(true));
+        if (outlineOn != fx.OutlineEnabled) { fx.OutlineEnabled = outlineOn; changed = true; }
+        GUILayout.EndHorizontal();
+
+        if (fx.OutlineEnabled)
+        {
+            changed |= DrawFloatField(Tr.Get(Tr.Key.TextEffectOutlineWidth), ref fx.OutlineWidth, 0f, 0.5f);
+            changed |= DrawFloatField(Tr.Get(Tr.Key.TextEffectOutlineSoftness), ref fx.OutlineSoftness, 0f, 1f);
+            changed |= DrawColorCacheField(Tr.Get(Tr.Key.TextEffectOutlineColor), fx.OutlineColor);
+        }
+
+        if (changed)
+        {
+            Save();
+            ShadowManager.ClearCache();
+            Overlay.Instance?.ApplyFontToAll();
+        }
+    }
+
+    bool DrawFloatField(string label, ref float value, float min, float max)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        GUILayout.Label(label, GUILayout.Width(140));
+        var v = GUILayout.HorizontalSlider(value, min, max, GUILayout.ExpandWidth(true));
+        GUILayout.Label(value.ToString("F2"), GUILayout.Width(40));
+        GUILayout.EndHorizontal();
+        if (Math.Abs(v - value) > 1e-4)
+        {
+            value = v;
+            return true;
+        }
+        return false;
+    }
+
+    // Render a ColorCache's RGBA sliders inline with a label. SettingGUI manages its own rows
+    // (Hex → R → G → B → A → preview) so we just emit the label above it.
+    static bool DrawColorCacheField(string label, ColorCache cc)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        GUILayout.Label(label);
+        GUILayout.EndHorizontal();
+        bool changed = cc.SettingGUI(label, Color.black);
+        return changed;
+    }
+
     void DrawJongyeolSection()
     {
         bool prevJongyeol = JongyeolMode;
@@ -735,7 +812,7 @@ public class Settings
     {
         fixedWidth = 18f, normal = new GUIStyleState { textColor = Color.white }, fontSize = 14, margin = new RectOffset(4, 2, 4, 4)
     };
-    private static bool _generalFold, _displayFold, _fontFold, _alignFold;
+    private static bool _generalFold, _displayFold, _fontFold, _alignFold, _textEffectsFold;
     private static string _expandedAlign, _expandedDisplaySub, _expandedPos;
     private static string _expandedOrder, _expandedFontSlot;
     private static bool _labelsFold;

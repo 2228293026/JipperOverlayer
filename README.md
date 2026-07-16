@@ -17,6 +17,9 @@ An in-game overlay mod for **A Dance of Fire and Ice (ADOFAI)** that displays pr
 - **Progress Bar** — Visual progress indicator
 - **Jongyeol Mode** — Extended overlay with FPS, State, Death count, Start position, Timing analysis, Debug text hiding
 - **Co-op Support** — Per-player display for multiplayer
+- **Text Effects** — Global shadow (TMP Underlay) and outline with toggles, RGBA color pickers, Width/Softness sliders
+- **Per-Section Fonts** — Independent font and font-size per overlay slot (Main, BPM, Judgement, Combo, Timing, Attempt)
+- **UI Patch Toggles** — Independent switches for Beta watermark, level name position, auto text reposition
 - **Color Editor** — Interactive gradient editor for all overlay colors
 - **XPerfect Integration** — Optional enhanced perfect display via [XPerfect](https://github.com/8100print/XPerfect)
 

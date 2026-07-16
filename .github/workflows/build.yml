@@ -79,7 +79,8 @@ jobs:
           mkdir -p output-melon
           cp build/JipperOverlayer/bin/Release/JipperOverlayer.dll output-melon/
           cp build/JipperOverlayer.Loader.Melon/bin/Release/JipperOverlayer.Loader.Melon.dll output-melon/
-          cp Info.json output-melon/
+          cp JipperOverlayer-Unity/Assets/AssetBundles2022/jipperoverlayerbundle output-melon/jipperoverlayerbundle2022
+          cp JipperOverlayer-Unity/Assets/AssetBundles6000/jipperoverlayerbundle output-melon/jipperoverlayerbundle6000
 
       - name: Create UMM zip
         run: cd output-umm && zip -r ../JipperOverlayer-UMM.zip . && cd ..

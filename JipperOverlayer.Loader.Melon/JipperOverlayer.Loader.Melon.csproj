@@ -13,6 +13,9 @@
     <FileAlignment>512</FileAlignment>
     <LangVersion>12</LangVersion>
     <Deterministic>true</Deterministic>
+    <!-- MelonLoader is an x64 (AMD64) assembly; target x64 so the emitted module matches its
+         architecture and silences MSB3270 (MSIL vs AMD64 mismatch). -->
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

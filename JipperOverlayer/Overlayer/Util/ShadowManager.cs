@@ -15,15 +15,32 @@ internal static class ShadowManager
 
     public static void ClearCache() => MaterialCache.Clear();
 
-    public static void ApplyShadow(TextMeshProUGUI text) => Apply(text, 0.5f);
-    public static void ApplyDarkShadow(TextMeshProUGUI text) => Apply(text, 0.7f);
+    public static void ApplyShadow(TextMeshProUGUI text) => Apply(text);
+    public static void ApplyDarkShadow(TextMeshProUGUI text) => Apply(text);
 
-    private static void Apply(TextMeshProUGUI text, float alpha)
+    // Apply the global text-effect settings (shadow + outline) to a text. Parameters come from
+    // Main.Settings.TextEffects so all overlay texts share one configurable look. Material is
+    // cached per font; callers must ClearCache() when the settings change so the cached material
+    // is rebuilt with the new parameters.
+    private static void Apply(TextMeshProUGUI text)
     {
         try
         {
             var font = text.font;
             if (font == null) return;
+
+            var fx = Main.Settings?.TextEffects;
+            bool shadowOn = fx != null && fx.ShadowEnabled;
+            bool outlineOn = fx != null && fx.OutlineEnabled;
+
+            // Nothing requested: leave the text on its plain font material.
+            if (!shadowOn && !outlineOn)
+            {
+                var plain = GetFontMaterial(font);
+                if (plain != null) text.fontSharedMaterial = plain;
+                return;
+            }
+
             if (!MaterialCache.TryGetValue(font, out var mat))
             {
                 var fontMat = GetFontMaterial(font);
@@ -33,16 +50,26 @@ internal static class ShadowManager
                     return;
                 }
                 mat = new Material(fontMat);
-                if (ShaderRef) mat.shader = ShaderRef;
-                mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-                mat.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
-                mat.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.01f);
-                mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-                mat.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0, 0, 0, alpha));
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 1f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -1f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
-                mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+                if (ShaderRef != null) mat.shader = ShaderRef;
+
+                if (shadowOn)
+                {
+                    mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+                    mat.SetColor(ShaderUtilities.ID_UnderlayColor, fx.ShadowColor);
+                    mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, fx.ShadowOffsetX);
+                    mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, fx.ShadowOffsetY);
+                    mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
+                    mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, fx.ShadowSoftness);
+                }
+
+                if (outlineOn)
+                {
+                    mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
+                    mat.SetColor(ShaderUtilities.ID_OutlineColor, fx.OutlineColor);
+                    mat.SetFloat(ShaderUtilities.ID_OutlineWidth, fx.OutlineWidth);
+                    mat.SetFloat(ShaderUtilities.ID_OutlineSoftness, fx.OutlineSoftness);
+                }
+
                 MaterialCache[font] = mat;
             }
             text.fontSharedMaterial = mat;
