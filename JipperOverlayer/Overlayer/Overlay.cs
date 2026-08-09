@@ -63,6 +63,7 @@ public class Overlay
     internal string MapTimeCache;
     public PlayCount.Hash LastHash;
     private float _lastSavedStartProgress = -1;
+    private bool _lastSavedFromStart;
     public float LastMultiplier = 1f;
     internal string _musicTimeLabel;
     internal string _mapTimeLabel;
@@ -1004,7 +1005,7 @@ public class Overlay
     {
         var s = Main.Settings;
         Jongyeol?.OnShow(floor);
-        if (_lastSavedStartProgress != -1)
+        if (_lastSavedStartProgress != -1 && _lastSavedFromStart)
         {
             if (!AutoOnceEnabled) PlayCount.SetBest(LastHash, _lastSavedStartProgress, OverlayTextManager.GetProgress(), LastMultiplier);
             _lastSavedStartProgress = -1;
@@ -1019,6 +1020,7 @@ public class Overlay
         StartTile = floor;
         var floors = GameRefs.LevelMaker?.listFloors;
         _lastSavedStartProgress = StartProgress = floors != null && floors.Count > 0 ? (float)(floor + 1) / floors.Count : 0f;
+        _lastSavedFromStart = floor == 0;
         LastMultiplier = (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance));
         if (!AutoOnceEnabled) PlayCount.AddAttempts(LastHash, StartProgress);
         SetupTextManager();
@@ -1054,7 +1056,7 @@ public class Overlay
     public void Death()
     {
         IsDeath = true;
-        if (AutoOnceEnabled || _lastSavedStartProgress == -1) return;
+        if (AutoOnceEnabled || _lastSavedStartProgress == -1 || !_lastSavedFromStart) return;
         PlayCount.SetBest(LastHash, _lastSavedStartProgress, OverlayTextManager.GetProgress(), LastMultiplier);
         PlayCount.Save();
         _lastSavedStartProgress = -1;
@@ -1063,7 +1065,7 @@ public class Overlay
 
     public void Clear()
     {
-        if (AutoOnceEnabled || _lastSavedStartProgress == -1) return;
+        if (AutoOnceEnabled || _lastSavedStartProgress == -1 || !_lastSavedFromStart) return;
         PlayCount.SetBest(LastHash, _lastSavedStartProgress, 1, LastMultiplier);
         _lastSavedStartProgress = -1;
         OverlayTextManager.SetBest(1);
@@ -1082,7 +1084,7 @@ public class Overlay
         if (_mono) _mono.enabled = false;
         try
         {
-            if (!AutoOnceEnabled && _lastSavedStartProgress != -1)
+            if (!AutoOnceEnabled && _lastSavedStartProgress != -1 && _lastSavedFromStart)
             {
                 PlayCount.SetBest(LastHash, _lastSavedStartProgress, OverlayTextManager.GetProgress(), LastMultiplier);
                 _lastSavedStartProgress = -1;
