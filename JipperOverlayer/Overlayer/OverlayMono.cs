@@ -13,7 +13,7 @@ public class OverlayMono : MonoBehaviour
     {
         if (Overlay == null || !Overlay.GameObject.activeSelf) return;
         Overlay.UpdateTime();
-        bool paused = ADOBase.controller?.paused ?? _lastPaused;
+        bool paused = GameRefs.IsPaused;
         if (paused != _lastPaused)
         {
             _lastPaused = paused;

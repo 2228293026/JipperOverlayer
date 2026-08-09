@@ -54,6 +54,7 @@ public static class Main
         Log("JipperOverlayer enabled.");
 
         PatchManager.Initialize(Harmony);
+        GameRefs.BindDelegates();
         VersionSafe.Setup();
         RegisterFeatures();
 
@@ -123,19 +124,19 @@ public static class Main
         _overlay = null;
         Overlay.Instance = null;
         CreateOverlay();
-        if (ADOBase.controller == null || ADOBase.conductor is not { isGameWorld: true })
+        if (!GameRefs.IsGameReady)
             return;
         if (_overlay == null || _overlay.GameObject.activeSelf) return;
 
-        if (ADOBase.controller.paused)
+        if (GameRefs.IsPaused)
         {
-            _overlay.Show(scrController.instance.currentSeqID, suppressNativeUI: true);
+            _overlay.Show(GameRefs.CurrentSeqID, suppressNativeUI: true);
             if (_overlay.Canvas)
                 _overlay.Canvas.enabled = false;
         }
         else
         {
-            _overlay.Show(scrController.instance.currentSeqID);
+            _overlay.Show(GameRefs.CurrentSeqID);
         }
     }
 

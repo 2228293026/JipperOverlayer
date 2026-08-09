@@ -106,7 +106,7 @@ public class Overlay
         _mono.enabled = false;
         RefreshTimeLabels();
         Object.DontDestroyOnLoad(GameObject);
-        if (ADOBase.controller is { paused: false } && ADOBase.conductor is { isGameWorld: true })
+        if (!GameRefs.IsPaused && GameRefs.IsGameWorld)
             Show(0);
     }
 
@@ -363,7 +363,7 @@ public class Overlay
 
     internal static void ResetLevelName()
     {
-        var levelName = ADOBase.controller?.txtLevelName;
+        var levelName = GameRefs.Controller?.txtLevelName;
         if (levelName != null)
         {
             if (_originalLevelNamePos != null)
@@ -377,8 +377,8 @@ public class Overlay
                         rt.sizeDelta = new Vector2(_originalLevelNameSizeX.Value, rt.sizeDelta.y);
                 }
                 // Restore the game's original-position reference to match.
-                if (ADOBase.controller != null)
-                    ADOBase.controller.txtLevelNameOriginalPosition = _originalLevelNamePos;
+                if (GameRefs.Controller != null)
+                    GameRefs.Controller.txtLevelNameOriginalPosition = _originalLevelNamePos;
             }
             if (_originalLevelNameText != null)
                 levelName.text = _originalLevelNameText;
@@ -391,7 +391,7 @@ public class Overlay
 
     static void ApplyLevelNamePatch()
     {
-        var ln = ADOBase.controller?.txtLevelName;
+        var ln = GameRefs.Controller?.txtLevelName;
         if (ln == null) return;
         var rt = ln.GetComponent<RectTransform>();
         if (rt == null) return;
@@ -412,8 +412,8 @@ public class Overlay
         // Keep the game's internal original-position reference in sync so that
         // SetDefaultText events (which compute a delta from that baseline) don't
         // yank the title back to its pre-patch position.
-        if (ADOBase.controller != null)
-            ADOBase.controller.txtLevelNameOriginalPosition = rt.anchoredPosition;
+        if (GameRefs.Controller != null)
+            GameRefs.Controller.txtLevelNameOriginalPosition = rt.anchoredPosition;
     }
 
     public void UpdateSize()
@@ -633,7 +633,8 @@ public class Overlay
 
     internal static int[] CollectCheckpoints()
     {
-        var floors = scrLevelMaker.instance.listFloors;
+        var floors = GameRefs.LevelMaker?.listFloors;
+        if (floors == null) return Array.Empty<int>();
         int count = 0;
         for (int i = 0; i < floors.Count; i++)
             if (floors[i].GetComponent<ffxCheckpoint>()) count++;
@@ -813,18 +814,22 @@ public class Overlay
         bool requireMusicToMap = false;
         if (s.ShowMusicTime)
         {
-            var song = scrConductor.instance.song;
-            if (!song?.clip && s.ShowMapTimeIfNotMusic) requireMusicToMap = true;
+            var song = GameRefs.Song;
+            if (song is not AudioSource audioSrc) requireMusicToMap = true;
+            else if (audioSrc.clip == null && s.ShowMapTimeIfNotMusic) requireMusicToMap = true;
             else
             {
-                float time = song!.time;
-                float totalTime = song.clip?.length > 0 ? song.clip.length : 0;
+                float time = audioSrc.time;
+                if (time < 0) time = 0;
+                var clip = audioSrc.clip;
+                float totalTime = clip != null && clip.length > 0 ? clip.length : 0;
 
                 // Fallback: when song has no clip, use map total time
                 if (totalTime <= 0)
                 {
-                    var floors = scrLevelMaker.instance.listFloors;
-                    totalTime = (float)floors[floors.Count - 1].entryTime;
+                    var floors = GameRefs.LevelMaker?.listFloors;
+                    if (floors != null && floors.Count > 0)
+                        totalTime = (float)floors[floors.Count - 1].entryTime;
                 }
 
                 if (LastTime == (int)time) return;
@@ -841,8 +846,9 @@ public class Overlay
         }
         if (s.ShowMapTime || requireMusicToMap)
         {
-            float time = (float)(scrConductor.instance.addoffset + scrConductor.instance.songposition_minusi);
-            var floors = scrLevelMaker.instance.listFloors;
+            float time = (float)(GameRefs.ConductorAddoffset + GameRefs.ConductorSongpositionMinusi);
+            var floors = GameRefs.LevelMaker?.listFloors;
+            if (floors == null || floors.Count == 0) return;
             float totalTime = (float)floors[floors.Count - 1].entryTime;
             if (time < 0) time = 0; else if (time > totalTime) time = totalTime;
             if ((!s.ShowMapTime || LastMapTime == (int)time) && (!requireMusicToMap || LastTime == (int)time)) return;
@@ -897,9 +903,9 @@ public class Overlay
         var s = Main.Settings;
         if (Jongyeol != null) { Jongyeol.UpdateBPM(); return; }
         if (!GameObject.activeSelf) return;
-        var floor = scrController.instance.currFloor ?? scrController.instance.firstFloor;
+        var floor = GameRefs.CurrentFloor ?? GameRefs.FirstFloor;
         if (floor == null) return;
-        var bpm = BpmCalculator.Calculate(floor, (float)(scrConductor.instance.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance)));
+        var bpm = BpmCalculator.Calculate(floor, (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance)));
         if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm) return;
         string hex = BpmCalculator.ColorToHex(s.Colors.GetBpmColor(bpm.TileBpm / s.BpmColorMax));
         BPMText.text = BuildBpmText(s.BpmLineOrder, hex, s, bpm.TileBpm, bpm.CurrentBpm, bpm.Kps);
@@ -982,8 +988,8 @@ public class Overlay
 
     public void UpdateTimingScale()
     {
-        if (!GameObject.activeSelf || scrController.instance?.currFloor == null) return;
-        float cur = (float)Math.Round(scrController.instance.currFloor.marginScale * 100, 2);
+        if (!GameObject.activeSelf || GameRefs.CurrentFloor == null) return;
+        float cur = (float)Math.Round(GameRefs.CurrentFloor.marginScale * 100, 2);
         if (Math.Abs(cur - _lastTimingScale) < 0.001f) return;
         _lastTimingScale = cur;
         _timingSb.Clear();
@@ -1006,13 +1012,14 @@ public class Overlay
         var hash = PlayCount.GetMapHash();
         if (LastHash != hash) { LastHash = hash; Checkpoints = null; MapTimeCache = null; }
         MusicTimeCache = null;
-        if (scnEditor.instance) { if (scrController.checkpointsUsed == 0) NoCheckStartTile = floor; }
+        if (GameRefs.EditorInstance != null) { if (GameRefs.CheckpointsUsed == 0) NoCheckStartTile = floor; }
         else if (!GCS.practiceMode) NoCheckStartTile = 0;
         else NoCheckStartTile = floor;
-        AutoOnceEnabled = RDC.auto || ADOBase.controller.noFail;
+        AutoOnceEnabled = GameRefs.IsAuto || GameRefs.IsNoFail;
         StartTile = floor;
-        _lastSavedStartProgress = StartProgress = (float)floor / ADOBase.lm.listFloors.Count;
-        LastMultiplier = (float)(ADOBase.conductor.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance));
+        var floors = GameRefs.LevelMaker?.listFloors;
+        _lastSavedStartProgress = StartProgress = floors != null && floors.Count > 0 ? (float)floor / floors.Count : 0f;
+        LastMultiplier = (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance));
         if (!AutoOnceEnabled) PlayCount.AddAttempts(LastHash, StartProgress);
         SetupTextManager();
         ApplyFontToAll();

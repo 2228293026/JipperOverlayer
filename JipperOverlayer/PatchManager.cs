@@ -552,6 +552,116 @@ internal static class PatchManager
         }
     }
 
+    public static Func<T, object> CreateMemberGetter<T>(string name) where T : class
+    {
+        var key = $"MemberGet:{typeof(T).FullName}.{name}";
+        lock (_lock)
+        {
+            if (_delegateCache.TryGetValue(key, out var cached))
+                return (Func<T, object>)cached;
+
+            var field = AccessTools.Field(typeof(T), name);
+            if (field != null)
+            {
+                var getter = new Func<T, object>(instance => instance == null ? null : field.GetValue(instance));
+                _delegateCache[key] = getter;
+                return getter;
+            }
+
+            var prop = AccessTools.Property(typeof(T), name);
+            if (prop != null)
+            {
+                var getMethod = prop.GetGetMethod(true);
+                if (getMethod == null) throw new InvalidOperationException($"Property '{name}' has no getter");
+                var getter = new Func<T, object>(instance => instance == null ? null : getMethod.Invoke(instance, null));
+                _delegateCache[key] = getter;
+                return getter;
+            }
+
+            throw new MissingMemberException($"{typeof(T)}.{name}");
+        }
+    }
+
+    public static Func<T, F> CreateMemberGetter<T, F>(string name) where T : class
+    {
+        var key = $"MemberGetTyped:{typeof(T).FullName}.{name}_{typeof(F).FullName}";
+        lock (_lock)
+        {
+            if (_delegateCache.TryGetValue(key, out var cached))
+                return (Func<T, F>)cached;
+
+            var prop = AccessTools.Property(typeof(T), name);
+            if (prop != null)
+            {
+                var getMethod = prop.GetGetMethod(true);
+                if (getMethod != null)
+                {
+                    Func<T, F> getter;
+                    try
+                    {
+                        getter = (Func<T, F>)Delegate.CreateDelegate(typeof(Func<T, F>), getMethod);
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Private getter — skip-visibility dynamic-method wrapper
+                        var method = new DynamicMethod($"get_{name}", typeof(F), new[] { typeof(T) }, true);
+                        var il = method.GetILGenerator();
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Callvirt, getMethod);
+                        il.Emit(OpCodes.Ret);
+                        getter = (Func<T, F>)method.CreateDelegate(typeof(Func<T, F>));
+                    }
+                    _delegateCache[key] = getter;
+                    return getter;
+                }
+            }
+
+            var field = AccessTools.Field(typeof(T), name);
+            if (field != null)
+            {
+                // Dynamic-method based FieldRef — no slow GetValue at runtime
+                var refGet = AccessTools.FieldRefAccess<T, F>(field);
+                var getter = new Func<T, F>(instance => instance == null ? default : refGet(instance));
+                _delegateCache[key] = getter;
+                return getter;
+            }
+
+            throw new MissingMemberException($"{typeof(T)}.{name}");
+        }
+    }
+
+    public static Func<object> CreateStaticMemberGetter(Type declaringType, string name)
+    {
+        var key = $"StaticMemberGet:{declaringType.FullName}.{name}";
+        lock (_lock)
+        {
+            if (_delegateCache.TryGetValue(key, out var cached))
+                return (Func<object>)cached;
+
+            var field = AccessTools.Field(declaringType, name);
+            if (field != null && field.IsStatic)
+            {
+                var getter = new Func<object>(() => field.GetValue(null));
+                _delegateCache[key] = getter;
+                return getter;
+            }
+
+            var prop = AccessTools.Property(declaringType, name);
+            if (prop != null)
+            {
+                var getMethod = prop.GetGetMethod(true);
+                if (getMethod != null && getMethod.IsStatic)
+                {
+                    var getter = new Func<object>(() => getMethod.Invoke(null, null));
+                    _delegateCache[key] = getter;
+                    return getter;
+                }
+            }
+
+            throw new MissingMemberException($"{declaringType}.{name}");
+        }
+    }
+
     private class PatchRegistration
     {
         public Type PatchType { get; }

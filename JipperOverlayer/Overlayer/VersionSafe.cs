@@ -40,7 +40,7 @@ public static class VersionSafe
     private static bool DetectApiVersion()
     {
         try { return AccessTools.TypeByName("scrMarginTracker") != null
-                    && PatchManager.CreateStaticPropertyGetter<object>(typeof(ADOBase), "playerManager") != null; }
+                    && PatchManager.CreateStaticMemberGetter(typeof(ADOBase), "playerManager") != null; }
         catch { return false; }
     }
 
@@ -108,47 +108,49 @@ public static class VersionSafe
     {
         var mmType = typeof(scrMistakesManager);
 
-        // Try zero-reflection IL getter; fall back to original GetValue lambda
+        // hitMarginsCount — static field or static property (type varies by version)
+        var hitMarginsGetter = TryStaticMemberGetter(mmType, "hitMarginsCount");
+        _getHitMarginsCount = () =>
         {
-            var getter = TryStaticFieldGetter<int[]>(mmType, "hitMarginsCount");
-            _getHitMarginsCount = getter ?? (() => new int[11]);
-        }
+            var v = hitMarginsGetter?.Invoke();
+            return v is int[] arr ? arr : new int[11];
+        };
 
-        // Instance field: cached FieldInfo (field type varies by version)
-        var speedField = TryFieldInfo(typeof(scrController), "speed");
+        // speed — instance field or property (type varies by version)
+        var speedGetter = TryMemberGetter<scrController>("speed");
         _getPlanetSpeed = ctrl =>
         {
-            if (speedField == null) return 1.0;
-            var v = speedField.GetValue(ctrl);
+            if (speedGetter == null || ctrl == null) return 1.0;
+            var v = speedGetter(ctrl);
             return v is double d ? d : v is float f ? f : 1.0;
         };
 
-        // Resolve mistakesManager via cached FieldInfo + cached static getter
-        var mmField = TryFieldInfo(typeof(scrController), "mistakesManager");
-        var instanceGetter = TryStaticFieldGetter<scrController>(typeof(scrController), "_instance");
+        // mistakesManager — instance field or property + cached static getter
+        var mmGetter = TryMemberGetter<scrController>("mistakesManager");
+        var instanceGetter = TryStaticMemberGetter(typeof(scrController), "_instance");
         scrMistakesManager GetMM()
         {
-            if (mmField == null || instanceGetter == null) return null;
+            if (mmGetter == null || instanceGetter == null) return null;
             var ctrl = instanceGetter();
-            return ctrl != null ? (scrMistakesManager)mmField.GetValue(ctrl) : null;
+            return ctrl is scrController c && mmGetter(c) is scrMistakesManager mm ? mm : null;
         }
 
         var calcAcc = TryMethodInfo(mmType, "CalculatePercentAcc");
         _calculatePercentAcc = () => calcAcc?.Invoke(GetMM(), null);
 
-        // Instance fields on mistakesManager
-        var accField = TryFieldInfo(mmType, "percentAcc");
+        // percentAcc / percentXAcc — instance fields or properties on mistakesManager
+        var accGetter = TryMemberGetter<scrMistakesManager>("percentAcc");
         _getPercentAcc = () =>
         {
             var mm = GetMM();
-            return mm != null && accField != null ? (float)accField.GetValue(mm) : 1f;
+            return mm != null && accGetter != null && accGetter(mm) is float f ? f : 1f;
         };
 
-        var xAccField = TryFieldInfo(mmType, "percentXAcc");
+        var xAccGetter = TryMemberGetter<scrMistakesManager>("percentXAcc");
         _getPercentXAcc = () =>
         {
             var mm = GetMM();
-            return mm != null && xAccField != null ? (float)xAccField.GetValue(mm) : 1f;
+            return mm != null && xAccGetter != null && xAccGetter(mm) is float f ? f : 1f;
         };
 
         _isCoopMode = () => false;
@@ -160,16 +162,16 @@ public static class VersionSafe
     }
 
     // ===== Safe wrappers — return null on miss instead of throwing =====
-    private static Func<TField> TryStaticFieldGetter<TField>(Type type, string name)
+    private static Func<object> TryStaticMemberGetter(Type type, string name)
     {
-        try { return PatchManager.CreateStaticFieldGetter<TField>(type, name); }
-        catch (Exception e) { Loader.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
+        try { return PatchManager.CreateStaticMemberGetter(type, name); }
+        catch (Exception e) { Loader.Warning($"VersionSafe: 字段或属性 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
     }
 
-    private static FieldInfo TryFieldInfo(Type type, string name)
+    private static Func<T, object> TryMemberGetter<T>(string name) where T : class
     {
-        try { return PatchManager.GetFieldInfo(type, name); }
-        catch (Exception e) { Loader.Warning($"VersionSafe: 字段 {type.Name}.{name} 不存在 ({e.Message})"); return null; }
+        try { return PatchManager.CreateMemberGetter<T>(name); }
+        catch (Exception e) { Loader.Warning($"VersionSafe: 字段或属性 {typeof(T).Name}.{name} 不存在 ({e.Message})"); return null; }
     }
 
     private static MethodInfo TryMethodInfo(Type type, string name)

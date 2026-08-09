@@ -13,7 +13,7 @@ public class PlayCount
     private static string FilePath => Path.Combine(Loader.ModPath, "Plays.dat");
     private static readonly MD5 Md5 = MD5.Create();
 
-    public static float Multiplier => (float)(ADOBase.conductor?.song?.pitch ?? 1.0);
+    public static float Multiplier => GameRefs.SongPitch;
 
     public static void Load()
     {
@@ -185,7 +185,7 @@ public class PlayCount
     private static byte[] GetHash()
     {
         using MemoryStream ms = new();
-        scrLevelMaker lm = ADOBase.lm;
+        scrLevelMaker lm = GameRefs.LevelMaker;
         if (lm.isOldLevel) ms.WriteUTF(lm.leveldata);
         else ms.WriteObject(lm.floorAngles);
         foreach (LevelEvent levelEvent in ADOBase.customLevel.events)

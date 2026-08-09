@@ -46,7 +46,7 @@ public class JongyeolModule
         if (!FPSText) return;
         int y = -15;
         var s = Main.Settings;
-        bool checkAuto = !s.RemoveNotRequireInAuto || !RDC.auto;
+        bool checkAuto = !s.RemoveNotRequireInAuto || !GameRefs.IsAuto;
 
         _overlay.Checkpoints ??= Overlay.CollectCheckpoints();
 
@@ -97,7 +97,7 @@ public class JongyeolModule
             var ld = scnGame.instance?.levelData;
             return !string.IsNullOrEmpty(ld?.GetType().GetProperty("author")?.GetValue(ld) as string) && s.ShowAuthor;
         }
-        if (elem == DisplayElement.Death) return scrController.instance.noFail && s.ShowDeath;
+        if (elem == DisplayElement.Death) return GameRefs.IsNoFail && s.ShowDeath;
         if (elem == DisplayElement.Start) return _overlay.StartTile != 0 && s.ShowStart;
         if (elem == DisplayElement.Checkpoint) return checkAuto && s.ShowCheckpoint && (_overlay.Checkpoints?.Length > 0);
         return elem switch
@@ -176,7 +176,7 @@ public class JongyeolModule
     public void UpdateStart()
     {
         var s = Main.Settings;
-        if (!s.ShowStart || !_overlay.GameObject.activeSelf || _overlay.StartTile != scrController.instance.currentSeqID) return;
+        if (!s.ShowStart || !_overlay.GameObject.activeSelf || _overlay.StartTile != GameRefs.CurrentSeqID) return;
         StartText.text = $"<color=white>{s.Labels.Start} |</color> {_overlay.StartTile} ({Math.Round(_overlay.OverlayTextManager.GetProgress() * 100, DecimalPrecision)}%)";
         StartText.color = s.Colors.JStart;
     }
@@ -207,18 +207,22 @@ public class JongyeolModule
         // --- Music Time ---
         if (s.ShowMusicTime)
         {
-            var song = scrConductor.instance.song;
-            if (!song?.clip && s.ShowMapTimeIfNotMusic) requireMusicToMap = true;
+            var song = GameRefs.Song;
+            if (song is not AudioSource audioSrc) requireMusicToMap = true;
+            else if (audioSrc.clip == null && s.ShowMapTimeIfNotMusic) requireMusicToMap = true;
             else
             {
-                float time = song!.time;
-                float totalTime = song.clip?.length > 0 ? song.clip.length : 0;
+                float time = audioSrc.time;
+                if (time < 0) time = 0;
+                var clip = audioSrc.clip;
+                float totalTime = clip != null && clip.length > 0 ? clip.length : 0;
 
                 // Fallback: when song has no clip, use map total time
                 if (totalTime <= 0)
                 {
-                    var floors = scrLevelMaker.instance.listFloors;
-                    totalTime = (float)floors[floors.Count - 1].entryTime;
+                    var floors = GameRefs.LevelMaker?.listFloors;
+                    if (floors != null && floors.Count > 0)
+                        totalTime = (float)floors[floors.Count - 1].entryTime;
                 }
 
                 // Throttle: update at ~10fps to avoid per-frame song.time access
@@ -244,8 +248,9 @@ public class JongyeolModule
         // --- Map Time (with music-time fallback when song has no clip) ---
         if (s.ShowMapTime || requireMusicToMap)
         {
-            float time = (float)(scrConductor.instance.addoffset + scrConductor.instance.songposition_minusi);
-            var floors = scrLevelMaker.instance.listFloors;
+            float time = (float)(GameRefs.ConductorAddoffset + GameRefs.ConductorSongpositionMinusi);
+            var floors = GameRefs.LevelMaker?.listFloors;
+            if (floors == null || floors.Count == 0) return;
             float totalTime = (float)floors[floors.Count - 1].entryTime;
             if (time < 0) time = 0;
             else if (time > totalTime) time = totalTime;
@@ -263,9 +268,9 @@ public class JongyeolModule
     {
         var s = Main.Settings;
         if (!_overlay.GameObject.activeSelf) return;
-        scrFloor floor = scrController.instance.currFloor ?? scrController.instance.firstFloor;
+        scrFloor floor = GameRefs.CurrentFloor ?? GameRefs.FirstFloor;
         if (floor == null || floor.seqID <= _pseudoFloor) return;
-        var bpm = BpmCalculator.Calculate(floor, (float)(scrConductor.instance.song.pitch * VersionSafe.GetPlanetSpeed(scrController.instance)));
+        var bpm = BpmCalculator.Calculate(floor, (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance)));
         bool checkPseudo = Jbpm.CheckPseudo;
         float cbpm = 0;
         int count = 0;
@@ -286,7 +291,7 @@ public class JongyeolModule
     {
         if (_purePerfect) return Main.Settings.Colors.JStatePerfectPlay;
         int too = _overlay.OverlayTextManager?.GetTooJudgement(_overlay) ?? 0;
-        float value = (float)combo / (scrController.instance.currentSeqID - _overlay.StartTile + too + 1) * 2;
+        float value = (float)combo / (GameRefs.CurrentSeqID - _overlay.StartTile + too + 1) * 2;
         if (value > 1) value = 1;
         return Main.Settings.Colors.JCombo.GetColor(value);
     }
@@ -305,7 +310,7 @@ public class JongyeolModule
         _perToCom = false; _purePerfect = true; _pseudoFloor = -1;
         _timingsSum = 0;
         _lastMusicTimeTick = -1;
-        if (scrController.checkpointsUsed == 0) _overlay.ComboTitle.text = Main.Settings.Labels.ComboTitle;
+        if (GameRefs.CheckpointsUsed == 0) _overlay.ComboTitle.text = Main.Settings.Labels.ComboTitle;
     }
 
     public void OnHide()
@@ -359,7 +364,7 @@ public class JongyeolModule
         count = floor.seqID - curFloor.seqID + 1 - midSpin;
         if (count <= 1) { cbpm = 0; return false; }
         cbpm = floor.nextfloor != null ? (float)(60 / (floor.nextfloor.entryTime - curFloor.entryTime)) : (float)(60 / (floor.entryTime - curFloor.entryTime + 60 / bpm));
-        cbpm *= scrConductor.instance?.song?.pitch ?? 1;
+        cbpm *= GameRefs.SongPitch;
         _pseudoFloor = floor.seqID;
         return true;
     }

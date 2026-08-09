@@ -29,9 +29,11 @@ public class OverlayTextManagerCoop : IOverlayTextManager
 
     public void CacheProgress(scrPlanet planet)
     {
+        var allFloors = GameRefs.LevelMaker?.listFloors;
+        if (allFloors == null) return;
+        float count = allFloors.Count;
         if ((object)planet == null)
         {
-            float count = ADOBase.lm.listFloors.Count;
             for (int i = 0; i < PlayerDatas.Length; i++)
                 SetProgress(ref PlayerDatas[i],
                     (scrPlayerManager.instance.allPlayers[i].planetarySystem.chosenPlanet.currfloor.seqID + 1) / count);
@@ -39,7 +41,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         else
         {
             SetProgress(ref PlayerDatas[planet.player.playerID],
-                (planet.currfloor.seqID + 1) / (float)ADOBase.lm.listFloors.Count);
+                (planet.currfloor.seqID + 1) / count);
         }
     }
 
@@ -112,18 +114,18 @@ public class OverlayTextManagerCoop : IOverlayTextManager
     public void UpdateCheckpoint(Overlay overlay)
     {
         bool updated = false;
-        while (overlay.Checkpoints.Length > CurCheck && scrController.instance.currentSeqID >= overlay.Checkpoints[CurCheck])
+        while (overlay.Checkpoints.Length > CurCheck && GameRefs.CurrentSeqID >= overlay.Checkpoints[CurCheck])
         {
             CurCheck++; updated = true;
         }
-        if (LastCheckpoint == scrController.checkpointsUsed && !updated) return;
-        overlay.CheckpointText.text = $"<color=white>{Main.Settings.Labels.Checkpoint} |</color> {scrController.checkpointsUsed} ({CurCheck}/{overlay.Checkpoints.Length})";
-        LastCheckpoint = scrController.checkpointsUsed;
+        if (LastCheckpoint == GameRefs.CheckpointsUsed && !updated) return;
+        overlay.CheckpointText.text = $"<color=white>{Main.Settings.Labels.Checkpoint} |</color> {GameRefs.CheckpointsUsed} ({CurCheck}/{overlay.Checkpoints.Length})";
+        LastCheckpoint = GameRefs.CheckpointsUsed;
     }
 
     public void UpdateBest(Overlay overlay)
     {
-        if (RDC.auto && !overlay.AutoOnceEnabled) overlay.AutoOnceEnabled = true;
+        if (GameRefs.IsAuto && !overlay.AutoOnceEnabled) overlay.AutoOnceEnabled = true;
         if (CurBest == -1)
             CurBest = PlayCount.GetData(overlay.LastHash)?.GetBest(overlay.StartProgress, overlay.LastMultiplier) ?? 0;
         else if (CurBest > MaxProgress || overlay.AutoOnceEnabled) return;
@@ -219,16 +221,16 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         var labels = Main.Settings.Labels;
         string state;
 
-        if (scrController.instance.currentSeqID == overlay.StartTile)
+        if (GameRefs.CurrentSeqID == overlay.StartTile)
             state = labels.StateWaiting;
-        else if (!RDC.auto && player.auto)
+        else if (!GameRefs.IsAuto && player.auto)
             state = labels.StateAuto;  // respawn waiting
         else
         {
             var curFloor = player.planetarySystem?.chosenPlanet?.currfloor;
             if (curFloor != null && curFloor.nextfloor is { auto: true })
                 state = labels.StateAutoTile;
-            else if (RDC.auto)
+            else if (GameRefs.IsAuto)
                 state = labels.StateAuto;
             else if (IsPurePerfect(hits))
                 state = labels.StatePerfectPlay;
@@ -241,7 +243,8 @@ public class OverlayTextManagerCoop : IOverlayTextManager
                 else state = labels.StatePerfectionist;
             }
         }
-        if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count)
+        var allFloors = GameRefs.LevelMaker?.listFloors;
+        if (allFloors != null && GameRefs.CurrentSeqID != allFloors.Count)
             state += labels.StateSuffix;
         return state;
     }

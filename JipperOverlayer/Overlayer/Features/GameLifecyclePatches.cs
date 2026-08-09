@@ -67,8 +67,8 @@ internal static class PressToStartShowTextPatch
 {
     static void Postfix()
     {
-        if (!GCS.practiceMode && scnGame.instance) return;
-        GameLifecycleHelper.GetOverlay()?.Show(scrController.instance.currentSeqID);
+        if (!GCS.practiceMode && GameRefs.GameInstance != null) return;
+        GameLifecycleHelper.GetOverlay()?.Show(GameRefs.CurrentSeqID);
     }
 }
 
@@ -135,7 +135,7 @@ internal static class RdcSetAutoPatch
 {
     static void Postfix()
     {
-        if (!ADOBase.isScnGame) return;
+        if (!GameRefs.IsScnGame) return;
         Overlay.Instance?.Jongyeol?.SetupLocation();
     }
 }

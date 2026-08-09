@@ -114,6 +114,7 @@
   <ItemGroup>
     <Compile Include="IModLoader.cs" />
     <Compile Include="Loader.cs" />
+    <Compile Include="Overlayer\GameRefs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PatchManager.cs" />
     <Compile Include="Settings.cs" />

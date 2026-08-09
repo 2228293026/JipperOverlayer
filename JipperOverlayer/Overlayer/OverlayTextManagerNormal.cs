@@ -16,7 +16,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
 
     public void CacheProgress(scrPlanet planet)
     {
-        Progress = scrController.instance.percentComplete;
+        Progress = GameRefs.PercentComplete;
     }
 
     public void UpdateAccuracy(Overlay overlay, int index)
@@ -27,7 +27,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         if (Main.Settings.ShowAccuracy)
         {
             float acc = VersionSafe.GetPercentAcc();
-            float maxAcc = 1 + (scrController.instance.currentSeqID - overlay.NoCheckStartTile + 1) * 0.0001f;
+            float maxAcc = 1 + (GameRefs.CurrentSeqID - overlay.NoCheckStartTile + 1) * 0.0001f;
             _sb.Clear();
             _sb.Append("<color=white>");
             _sb.Append(labels.Accuracy);
@@ -55,8 +55,9 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         var labels = Main.Settings.Labels;
         if (Main.Settings.JongyeolMode)
         {
-            int cur = scrController.instance.currentSeqID;
-            int last = ADOBase.lm.listFloors.Count - 1;
+            int cur = GameRefs.CurrentSeqID;
+            var floors = GameRefs.LevelMaker?.listFloors;
+            int last = floors != null && floors.Count > 0 ? floors.Count - 1 : 0;
             overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {cur} / {last}{(cur == last ? "" : $" [-{last - cur}]")} ({Math.Round(Progress * 100, DecimalPrecision)}%)";
         }
         else
@@ -84,28 +85,28 @@ public class OverlayTextManagerNormal : IOverlayTextManager
     public void UpdateCheckpoint(Overlay overlay)
     {
         bool updated = false;
-        while (overlay.Checkpoints.Length > CurCheck && scrController.instance.currentSeqID >= overlay.Checkpoints[CurCheck])
+        while (overlay.Checkpoints.Length > CurCheck && GameRefs.CurrentSeqID >= overlay.Checkpoints[CurCheck])
         {
             CurCheck++; updated = true;
         }
-        if (LastCheckpoint == scrController.checkpointsUsed && !updated) return;
+        if (LastCheckpoint == GameRefs.CheckpointsUsed && !updated) return;
         _sb.Clear();
         _sb.Append("<color=white>");
         _sb.Append(Main.Settings.Labels.Checkpoint);
         _sb.Append(" |</color> ");
-        _sb.Append(scrController.checkpointsUsed);
+        _sb.Append(GameRefs.CheckpointsUsed);
         _sb.Append(" (");
         _sb.Append(CurCheck);
         _sb.Append('/');
         _sb.Append(overlay.Checkpoints.Length);
         _sb.Append(')');
         overlay.CheckpointText.SetText(_sb);
-        LastCheckpoint = scrController.checkpointsUsed;
+        LastCheckpoint = GameRefs.CheckpointsUsed;
     }
 
     public void UpdateBest(Overlay overlay)
     {
-        if (RDC.auto && !overlay.AutoOnceEnabled) overlay.AutoOnceEnabled = true;
+        if (GameRefs.IsAuto && !overlay.AutoOnceEnabled) overlay.AutoOnceEnabled = true;
         if (CurBest == -1)
             CurBest = PlayCount.GetData(overlay.LastHash)?.GetBest(overlay.StartProgress, overlay.LastMultiplier) ?? 0;
         else if (CurBest > Progress || overlay.AutoOnceEnabled) return;
@@ -147,7 +148,7 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             overlay.DeathText.SetText(_sb);
             _lastDeath = _deathCount;
         }
-        float max = (scrController.instance.currentSeqID - overlay.StartTile) * 0.05f;
+        float max = (GameRefs.CurrentSeqID - overlay.StartTile) * 0.05f;
         if (max < 0.001f) return;
         overlay.DeathText.color = s.Colors.JDeath.GetColor(1 - Math.Min(_deathCount, max) / max);
     }
@@ -160,13 +161,13 @@ public class OverlayTextManagerNormal : IOverlayTextManager
         var labels = s.Labels;
         string state;
         overlay.StateText.color = sColors.JStateWaiting;
-        if (scrController.instance.currentSeqID == overlay.StartTile) state = labels.StateWaiting;
-        else if (scrController.instance.currFloor?.nextfloor is { auto: true })
+        if (GameRefs.CurrentSeqID == overlay.StartTile) state = labels.StateWaiting;
+        else if (GameRefs.CurrentFloor?.nextfloor is { auto: true })
         {
             state = labels.StateAutoTile;
             overlay.StateText.color = sColors.JStateAutoTile;
         }
-        else if (RDC.auto) { state = labels.StateAuto; overlay.StateText.color = sColors.JStateAuto; }
+        else if (GameRefs.IsAuto) { state = labels.StateAuto; overlay.StateText.color = sColors.JStateAuto; }
         else if (isPurePerfect) { state = labels.StatePerfectPlay; overlay.StateText.color = sColors.JStatePerfectPlay; }
         else
         {
@@ -176,7 +177,8 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             else if (hits[1] != 0 || hits[5] != 0) { state = labels.StateNoMiss; overlay.StateText.color = sColors.JStateNoMiss; }
             else { state = labels.StatePerfectionist; overlay.StateText.color = sColors.JStatePerfectionist; }
         }
-        if (scrController.instance.currentSeqID != ADOBase.lm.listFloors.Count) state += labels.StateSuffix;
+        var allFloors = GameRefs.LevelMaker?.listFloors;
+        if (allFloors != null && GameRefs.CurrentSeqID != allFloors.Count) state += labels.StateSuffix;
         if (overlay.StartTile != 0) state += labels.StateMidStart;
         _sb.Clear();
         _sb.Append("<color=white>");
