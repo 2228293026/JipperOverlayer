@@ -4,6 +4,7 @@ public interface IOverlayTextManager
 {
     void SetBest(float best);
     void CacheProgress(scrPlanet planet);
+    void SeedProgress(float progress);
     void UpdateAccuracy(Overlay overlay, int index);
     void UpdateProgress(Overlay overlay);
     void UpdateProgressBar(Overlay overlay);

@@ -1018,7 +1018,7 @@ public class Overlay
         AutoOnceEnabled = GameRefs.IsAuto || GameRefs.IsNoFail;
         StartTile = floor;
         var floors = GameRefs.LevelMaker?.listFloors;
-        _lastSavedStartProgress = StartProgress = floors != null && floors.Count > 0 ? (float)floor / floors.Count : 0f;
+        _lastSavedStartProgress = StartProgress = floors != null && floors.Count > 0 ? (float)(floor + 1) / floors.Count : 0f;
         LastMultiplier = (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance));
         if (!AutoOnceEnabled) PlayCount.AddAttempts(LastHash, StartProgress);
         SetupTextManager();
@@ -1029,6 +1029,13 @@ public class Overlay
 
         if (s.ShowProgress || s.ShowMusicTime || s.ShowCheckpoint || s.ShowBest || Jongyeol != null)
             SetupLocationMain();
+        OverlayTextManager.SeedProgress(StartProgress);
+        if (s.ShowProgress || s.ShowProgressBar || s.ShowBest)
+        {
+            if (s.ShowProgress) OverlayTextManager.UpdateProgress(this);
+            if (s.ShowProgressBar) UpdateProgressBar();
+            if (s.ShowBest) OverlayTextManager.UpdateBest(this);
+        }
         if (s.ShowJudgement) { SetupLocationJudgement(); UpdateJudgement(); }
         if (s.ShowCombo) UpdateCombo(0, false);
         if (s.ShowBPM) UpdateBPM();

@@ -52,6 +52,12 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         if (MaxProgress < progress) MaxProgress = progress;
     }
 
+    public void SeedProgress(float progress)
+    {
+        for (int i = 0; i < PlayerDatas.Length; i++)
+            SetProgress(ref PlayerDatas[i], progress);
+    }
+
     public void UpdateAccuracy(Overlay overlay, int index)
     {
         if (Main.Settings.ShowAccuracy)
@@ -98,6 +104,8 @@ public class OverlayTextManagerCoop : IOverlayTextManager
     {
         var strings = new string[PlayerDatas.Length + 1];
         strings[0] = Main.Settings.Labels.Progress;
+        if (overlay.StartTile > 0)
+            strings[0] += $" | {ColorToString(Main.Settings.Colors.GetProgressColor(overlay.StartProgress))}{Math.Round(overlay.StartProgress * 100, DecimalPrecision)}%</color> ~";
         for (int i = 0; i < PlayerDatas.Length; i++) strings[i + 1] = PlayerDatas[i].ProgressString;
         overlay.ProgressText.text = string.Concat(strings);
     }

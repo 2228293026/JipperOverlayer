@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using UnityEngine;
 
 namespace JipperOverlayer.Overlayer;
 
@@ -18,6 +19,8 @@ public class OverlayTextManagerNormal : IOverlayTextManager
     {
         Progress = GameRefs.PercentComplete;
     }
+
+    public void SeedProgress(float progress) => Progress = progress;
 
     public void UpdateAccuracy(Overlay overlay, int index)
     {
@@ -59,18 +62,31 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             var floors = GameRefs.LevelMaker?.listFloors;
             int last = floors != null && floors.Count > 0 ? floors.Count - 1 : 0;
             overlay.ProgressText.text = $"<color=white>{labels.Progress} |</color> {cur} / {last}{(cur == last ? "" : $" [-{last - cur}]")} ({Math.Round(Progress * 100, DecimalPrecision)}%)";
+            overlay.ProgressText.color = Main.Settings.Colors.GetProgressColor(Progress);
         }
         else
         {
+            var colors = Main.Settings.Colors;
             _sb.Clear();
             _sb.Append("<color=white>");
             _sb.Append(labels.Progress);
             _sb.Append(" |</color> ");
+            if (overlay.StartTile > 0)
+            {
+                _sb.Append("<color=#");
+                _sb.Append(ColorUtility.ToHtmlStringRGB(colors.GetProgressColor(overlay.StartProgress)));
+                _sb.Append(">");
+                _sb.Append(Math.Round(overlay.StartProgress * 100, DecimalPrecision));
+                _sb.Append("%</color> ~ ");
+            }
+            _sb.Append("<color=#");
+            _sb.Append(ColorUtility.ToHtmlStringRGB(colors.GetProgressColor(Progress)));
+            _sb.Append(">");
             _sb.Append(Math.Round(Progress * 100, DecimalPrecision));
-            _sb.Append('%');
+            _sb.Append("%</color>");
             overlay.ProgressText.SetText(_sb);
+            overlay.ProgressText.color = Color.white;
         }
-        overlay.ProgressText.color = Main.Settings.Colors.GetProgressColor(Progress);
     }
 
     public void UpdateProgressBar(Overlay overlay)
