@@ -7,19 +7,13 @@ public class OverlayMono : MonoBehaviour
 {
     public Overlay Overlay;
     private Coroutine _comboAnim;
-    private bool _lastPaused;
 
     private void Update()
     {
         if (Overlay == null || !Overlay.GameObject.activeSelf) return;
         Overlay.UpdateTime();
-        bool paused = GameRefs.IsPaused;
-        if (paused != _lastPaused)
-        {
-            _lastPaused = paused;
-            if (Overlay.Canvas)
-                Overlay.Canvas.enabled = !paused;
-        }
+        if (Overlay.Canvas)
+            Overlay.Canvas.enabled = !GameRefs.IsPaused;
     }
 
     public void StartComboBump()
