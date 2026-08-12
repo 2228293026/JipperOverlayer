@@ -1,12 +1,29 @@
 # Changelog
 
-## Unreleased
+## v1.1.4 — 2026.08.12
+
+### Features
+
+- **Asynchronous lazy-loaded patches** (PatchManager): register patches with a `lazyTrigger` — applied asynchronously only when both the toggle and the trigger allow, without touching the update loop. A background poller applies/unapplies on demand, isolates permanently failing patches (`_failedPatches`) instead of retrying every tick, and is torn down safely on disable/quit (cc616d2)
+- **PatchManager scene-awareness**: the lazy poller pauses while a scene loads and cancels on application quit; `Initialize` now resets every cache and the quitting flag so re-enabling starts clean (7a0d892)
 
 ### Performance
 
+- **GameRefs centralized state access layer**: new static facade (`GameRefs`) exposes controller/conductor/level-maker/RDC/etc. through delegate calls instead of scattered reflection and direct type access; `PatchManager` gained `CreateMemberGetter` and friends with full delegate caching, so high-frequency reads cost a plain delegate call (b66d84b)
+- **Pre-baked hex color LUT**: `ColorPerDictionary` bakes a 256-step RGB/RGBA hex lookup table (built through `ColorUtility`, byte-identical output) and the Progress / BPM / coop Accuracy hot paths now read it by index instead of interpolating a color and converting to hex per frame; the LUT invalidates itself on any color edit. The per-hit player nameplate hex in `VersionSafe` is memoized. All rich-text overlay colors now carry alpha (single-player Progress included, matching the color editor's alpha slider). Removed the unused `BpmCalculator.ColorToHex`
 - **Dynamic glyph pre-baking**: the bounded overlay charset — ASCII printable, every character used by the three UI languages, and user-custom labels — is baked into all TMP dynamic font atlases at boot via `TMP_FontAsset.TryAddCharacters` (overload resolved at runtime across the string/`uint[]`/`IEnumerable<char>` signatures TMP versions use; multi-atlas enabled; static atlases skipped in silence). Removes main-thread atlas re-rack + texture-rebuild spikes on first render and on EN/KO/CN language switches. Glyphs a font can't produce (e.g. Hangul in a Latin-only ttf) simply stay unbaked and keep falling back to the CJK font
-- **Pre-baked hex color LUT**: `ColorPerDictionary` bakes a 256-step RGB/RGBA hex lookup table (built through `ColorUtility`, byte-identical output) and the Progress / BPM / coop Accuracy hot paths now read it by index instead of interpolating a color and converting to hex per frame. The LUT invalidates itself on any color edit. The per-hit player nameplate hex in `VersionSafe` is memoized so identical colors skip re-formatting
-- Removed the now-unused `BpmCalculator.ColorToHex` helper
+- **XPerfect probing gated**: when XPerfect is not installed the probe is disabled permanently (it can't be installed without a restart); when installed-but-disabled it keeps polling every frame (it may be enabled in-game); when active it stops after the first successful cache and recovers automatically via the toggle event when disabled again
+
+### Bug Fixes
+
+- **Level-name position no longer reset**: `ApplyLevelNamePatch()` / `ResetLevelName()` keep `scrController.txtLevelNameOriginalPosition` in sync with the applied position, so later `SetDefaultText` events no longer yank the title back to its pre-patch position (84fd26f)
+- **No more stray best records from mid-level starts**: a run is only saved/settled when it started from floor 0 (`_lastSavedFromStart`); checkpoints and mid-level restarts no longer pollute the best/attempt stats (3b300a2)
+
+### Refactors
+
+- **Overlay code decoupled from concrete game types**: all state access now goes through `GameRefs`; `VersionSafe` and callers were adapted, and `.csproj`/`.gitignore` updated alongside (b66d84b)
+- **Pause handling flattened**: removed the `_lastPaused` edge-detection field; canvas visibility now reads `GameRefs.IsPaused` directly each frame in `OverlayMono` (ac86aea)
+- **SeedProgress**: progress managers seed the start tile explicitly on show via the new `IOverlayTextManager.SeedProgress` (single-player and coop), giving an immediate refresh when progress display is enabled and showing the start-progress range for mid-level starts; start progress is now calculated as `(floor + 1) / totalTiles` (02a0553)
 
 ## v1.1.3 — 2026.07.16
 
