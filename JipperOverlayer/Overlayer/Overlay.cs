@@ -908,7 +908,7 @@ public class Overlay
         if (floor == null) return;
         var bpm = BpmCalculator.Calculate(floor, (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance)));
         if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm) return;
-        string hex = BpmCalculator.ColorToHex(s.Colors.GetBpmColor(bpm.TileBpm / s.BpmColorMax));
+        string hex = s.Colors.GetBpmHex(bpm.TileBpm / s.BpmColorMax, true);
         BPMText.text = BuildBpmText(s.BpmLineOrder, hex, s, bpm.TileBpm, bpm.CurrentBpm, bpm.Kps);
         if (LastCurBpm != bpm.CurrentBpm) BPMText.color = s.Colors.GetBpmColor(bpm.CurrentBpm / s.BpmColorMax);
         LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;

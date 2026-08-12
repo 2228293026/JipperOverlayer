@@ -74,13 +74,13 @@ public class OverlayTextManagerNormal : IOverlayTextManager
             if (overlay.StartTile > 0)
             {
                 _sb.Append("<color=#");
-                _sb.Append(ColorUtility.ToHtmlStringRGB(colors.GetProgressColor(overlay.StartProgress)));
+                _sb.Append(colors.GetProgressHex(overlay.StartProgress, true));
                 _sb.Append(">");
                 _sb.Append(Math.Round(overlay.StartProgress * 100, DecimalPrecision));
                 _sb.Append("%</color> ~ ");
             }
             _sb.Append("<color=#");
-            _sb.Append(ColorUtility.ToHtmlStringRGB(colors.GetProgressColor(Progress)));
+            _sb.Append(colors.GetProgressHex(Progress, true));
             _sb.Append(">");
             _sb.Append(Math.Round(Progress * 100, DecimalPrecision));
             _sb.Append("%</color>");

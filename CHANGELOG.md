@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Performance
+
+- **Dynamic glyph pre-baking**: the bounded overlay charset — ASCII printable, every character used by the three UI languages, and user-custom labels — is baked into all TMP dynamic font atlases at boot via `TMP_FontAsset.TryAddCharacters` (overload resolved at runtime across the string/`uint[]`/`IEnumerable<char>` signatures TMP versions use; multi-atlas enabled; static atlases skipped in silence). Removes main-thread atlas re-rack + texture-rebuild spikes on first render and on EN/KO/CN language switches. Glyphs a font can't produce (e.g. Hangul in a Latin-only ttf) simply stay unbaked and keep falling back to the CJK font
+- **Pre-baked hex color LUT**: `ColorPerDictionary` bakes a 256-step RGB/RGBA hex lookup table (built through `ColorUtility`, byte-identical output) and the Progress / BPM / coop Accuracy hot paths now read it by index instead of interpolating a color and converting to hex per frame. The LUT invalidates itself on any color edit. The per-hit player nameplate hex in `VersionSafe` is memoized so identical colors skip re-formatting
+- Removed the now-unused `BpmCalculator.ColorToHex` helper
+
 ## v1.1.3 — 2026.07.16
 
 ### Features

@@ -48,7 +48,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
     protected void SetProgress(ref PlayerData pData, float progress)
     {
         pData.Progress = progress;
-        pData.ProgressString = $" | {ColorToString(Main.Settings.Colors.GetProgressColor(progress))}{Math.Round(progress * 100, DecimalPrecision)}%</color>";
+        pData.ProgressString = $" | <color=#{Main.Settings.Colors.GetProgressHex(progress, true)}>{Math.Round(progress * 100, DecimalPrecision)}%</color>";
         if (MaxProgress < progress) MaxProgress = progress;
     }
 
@@ -90,14 +90,14 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         float maxAcc = 1 + (scrPlayerManager.instance.allPlayers[i].planetarySystem.chosenPlanet.currfloor.seqID - noCheckStartTile + 1) * 0.0001f;
         float xacc = scrMistakesManager.marginTrackers[i].percentXAcc;
         if (float.IsNaN(xacc)) xacc = 1;
-        pData.AccuracyString = $" | {ColorToString(Main.Settings.Colors.GetAccuracyColor(xacc == 1 ? 1 : acc / maxAcc, xacc == 1))}{Math.Round(acc * 100, DecimalPrecision)}%</color>";
+        pData.AccuracyString = $" | <color=#{Main.Settings.Colors.GetAccuracyHex(xacc == 1 ? 1 : acc / maxAcc, xacc == 1)}>{Math.Round(acc * 100, DecimalPrecision)}%</color>";
     }
 
     protected void SetXAccuracy(ref PlayerData pData, int i)
     {
         float xacc = scrMistakesManager.marginTrackers[i].percentXAcc;
         if (float.IsNaN(xacc)) xacc = 1;
-        pData.XAccuracyString = $" | {ColorToString(Main.Settings.Colors.GetAccuracyColor(xacc, xacc == 1))}{Math.Round(xacc * 100, DecimalPrecision)}%</color>";
+        pData.XAccuracyString = $" | <color=#{Main.Settings.Colors.GetXAccuracyHex(xacc, xacc == 1)}>{Math.Round(xacc * 100, DecimalPrecision)}%</color>";
     }
 
     public void UpdateProgress(Overlay overlay)
@@ -105,7 +105,7 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         var strings = new string[PlayerDatas.Length + 1];
         strings[0] = Main.Settings.Labels.Progress;
         if (overlay.StartTile > 0)
-            strings[0] += $" | {ColorToString(Main.Settings.Colors.GetProgressColor(overlay.StartProgress))}{Math.Round(overlay.StartProgress * 100, DecimalPrecision)}%</color> ~";
+            strings[0] += $" | <color=#{Main.Settings.Colors.GetProgressHex(overlay.StartProgress, true)}>{Math.Round(overlay.StartProgress * 100, DecimalPrecision)}%</color> ~";
         for (int i = 0; i < PlayerDatas.Length; i++) strings[i + 1] = PlayerDatas[i].ProgressString;
         overlay.ProgressText.text = string.Concat(strings);
     }
@@ -148,8 +148,6 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         overlay.BestText.text = $"<color=white>{Main.Settings.Labels.Best} |</color> {Math.Round(best * 100, DecimalPrecision)}%";
         overlay.BestText.color = Main.Settings.Colors.GetBestColor(best);
     }
-
-    public static string ColorToString(in Color color) => $"<color=#{ColorUtility.ToHtmlStringRGBA(color)}>";
 
     public struct PlayerData
     {

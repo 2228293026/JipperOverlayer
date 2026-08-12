@@ -170,4 +170,20 @@ public static class Tr
         if (Main.Settings == null) return Data[0][(int)key];
         return Data[(int)Main.Settings.CurrentLanguage][(int)key];
     }
+
+    /// <summary>Union of every character used by any language's UI strings (for glyph pre-baking).</summary>
+    public static string CollectOverlayCharacters()
+    {
+        var set = new System.Collections.Generic.HashSet<char>();
+        for (int lang = 0; lang < Data.Length; lang++)
+        {
+            var arr = Data[lang];
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var s = arr[i];
+                for (int j = 0; j < s.Length; j++) set.Add(s[j]);
+            }
+        }
+        return string.Concat(set);
+    }
 }

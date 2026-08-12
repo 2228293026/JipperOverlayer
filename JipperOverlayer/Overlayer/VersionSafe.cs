@@ -23,6 +23,11 @@ public static class VersionSafe
     private static Func<int, int[]> _getHitMarginsCountForPlayer;
     private static Func<int, string> _getPlayerColorHex;
 
+    // Single-slot memo for the per-hit player nameplate hex string
+    private static int _cachedPlayerHexIdx = -1;
+    private static Color _cachedPlayerHexColor;
+    private static string _cachedPlayerHex;
+
     public static void Setup()
     {
         if (IsInitialized) return;
@@ -99,7 +104,12 @@ public static class VersionSafe
         {
             if (scrPlayerManager.playerColors == null || playerIdx >= scrPlayerManager.playerColors.Length)
                 return "FFFFFF";
-            return ColorUtility.ToHtmlStringRGB(scrPlayerManager.playerColors[playerIdx].ToRealColor());
+            Color c = scrPlayerManager.playerColors[playerIdx].ToRealColor();
+            if (_cachedPlayerHexIdx == playerIdx && _cachedPlayerHexColor == c)
+                return _cachedPlayerHex;
+            _cachedPlayerHexIdx = playerIdx;
+            _cachedPlayerHexColor = c;
+            return _cachedPlayerHex = ColorUtility.ToHtmlStringRGB(c);
         };
     }
 

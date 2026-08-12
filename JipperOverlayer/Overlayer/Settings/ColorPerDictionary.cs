@@ -33,6 +33,7 @@ public class ColorPerDictionary {
     // Call after deserialization to ensure list is sorted
     public void EnsureSorted() {
         List.Sort((a, b) => a.Progress.CompareTo(b.Progress));
+        InvalidateHexLut();
     }
 
     public Color GetColor(float key, bool noCache = false) {
@@ -62,6 +63,40 @@ public class ColorPerDictionary {
 
     float _lastKey = -1f;
     Color? _lastColor;
+
+    // ===== Pre-baked hex LUT — replaces per-frame ColorUtility.ToHtmlString* calls =====
+    private const int HexLutSize = 256;
+    [JsonIgnore] private string[] _hexLutRgb;
+    [JsonIgnore] private string[] _hexLutRgba;
+    [JsonIgnore] private bool _hexLutDirty = true;
+
+    /// <summary>Returns a pre-baked lower-case hex string ("rrggbb" or "rrggbbaa") for <paramref name="key"/> in [0,1].</summary>
+    public string GetHex(float key, bool includeAlpha = false)
+    {
+        EnsureHexLut();
+        if (key < 0) key = 0;
+        else if (key > 1) key = 1;
+        var lut = includeAlpha ? _hexLutRgba : _hexLutRgb;
+        return lut[(int)(key * (HexLutSize - 1) + 0.5f)];
+    }
+
+    private void EnsureHexLut()
+    {
+        if (!_hexLutDirty && _hexLutRgb != null) return;
+        _hexLutRgb = new string[HexLutSize];
+        _hexLutRgba = new string[HexLutSize];
+        for (int i = 0; i < HexLutSize; i++)
+        {
+            float t = i / (float)(HexLutSize - 1);
+            Color c = GetColor(t);
+            // Bake via ColorUtility so output is byte-for-byte identical to the old runtime path.
+            _hexLutRgb[i] = ColorUtility.ToHtmlStringRGB(c);
+            _hexLutRgba[i] = ColorUtility.ToHtmlStringRGBA(c);
+        }
+        _hexLutDirty = false;
+    }
+
+    private void InvalidateHexLut() => _hexLutDirty = true;
 
     int BinarySearch(float value) {
         if (List.Count == 0) return 0;
@@ -153,11 +188,13 @@ public class ColorPerDictionary {
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
         GUILayout.Space(8);
+        if (changed) InvalidateHexLut();
         return changed;
     }
 
     void SortList() {
         List.Sort((a, b) => a.Progress.CompareTo(b.Progress));
+        InvalidateHexLut();
     }
 
     public void Add((float, Color) item) {

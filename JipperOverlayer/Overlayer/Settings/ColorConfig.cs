@@ -38,6 +38,13 @@ public class ColorConfig
     public ColorCache JStart = new(Color.white);
 
     public Color GetProgressColor(float t) { return Progress.GetColor(t); }
+    public string GetProgressHex(float t, bool alpha = false) { return Progress.GetHex(t, alpha); }
+    public string GetBpmHex(float t, bool alpha = false) { return Bpm.GetHex(t, alpha); }
+    public string GetAccuracyHex(float t, bool perfect, bool alpha = true)
+        => perfect ? ColorUtility.ToHtmlStringRGBA(SettingsGold) : Accuracy.GetHex(t, alpha);
+    public string GetXAccuracyHex(float t, bool perfect, bool alpha = true)
+        => perfect ? ColorUtility.ToHtmlStringRGBA(SettingsGold) : XAccuracy.GetHex(t, alpha);
+    private static readonly Color SettingsGold = new(1, 0.8549f, 0);
     public void EnsureSorted() {
         Progress.EnsureSorted(); Accuracy.EnsureSorted(); XAccuracy.EnsureSorted();
         MusicTime.EnsureSorted(); MapTime.EnsureSorted(); Best.EnsureSorted();

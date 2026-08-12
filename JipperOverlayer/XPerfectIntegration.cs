@@ -22,11 +22,13 @@ namespace JipperOverlayer
             (GetPlayerPlusPerfect(player), GetPlayerXPerfect(player), GetPlayerMinusPerfect(player));
 
         private static bool _subscribedToToggle;
+        private static bool _notInstalled; // XPerfect 未安装:运行时无法装上,永久跳过探测
 
-        /// <summary>懒加载：在需要时调用（如 UpdateJudgement 或 OnUpdate）</summary>
+        /// <summary>懒加载：在需要时调用（如 UpdateJudgement 或 OnUpdate）。
+        /// 未安装 → 永久短路;安装未启用 → 保持每帧探测;已启用使用 → IsAvailable 短路,仅关闭时经 OnToggle 恢复。</summary>
         public static void EnsureInitialized()
         {
-            if (IsAvailable) return;
+            if (IsAvailable || _notInstalled) return;
             TryCache();
             SubscribeToToggle();
         }
@@ -35,7 +37,13 @@ namespace JipperOverlayer
         {
             if (IsAvailable) return;
             var mod = UnityModManager.FindMod("XPerfect");
-            if (mod == null || !mod.Enabled || !mod.Active || mod.Assembly == null) return;
+            if (mod == null)
+            {
+                _notInstalled = true;
+                Loader.Log("[XPerfectIntegration] XPerfect not found — probe disabled for this session.");
+                return;
+            }
+            if (!mod.Enabled || !mod.Active || mod.Assembly == null) return; // 装了但没开:随时可能启用,继续探测
             CacheDelegates(mod.Assembly);
             Overlayer.Overlay.Instance?.UpdateJudgement();
         }

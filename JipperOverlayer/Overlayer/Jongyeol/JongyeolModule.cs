@@ -279,8 +279,8 @@ public class JongyeolModule
         float kps = cbpm / 60;
         if (isPseudo) kps *= count;
         if (_overlay.LastTileBpm == bpm.TileBpm && _overlay.LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
-        string colorHex = BpmCalculator.ColorToHex(s.Colors.GetBpmColor(bpm.TileBpm / s.BpmColorMax));
-        string kpsPrefix = isPseudo ? $"<color=#{BpmCalculator.ColorToHex(s.Colors.GetBpmColor(cbpm * count / s.BpmColorMax))}>" : "";
+        string colorHex = s.Colors.GetBpmHex(bpm.TileBpm / s.BpmColorMax, true);
+        string kpsPrefix = isPseudo ? $"<color=#{s.Colors.GetBpmHex(cbpm * count / s.BpmColorMax, true)}>" : "";
         string kpsSuffix = isPseudo ? "</color>" : "";
         _overlay.BPMText.text = Overlay.BuildBpmText(s.BpmLineOrder, colorHex, s, bpm.TileBpm, cbpm, kps, kpsPrefix, kpsSuffix);
         if (_overlay.LastCurBpm != cbpm) _overlay.BPMText.color = s.Colors.GetBpmColor(cbpm / s.BpmColorMax);
