@@ -547,6 +547,15 @@ public class Overlay
             _mainContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(16, -16);
         if (_bpmObject)
             _bpmObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(-16, -16);
+        bool coopJudge = VersionSafe.IsCoopMode();
+        int judgeCount = coopJudge ? Math.Min(VersionSafe.GetPlayerCount(), 4) : 1;
+        for (int i = 0; i < 4; i++)
+        {
+            if (!_judgementObjects[i] || i >= judgeCount) continue;
+            JudgementTexts[i].rectTransform.anchoredPosition = coopJudge
+                ? new Vector2(i % 2 == 0 ? -250 : 250, 35 - 30 * (i / 2))
+                : new Vector2(0, s.JudgementLocationUp ? 85 : 5);
+        }
         if (ComboTransform)
             ComboTransform.anchoredPosition = new Vector2(0, -43 - 14 * s.Size);
         if (_timingScaleObject)
@@ -558,10 +567,12 @@ public class Overlay
 
         if (!s.CustomPositionsEnabled) return;
         var o = Main.Settings;
+        // Offsets are in canvas reference units (1920x1080), so apply them in
+        // anchoredPosition space to scale with the CanvasScaler across resolutions.
         if (_mainContainer)
-            _mainContainer.GetComponent<RectTransform>().position += new Vector3(o.MainOffsetX, o.MainOffsetY, 0);
+            _mainContainer.GetComponent<RectTransform>().anchoredPosition += new Vector2(o.MainOffsetX, o.MainOffsetY);
         if (_bpmObject)
-            _bpmObject.GetComponent<RectTransform>().position += new Vector3(o.BPMOffsetX, o.BPMOffsetY, 0);
+            _bpmObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(o.BPMOffsetX, o.BPMOffsetY);
         for (int i = 0; i < 4; i++)
         {
             if (!_judgementObjects[i]) continue;
@@ -570,19 +581,19 @@ public class Overlay
             if (i == 0 && !coop) { ox = o.JudgeOffsetX; oy = o.JudgeOffsetY; }
             else { ox = i == 0 ? o.P1JudgeOffsetX : i == 1 ? o.P2JudgeOffsetX : i == 2 ? o.P3JudgeOffsetX : o.P4JudgeOffsetX;
                 oy = i == 0 ? o.P1JudgeOffsetY : i == 1 ? o.P2JudgeOffsetY : i == 2 ? o.P3JudgeOffsetY : o.P4JudgeOffsetY; }
-            JudgementTexts[i].rectTransform.position += new Vector3(ox, oy, 0);
+            JudgementTexts[i].rectTransform.anchoredPosition += new Vector2(ox, oy);
         }
         if (ComboTransform)
-            ComboTransform.position += new Vector3(o.ComboOffsetX, o.ComboOffsetY, 0);
+            ComboTransform.anchoredPosition += new Vector2(o.ComboOffsetX, o.ComboOffsetY);
         if (_timingScaleObject)
-            TimingScaleText.rectTransform.position += new Vector3(o.TimingOffsetX, o.TimingOffsetY, 0);
+            TimingScaleText.rectTransform.anchoredPosition += new Vector2(o.TimingOffsetX, o.TimingOffsetY);
         if (_attemptObject)
         {
             bool coop = VersionSafe.IsCoopMode() && VersionSafe.GetPlayerCount() > 1;
-            _attemptObject.GetComponent<RectTransform>().position += new Vector3(coop ? o.AttemptCoopOffsetX : o.AttemptOffsetX, coop ? o.AttemptCoopOffsetY : o.AttemptOffsetY, 0);
+            _attemptObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(coop ? o.AttemptCoopOffsetX : o.AttemptOffsetX, coop ? o.AttemptCoopOffsetY : o.AttemptOffsetY);
         }
         if (_progressBarObject)
-            _progressBarObject.GetComponent<RectTransform>().position += new Vector3(o.ProgBarOffsetX, o.ProgBarOffsetY, 0);
+            _progressBarObject.GetComponent<RectTransform>().anchoredPosition += new Vector2(o.ProgBarOffsetX, o.ProgBarOffsetY);
     }
 
     public void RefreshVisibility()
