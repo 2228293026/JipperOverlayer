@@ -31,3 +31,5 @@ Thumbs.db
 .DS_Store
 
 .vscode
+tools/VerifyGameApi/bin/
+tools/VerifyGameApi/obj/
