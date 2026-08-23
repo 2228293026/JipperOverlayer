@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+- **XPerfect probe hardening**: `EnsureInitialized` wraps the UMM probe in try/catch and permanently disables probing when the UnityModManager assembly is absent (pure MelonLoader installs), instead of throwing once per frame
+- **MelonLoader `ModEnabled` preference honored**: startup no longer auto-enables the mod when the preference is off; a lightweight per-frame watcher enables/disables live as the preference changes
+- **Best-record multiplier key**: `LastMultiplier` now uses song pitch only — planet speed (which drifts mid-level with BPM events) no longer splits one map's best records across multiple keys; attempt counting already used pitch-only
+- **Repository.json update source**: the download URL now points at the actually published `JipperOverlayer-UMM.zip` release asset
+- **Lazy patch poller busy-wait**: the 100 ms `Task.Delay` moved outside the scene-loading branch, so the background loop yields during scene loads instead of spinning
+- **Time-text color NaN guards**: all six `time / totalTime` divisions (Overlay + JongyeolModule, music/map time) fall back to white when the total duration is unavailable
+- **Custom labels apply instantly**: editing any of the 31 labels (including while paused) forces a full overlay text refresh via the new `Overlay.RefreshAllTexts` / `IOverlayTextManager.DirtyTextCaches` — previously Checkpoint/Best/BPM/TimingScale/Death/Author/Timing edits stayed stale until their underlying value next changed
+- **Combo title state consistency**: `Show()` syncs the custom main label on fresh starts (checkpoint keeps keep the alt title as designed); label edits respect the Jongyeol alt-title state via the new `IsAltComboTitle`
+- **Language preset buttons refresh**: applying the EN/KO/CN presets now routes through the overlay refresh path
+- **Out-of-range language clamp**: `Settings.Load` clamps a hand-edited `CurrentLanguage` back to EN/KO/CN instead of crashing every GUI draw
+
+### Performance
+
+- **Settings GUI throttle**: `OnGUI` runs the full `RefreshVisibility` pass only during the Layout phase or after an actual edit, instead of on every IMGUI event
+- **Coop text pooling**: per-player death/state rendering reuses a static `StringBuilder` instead of allocating per call
+- **Slide inputs keep raw text**: slider text fields preserve intermediate input (cleared box, minus sign) instead of snapping back, matching the `PosSlide2` behavior
+
+### Removed
+
+- `ShadowManager.ApplyDarkShadow` — an exact duplicate of `ApplyShadow`; combo texts follow the global text-effect settings like every other slot
+
 ## v1.1.4 — 2026.08.12
 
 ### Features
