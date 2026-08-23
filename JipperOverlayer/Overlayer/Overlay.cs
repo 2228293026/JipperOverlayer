@@ -293,7 +293,7 @@ public class Overlay
         var fitter = title.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        ShadowManager.ApplyDarkShadow(ComboTitle);
+        ShadowManager.ApplyShadow(ComboTitle);
 
         var val = new GameObject("ComboValue");
         t = val.AddComponent<RectTransform>();
@@ -309,7 +309,7 @@ public class Overlay
         fitter = val.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        ShadowManager.ApplyDarkShadow(ComboText);
+        ShadowManager.ApplyShadow(ComboText);
         _comboObject = go;
     }
 
@@ -469,8 +469,8 @@ public class Overlay
         { if (jt) ShadowManager.ApplyShadow(jt); }
         foreach (var t in ExtraTexts)
         { if (t) ShadowManager.ApplyShadow(t); }
-        if (ComboTitle) ShadowManager.ApplyDarkShadow(ComboTitle);
-        if (ComboText) ShadowManager.ApplyDarkShadow(ComboText);
+        if (ComboTitle) ShadowManager.ApplyShadow(ComboTitle);
+        if (ComboText) ShadowManager.ApplyShadow(ComboText);
         ApplyFontSizes();
     }
 
@@ -853,7 +853,7 @@ public class Overlay
                 else timeStr = TimeFormatter.Format(time, hourNeed);
                 TimeText.text = $"{_musicTimeLabel} {timeStr}~{MusicTimeCache}";
                 LastTime = (int)time;
-                TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
+                TimeText.color = totalTime > 0 ? s.Colors.GetMusicTimeColor(time / totalTime) : Color.white;
             }
         }
         if (s.ShowMapTime || requireMusicToMap)
@@ -868,8 +868,8 @@ public class Overlay
             MapTimeCache ??= TimeFormatter.Format(totalTime, hourNeed);
             string tStr = time == totalTime ? MapTimeCache : TimeFormatter.Format(time, hourNeed);
             string txt = $"{_mapTimeLabel} {tStr}~{MapTimeCache}";
-            if (s.ShowMapTime) { MapTimeText.text = txt; LastMapTime = (int)time; MapTimeText.color = s.Colors.GetMapTimeColor(time / totalTime); }
-            if (requireMusicToMap) { TimeText.text = txt; LastTime = (int)time; TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime); }
+            if (s.ShowMapTime) { MapTimeText.text = txt; LastMapTime = (int)time; MapTimeText.color = totalTime > 0 ? s.Colors.GetMapTimeColor(time / totalTime) : Color.white; }
+            if (requireMusicToMap) { TimeText.text = txt; LastTime = (int)time; TimeText.color = totalTime > 0 ? s.Colors.GetMusicTimeColor(time / totalTime) : Color.white; }
         }
     }
 
@@ -1012,10 +1012,40 @@ public class Overlay
         TimingScaleText.SetText(_timingSb);
     }
 
+    /// <summary>自定义标签编辑后强制重绘全部文本：先清空各更新路径的"值未变则跳过"节流，再逐个刷新。</summary>
+    internal void RefreshAllTexts()
+    {
+        if (ComboTitle)
+            ComboTitle.text = Jongyeol is { IsAltComboTitle: true }
+                ? Main.Settings.Labels.ComboTitleAlt
+                : Main.Settings.Labels.ComboTitle;
+        RefreshTimeLabels();
+        LastTime = -1;
+        LastMapTime = -1;
+        _lastTimingScale = -1;
+        DirtyBpmCache();
+        OverlayTextManager?.DirtyTextCaches();
+        Jongyeol?.DirtyTextCaches();
+        Jongyeol?.UpdateAuthor();
+        Jongyeol?.RefreshTiming();
+        UpdateProgress();     // 进度/检查点/进度条/最佳 + Jongyeol State/Death/Start/Colors
+        UpdateTime();
+        UpdateAccuracy();
+        UpdateBPM();
+        UpdateJudgement();
+        UpdateCombo(Features.GameLifecycleHelper.ComboCount, false);
+        UpdateTimingScale();
+        UpdateAttempts();
+    }
+
     public void Show(int floor, bool suppressNativeUI = false)
     {
         var s = Main.Settings;
         Jongyeol?.OnShow(floor);
+        // 每次显示都同步自定义标签——覆盖层隐藏期间编辑的标签也能生效。
+        // Jongyeol 模式下与 OnShow 同条件：checkpoint 续命刻意保留备用标题，不能在此覆盖。
+        if (ComboTitle && (Jongyeol == null || GameRefs.CheckpointsUsed == 0))
+            ComboTitle.text = s.Labels.ComboTitle;
         if (_lastSavedStartProgress != -1 && _lastSavedFromStart)
         {
             if (!AutoOnceEnabled) PlayCount.SetBest(LastHash, _lastSavedStartProgress, OverlayTextManager.GetProgress(), LastMultiplier);
@@ -1032,7 +1062,9 @@ public class Overlay
         var floors = GameRefs.LevelMaker?.listFloors;
         _lastSavedStartProgress = StartProgress = floors != null && floors.Count > 0 ? (float)(floor + 1) / floors.Count : 0f;
         _lastSavedFromStart = floor == 0;
-        LastMultiplier = (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance));
+        // 尝试/最佳记录的倍速键只用歌曲音高：行星速度会随 BPM 事件在关卡中变化，
+        // 混入会导致同一地图产生多套统计 key（数据错误）。
+        LastMultiplier = (float)GameRefs.SongPitch;
         if (!AutoOnceEnabled) PlayCount.AddAttempts(LastHash, StartProgress);
         SetupTextManager();
         ApplyFontToAll();

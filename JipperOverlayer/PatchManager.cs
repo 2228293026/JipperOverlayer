@@ -258,8 +258,9 @@ internal static class PatchManager
                     {
                         Debug.LogError($"[PatchManager] ApplyLazyPatches error: {ex}");
                     }
-                    await Task.Delay(100, token).ConfigureAwait(false);
                 }
+                // 无论是否在场景加载中都要让出线程——否则场景加载期间此循环会无延时空转烧 CPU。
+                await Task.Delay(100, token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) { }

@@ -12,6 +12,9 @@ public interface IOverlayTextManager
     void UpdateBest(Overlay overlay);
     float GetProgress();
 
+    /// <summary>标签编辑后清空各文本重建路径的"值未变则跳过"节流，强制下次刷新重绘。</summary>
+    void DirtyTextCaches();
+
     // Jongyeol-mode helpers (coop-aware)
     void UpdateDeath(Overlay overlay);
     void UpdateState(Overlay overlay, bool isPurePerfect);

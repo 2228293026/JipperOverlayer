@@ -51,7 +51,7 @@ public class BundleLoader
 
         foreach (UnityEngine.Object asset in Bundle.LoadAllAssets())
         {
-            Loader.Log($"  Bundle asset: {asset.name} ({asset.GetType().Name}");
+            Loader.Log($"  Bundle asset: {asset.name} ({asset.GetType().Name})");
 
             if (asset is Font font && FontAsset == null)
             {

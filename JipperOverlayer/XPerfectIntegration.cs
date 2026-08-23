@@ -29,8 +29,18 @@ namespace JipperOverlayer
         public static void EnsureInitialized()
         {
             if (IsAvailable || _notInstalled) return;
-            TryCache();
-            SubscribeToToggle();
+            try
+            {
+                TryCache();
+                SubscribeToToggle();
+            }
+            catch (Exception e)
+            {
+                // UMM 程序集不存在（纯 MelonLoader 安装）或探测失败：
+                // 本会话永久停用探测，避免每帧抛异常。
+                _notInstalled = true;
+                Loader.Log($"[XPerfectIntegration] Probe unavailable, integration disabled for this session ({e.GetType().Name}: {e.Message})");
+            }
         }
 
         private static void TryCache()

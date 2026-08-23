@@ -19,7 +19,11 @@ public class JongyeolModule
     private float _lastCurKps = -1, _fpsTime, _timingsSum;
     private bool _perToCom;
     private int _lastMusicTimeTick = -1;
+    private float _lastTiming;
     public int DecimalPrecision = 2;
+
+    /// <summary>Jongyeol 模式下连击标题是否已切换为备用文本（非完美命中后）。</summary>
+    public bool IsAltComboTitle => _perToCom;
 
     public JongyeolModule(Overlay overlay)
     {
@@ -192,8 +196,28 @@ public class JongyeolModule
         }
         _timings.Add(timing);
         _timingsSum += timing;
-        TimingText.text = $"<color=white>{s.Labels.Timing} |</color> {Math.Round(timing, DecimalPrecision)} ({Math.Round(_timingsSum / _timings.Count, DecimalPrecision)})";
-        TimingText.color = s.Colors.JTiming.GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
+        _lastTiming = timing;
+        RenderTiming(timing);
+    }
+
+    private void RenderTiming(float timing)
+    {
+        TimingText.text = $"<color=white>{Main.Settings.Labels.Timing} |</color> {Math.Round(timing, DecimalPrecision)} ({Math.Round(_timingsSum / _timings.Count, DecimalPrecision)})";
+        TimingText.color = Main.Settings.Colors.JTiming.GetColor(1 - Math.Min(Math.Abs(timing), 150) / 150);
+    }
+
+    // 标签编辑后重绘 Timing：用缓存的最近一次采样，不向统计里追加新样本。
+    internal void RefreshTiming()
+    {
+        if (!Main.Settings.ShowTiming || !_overlay.GameObject.activeSelf) return;
+        if (_timings == null || _timings.Count == 0 || !TimingText) return;
+        RenderTiming(_lastTiming);
+    }
+
+    internal void DirtyTextCaches()
+    {
+        _lastMusicTimeTick = -1;
+        _pseudoFloor = -1;
     }
 
     // ===== Overridden Update Methods =====
@@ -241,7 +265,7 @@ public class JongyeolModule
                     : TimeFormatter.FormatWithDecimals(time, hourNeed);
 
                 _overlay.TimeText.text = $"{_overlay._musicTimeLabel} {timeStr}~{_overlay.MusicTimeCache}";
-                _overlay.TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime);
+                _overlay.TimeText.color = totalTime > 0 ? s.Colors.GetMusicTimeColor(time / totalTime) : Color.white;
             }
         }
 
@@ -259,8 +283,8 @@ public class JongyeolModule
             _overlay.MapTimeCache ??= TimeFormatter.FormatWithDecimals(totalTime, hourNeed);
             string timeStr = time == totalTime ? _overlay.MapTimeCache : TimeFormatter.FormatWithDecimals(time, hourNeed);
             string text = $"{_overlay._mapTimeLabel} {timeStr}~{_overlay.MapTimeCache}";
-            if (s.ShowMapTime) { _overlay.MapTimeText.text = text; _overlay.MapTimeText.color = s.Colors.GetMapTimeColor(time / totalTime); }
-            if (requireMusicToMap) { _overlay.TimeText.text = text; _overlay.TimeText.color = s.Colors.GetMusicTimeColor(time / totalTime); }
+            if (s.ShowMapTime) { _overlay.MapTimeText.text = text; _overlay.MapTimeText.color = totalTime > 0 ? s.Colors.GetMapTimeColor(time / totalTime) : Color.white; }
+            if (requireMusicToMap) { _overlay.TimeText.text = text; _overlay.TimeText.color = totalTime > 0 ? s.Colors.GetMusicTimeColor(time / totalTime) : Color.white; }
         }
     }
 

@@ -153,7 +153,10 @@ public class Settings
         DrawTextSettings();
         DrawTextEffectsSection();
         DrawLabelsSection();
-        Overlay.Instance?.RefreshVisibility();
+        // 每个 IMGUI 帧只在 Layout 阶段（或有实际修改时）刷新一次可见性，
+        // 而不是每个 GUI 事件都全量重排。
+        if (GUI.changed || Event.current.type == EventType.Layout)
+            Overlay.Instance?.RefreshVisibility();
     }
 
     void DrawGeneralSection()
@@ -759,23 +762,20 @@ public class Settings
         string newText = GUILayout.TextField(text, GUILayout.Width(55));
         if (newText != text)
         {
-            float parsed;
-            if (float.TryParse(newText, out parsed))
+            // 保留用户输入的原始文本（含清空、负号等中间态），能解析才应用——
+            // 与 PosSlide2 相同的模式，避免输入被立即回弹。
+            _slideFields[label] = newText;
+            if (float.TryParse(newText, out float parsed))
             {
-                nv = Mathf.Clamp(parsed, min, max);
-                _slideFields[label] = Math.Abs(nv - parsed) > 0.0001f
-                    ? nv.ToString("F2") : newText;
+                float clamped = Mathf.Clamp(parsed, min, max);
+                if (Math.Abs(clamped - v) > 0.001f)
+                {
+                    nv = clamped;
+                    _slideFields[label] = Math.Abs(nv - parsed) > 0.0001f ? nv.ToString("F2") : newText;
+                }
             }
-            else if (newText.StartsWith(text) && newText.Length > text.Length
-                && float.TryParse(newText.Substring(text.Length), out parsed))
-            {
-                nv = Mathf.Clamp(parsed, min, max);
-                _slideFields[label] = Math.Abs(nv - parsed) > 0.0001f
-                    ? nv.ToString("F2") : newText;
-            }
-            else _slideFields[label] = v.ToString("F2");
         }
-        else if (newText == text && Math.Abs(nv - v) > 0.001f)
+        else if (Math.Abs(nv - v) > 0.001f)
             _slideFields[label] = nv.ToString("F2");
         GUILayout.EndHorizontal();
         if (Math.Abs(nv - v) > 0.001f) { onChange?.Invoke(); return nv; }
@@ -923,9 +923,10 @@ public class Settings
 
         GUILayout.BeginHorizontal();
         GUILayout.Space(16);
-        if (GUILayout.Button("English Preset", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.English); Labels.Save(); }
-        if (GUILayout.Button("한국어", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Korean); Labels.Save(); }
-        if (GUILayout.Button("中文", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Chinese); Labels.Save(); }
+        // GUILayout.Button 不会置位 GUI.changed，手动置位以走 RefreshAllTexts 通道刷新覆盖层。
+        if (GUILayout.Button("English Preset", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.English); Labels.Save(); GUI.changed = true; }
+        if (GUILayout.Button("한국어", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Korean); Labels.Save(); GUI.changed = true; }
+        if (GUILayout.Button("中文", GUILayout.ExpandWidth(false))) { Labels = LabelConfig.GetPreset(Language.Chinese); Labels.Save(); GUI.changed = true; }
         GUILayout.EndHorizontal();
 
         GUILayout.Space(5);
@@ -973,21 +974,7 @@ public class Settings
         {
             var o = Overlay.Instance;
             if (o != null && o.GameObject.activeSelf)
-            {
-                o.ComboTitle.text = Main.Settings.Labels.ComboTitle;
-                o.RefreshTimeLabels();
-                o.UpdateProgress();
-                o.UpdateTime();
-                o.UpdateAccuracy();
-                o.UpdateBPM();
-                o.UpdateJudgement();
-                o.UpdateCombo(GameLifecycleHelper.ComboCount, false);
-                o.UpdateTimingScale();
-                o.UpdateAttempts();
-                if (Main.Settings.ShowBest) o.OverlayTextManager?.UpdateBest(o);
-                if (Main.Settings.ShowCheckpoint) o.UpdateCheckPointText();
-                if (Main.Settings.ShowProgressBar) o.UpdateProgressBar();
-            }
+                o.RefreshAllTexts();
         }
     }
 
@@ -1065,6 +1052,9 @@ public class Settings
     public static Settings Load()
     {
         var s = LoadJson() ?? LoadXmlFallback() ?? new Settings();
+        // 手改 Settings.json 的越界语言值会让 Tr.Get 每次 GUI 绘制越界崩溃，这里钳制。
+        if (s.CurrentLanguage < Language.English || s.CurrentLanguage > Language.Chinese)
+            s.CurrentLanguage = Language.English;
         if (s.ConfigVersion < 2)
         {
             float Sw = 1920, Sh = 1080;

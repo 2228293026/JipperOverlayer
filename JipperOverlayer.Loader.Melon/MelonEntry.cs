@@ -28,6 +28,8 @@ public class JipperMelonMod : MelonMod
     public override void OnSceneWasInitialized(int buildIndex, string sceneName)
     {
         if (_enabled) return;
+        // 尊重 ModEnabled 首选项：关闭时启动不自动启用，等用户打开后再经 OnUpdate 启用。
+        if (SettingsWindow.Enabled != null && !SettingsWindow.Enabled.Value) return;
         _enabled = true;
         Main.Enable();
     }
@@ -37,6 +39,19 @@ public class JipperMelonMod : MelonMod
         // Hotkey check
         if (Input.GetKeyDown(SettingsWindow.Hotkey.Value))
             SettingsWindow.ToggleVisible();
+
+        // 跟随 ModEnabled 首选项实时启停（MelonLoader 没有自己的 OnToggle）。
+        bool wantEnabled = SettingsWindow.Enabled == null || SettingsWindow.Enabled.Value;
+        if (wantEnabled && !_enabled)
+        {
+            _enabled = true;
+            Main.Enable();
+        }
+        else if (!wantEnabled && _enabled)
+        {
+            _enabled = false;
+            Main.Disable();
+        }
 
         _handler?.TriggerOnUpdate(Time.deltaTime);
     }

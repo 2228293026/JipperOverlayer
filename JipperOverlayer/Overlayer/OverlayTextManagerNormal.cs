@@ -216,4 +216,11 @@ public class OverlayTextManagerNormal : IOverlayTextManager
     }
 
     public int GetTooJudgement(Overlay overlay) => overlay.Hit[0] + overlay.Hit[6];
+
+    public void DirtyTextCaches()
+    {
+        _lastDeath = -1;
+        LastCheckpoint = -1;
+        CurBest = -1;   // 触发从 PlayCount 重载并在下次 UpdateBest 时无条件重绘
+    }
 }

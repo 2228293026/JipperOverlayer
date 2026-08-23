@@ -16,7 +16,6 @@ internal static class ShadowManager
     public static void ClearCache() => MaterialCache.Clear();
 
     public static void ApplyShadow(TextMeshProUGUI text) => Apply(text);
-    public static void ApplyDarkShadow(TextMeshProUGUI text) => Apply(text);
 
     // Apply the global text-effect settings (shadow + outline) to a text. Parameters come from
     // Main.Settings.TextEffects so all overlay texts share one configurable look. Material is

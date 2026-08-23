@@ -6,6 +6,8 @@ namespace JipperOverlayer.Overlayer;
 
 public class OverlayTextManagerCoop : IOverlayTextManager
 {
+    private static readonly StringBuilder _sb = new(256);
+
     public PlayerData[] PlayerDatas;
     public float MaxProgress;
     public float CurBest = -1;
@@ -173,7 +175,8 @@ public class OverlayTextManagerCoop : IOverlayTextManager
             _lastPlayerDeath = new int[count];
             for (int i = 0; i < count; i++) _lastPlayerDeath[i] = -1;
         }
-        var sb = new StringBuilder();
+        var sb = _sb;
+        sb.Clear();
         sb.Append("<color=white>");
         sb.Append(s.Labels.Death);
         sb.Append("</color>");
@@ -201,7 +204,8 @@ public class OverlayTextManagerCoop : IOverlayTextManager
         if (!s.ShowState || !overlay.GameObject.activeSelf || overlay.StateText == null) return;
         var labels = s.Labels;
         int count = VersionSafe.GetPlayerCount();
-        var sb = new StringBuilder();
+        var sb = _sb;
+        sb.Clear();
         sb.Append("<color=white>");
         sb.Append(labels.State);
         sb.Append("</color>");
@@ -290,5 +294,13 @@ public class OverlayTextManagerCoop : IOverlayTextManager
             total += hits[0] + hits[6];
         }
         return total;
+    }
+
+    public void DirtyTextCaches()
+    {
+        if (_lastPlayerDeath != null)
+            for (int i = 0; i < _lastPlayerDeath.Length; i++) _lastPlayerDeath[i] = -1;
+        LastCheckpoint = -1;
+        CurBest = -1;
     }
 }
