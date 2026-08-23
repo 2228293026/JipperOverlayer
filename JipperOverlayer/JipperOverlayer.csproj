@@ -1,154 +1,103 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{38AEB58B-A5DE-44BF-AC1E-180B20543F5F}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFramework>net481</TargetFramework>
     <RootNamespace>JipperOverlayer</RootNamespace>
     <AssemblyName>JipperOverlayer</AssemblyName>
-    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <!-- SDK default for net48x is C# 7.3; this codebase uses C# 12 syntax -->
     <LangVersion>12</LangVersion>
-    <Deterministic>true</Deterministic>
+    <!-- CI / docs expect bin\<Configuration>\ without a net481 subfolder -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- Properties/AssemblyInfo.cs is the single source of assembly attributes -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+
   <ItemGroup>
+    <!-- Game / loader assemblies: reference-only, never copied to output -->
     <Reference Include="0Harmony">
-      <HintPath>$(ProjectDir)..\Libs\0Harmony.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\0Harmony.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>$(ProjectDir)..\Libs\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>$(ProjectDir)..\Libs\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>$(ProjectDir)..\Libs\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="RDTools">
-      <HintPath>$(ProjectDir)..\Libs\RDTools.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\RDTools.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Xml" />
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>$(ProjectDir)..\Libs\Unity.TextMeshPro.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.AssetBundleModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.AudioModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.IMGUIModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.InputLegacyModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.JSONSerializeModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.JSONSerializeModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.JSONSerializeModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextCoreFontEngineModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextCoreTextEngineModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.TextRenderingModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
-      <HintPath>$(ProjectDir)..\Libs\UnityEngine.UIModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityModManager">
-      <HintPath>$(ProjectDir)..\Libs\UnityModManager.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\Libs\UnityModManager.dll</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="IModLoader.cs" />
-    <Compile Include="Loader.cs" />
-    <Compile Include="Overlayer\GameRefs.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PatchManager.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="TextEffectConfig.cs" />
-    <Compile Include="UtilExtensions.cs" />
-    <Compile Include="Main.cs" />
-    <Compile Include="Overlayer\BundleLoader.cs" />
-    <Compile Include="Overlayer\FontManager.cs" />
-    <Compile Include="Overlayer\IOverlayTextManager.cs" />
-    <Compile Include="Overlayer\Overlay.cs" />
-    <Compile Include="Overlayer\Util\ShadowManager.cs" />
-    <Compile Include="Overlayer\Util\TimeFormatter.cs" />
-    <Compile Include="Overlayer\Util\BpmCalculator.cs" />
-    <Compile Include="Overlayer\OverlayMono.cs" />
-    <Compile Include="Overlayer\OverlayTextManagerNormal.cs" />
-    <Compile Include="Overlayer\OverlayTextManagerCoop.cs" />
-    <Compile Include="Overlayer\PlayCount.cs" />
-    <Compile Include="Overlayer\ProgressBar.cs" />
-    <Compile Include="Overlayer\VersionSafe.cs" />
-    <Compile Include="Overlayer\Settings\ColorConfig.cs" />
-    <Compile Include="Overlayer\Settings\LabelConfig.cs" />
-    <Compile Include="Overlayer\Settings\ColorCache.cs" />
-    <Compile Include="Overlayer\Settings\ProgressColorCache.cs" />
-    <Compile Include="Overlayer\Settings\ColorPerDictionary.cs" />
-    <Compile Include="Overlayer\Settings\DisplayElement.cs" />
-    <Compile Include="Overlayer\Features\PatchLogic.cs" />
-    <Compile Include="Overlayer\Features\GameLifecyclePatches.cs" />
-    <Compile Include="Overlayer\Features\V141Patches.cs" />
-    <Compile Include="Overlayer\Features\V136Patches.cs" />
-    <Compile Include="Overlayer\Jongyeol\JongyeolModule.cs" />
-    <Compile Include="Overlayer\Jongyeol\Jbpm.cs" />
-    <Compile Include="Overlayer\Localization\Language.cs" />
-    <Compile Include="Overlayer\Localization\Tr.cs" />
-    <Compile Include="XPerfectIntegration.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
 </Project>
