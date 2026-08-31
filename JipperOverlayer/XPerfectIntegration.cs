@@ -114,7 +114,11 @@ namespace JipperOverlayer
         {
             if (enabled)
             {
+                bool wasAvailable = IsAvailable;
                 TryCache();
+                // 首次探测成功：刷新判定窗口（X 行）——TryCache 内部已刷新 Judgement
+                if (IsAvailable && !wasAvailable)
+                    RefreshBpmOverlay();
                 if (!IsAvailable)
                     _subscribedToToggle = false;
             }
@@ -126,11 +130,23 @@ namespace JipperOverlayer
                     _getXPerfect = _getPlusPerfect = _getMinusPerfect = null;
                     _getPlayerXPerfect = _getPlayerPlusPerfect = _getPlayerMinusPerfect = null;
                     Loader.Log("[XPerfectIntegration] XPerfect disabled.");
-                    Overlayer.Overlay.Instance?.UpdateJudgement();
+                    // 同时刷新判定计数与判定窗口（隐藏 X 行）
+                    var o = Overlayer.Overlay.Instance;
+                    if (o != null) { o.UpdateJudgement(); RefreshBpm(o); }
                 }
                 _subscribedToToggle = false;
             }
             return true;
+        }
+
+        /// <summary>使 BPM 缓存失效并立即重绘（判定窗口 X 行随 XPerfect 可用性变化）。</summary>
+        private static void RefreshBpmOverlay() => RefreshBpm(Overlayer.Overlay.Instance);
+
+        private static void RefreshBpm(Overlayer.Overlay o)
+        {
+            if (o == null) return;
+            o.DirtyBpmCache();
+            o.UpdateBPM();
         }
     }
 }
