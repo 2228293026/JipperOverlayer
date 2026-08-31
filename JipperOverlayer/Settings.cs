@@ -313,7 +313,14 @@ public class Settings
                 Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor),
                     () => { Colors.Bpm = new([(0f, Color.white), (1f, Color.magenta)]); Colors.Save(); });
                 DrawBpmLineOrder();
+                bool prevShowTimingWindow = ShowTimingWindow;
                 ShowTimingWindow = Tog(Tr.Get(Tr.Key.ShowTimingWindow), ShowTimingWindow);
+                if (prevShowTimingWindow != ShowTimingWindow)
+                {
+                    // 切换判定时间窗时使 BPM 缓存失效并立即重绘，否则要等 BPM 变化才生效
+                    var o = Overlayer.Overlay.Instance;
+                    if (o != null) { o.DirtyBpmCache(); o.UpdateBPM(); }
+                }
             }
         });
 
