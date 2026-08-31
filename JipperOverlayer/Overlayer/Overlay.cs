@@ -1,4 +1,4 @@
-using JipperOverlayer.Overlayer.Jongyeol;
+﻿using JipperOverlayer.Overlayer.Jongyeol;
 using JipperOverlayer.Overlayer.Util;
 using System;
 using System.Collections.Generic;
@@ -74,7 +74,9 @@ public class Overlay
     private static readonly StringBuilder _bpmSb = new(128);
     private static readonly StringBuilder _comboSb = new(16);
     private static readonly StringBuilder _timingSb = new(64);
+    private static readonly StringBuilder _twSb = new(64);
     private float _lastTimingScale = -1f;
+    private float _lastTwP = -1f, _lastTwX = -1f, _lastTwGr = -1f, _lastTwGd = -1f;
     private OverlayMono _mono;
 
     private static readonly IReadOnlyList<TextMeshProUGUI> _emptyTexts = Array.Empty<TextMeshProUGUI>();
@@ -240,7 +242,7 @@ public class Overlay
         t.SetParent(Canvas.transform);
         t.anchorMin = t.anchorMax = t.pivot = new Vector2(1, 1);
         t.anchoredPosition = new Vector2(-16, -16);
-        t.sizeDelta = new Vector2(456, 90);
+        t.sizeDelta = new Vector2(456, 240);
         BPMText = go.AddComponent<TextMeshProUGUI>();
         BPMText.font = BundleLoader.FontAsset;
         BPMText.alignment = TextAlignmentOptions.TopRight;
@@ -918,11 +920,44 @@ public class Overlay
         var floor = GameRefs.CurrentFloor ?? GameRefs.FirstFloor;
         if (floor == null) return;
         var bpm = BpmCalculator.Calculate(floor, (float)(GameRefs.SongPitch * VersionSafe.GetPlanetSpeed(GameRefs.ControllerInstance)));
-        if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm) return;
+
+        // 判定时间窗：并入 BPM 多行文本，复用 BPM 的字体/字号/对齐/位置/行距。
+        var tw = s.ShowTimingWindow ? TimingWindowCalculator.Calculate(floor) : default;
+        bool twValid = s.ShowTimingWindow && tw.Valid;
+        bool twChanged = twValid && TimingWindowChanged(tw);
+
+        if (LastTileBpm == bpm.TileBpm && LastCurBpm == bpm.CurrentBpm && !twChanged) return;
         string hex = s.Colors.GetBpmHex(bpm.TileBpm / s.BpmColorMax, true);
-        BPMText.text = BuildBpmText(s.BpmLineOrder, hex, s, bpm.TileBpm, bpm.CurrentBpm, bpm.Kps);
+        string text = BuildBpmText(s.BpmLineOrder, hex, s, bpm.TileBpm, bpm.CurrentBpm, bpm.Kps);
+        if (twValid) text += BuildTimingWindowLines(tw);
+        BPMText.text = text;
         if (LastCurBpm != bpm.CurrentBpm) BPMText.color = s.Colors.GetBpmColor(bpm.CurrentBpm / s.BpmColorMax);
         LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;
+    }
+
+    /// <summary>判定时间窗数值是否变化（带节流）；变化时记录新值。</summary>
+    internal bool TimingWindowChanged(in TimingWindowCalculator.Result tw)
+    {
+        float x = tw.XPerfectValid ? tw.XPerfectMs : -1f;
+        if (Math.Abs(tw.PerfectMs - _lastTwP) < 0.05f &&
+            Math.Abs(tw.GreatMs - _lastTwGr) < 0.05f &&
+            Math.Abs(tw.GoodMs - _lastTwGd) < 0.05f &&
+            Math.Abs(x - _lastTwX) < 0.05f) return false;
+        _lastTwP = tw.PerfectMs; _lastTwGr = tw.GreatMs; _lastTwGd = tw.GoodMs; _lastTwX = x;
+        return true;
+    }
+
+    /// <summary>构造追加到 BPM 下方的判定时间窗行（每行一个判定）。</summary>
+    internal string BuildTimingWindowLines(in TimingWindowCalculator.Result tw)
+    {
+        var s = Main.Settings;
+        _twSb.Clear();
+        if (tw.XPerfectValid)
+            _twSb.Append("\n<color=#4DCCFF>").Append(s.Labels.XPerfectLabel).Append("</color> | ±").Append(Math.Round(tw.XPerfectMs)).Append("ms");
+        _twSb.Append("\n<color=#60FF4E>").Append(s.Labels.PerfectLabel).Append("</color> | ±").Append(Math.Round(tw.PerfectMs)).Append("ms");
+        _twSb.Append("\n<color=#A0FF4E>").Append(s.Labels.GreatLabel).Append("</color> | ±").Append(Math.Round(tw.GreatMs)).Append("ms");
+        _twSb.Append("\n<color=#FF6F4E>").Append(s.Labels.GoodLabel).Append("</color> | ±").Append(Math.Round(tw.GoodMs)).Append("ms");
+        return _twSb.ToString();
     }
 
     public void DirtyBpmCache() { LastTileBpm = LastCurBpm = -1; }

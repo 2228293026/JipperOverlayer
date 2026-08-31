@@ -302,11 +302,19 @@ public class JongyeolModule
         if (!isPseudo) cbpm = bpm.CurrentBpm;
         float kps = cbpm / 60;
         if (isPseudo) kps *= count;
-        if (_overlay.LastTileBpm == bpm.TileBpm && _overlay.LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f) return;
+
+        // 判定时间窗：并入 BPM 多行文本，与 Overlay.UpdateBPM 一致。
+        var tw = s.ShowTimingWindow ? TimingWindowCalculator.Calculate(floor) : default;
+        bool twValid = s.ShowTimingWindow && tw.Valid;
+        bool twChanged = twValid && _overlay.TimingWindowChanged(tw);
+
+        if (_overlay.LastTileBpm == bpm.TileBpm && _overlay.LastCurBpm == cbpm && Math.Abs(_lastCurKps - kps) < 0.001f && !twChanged) return;
         string colorHex = s.Colors.GetBpmHex(bpm.TileBpm / s.BpmColorMax, true);
         string kpsPrefix = isPseudo ? $"<color=#{s.Colors.GetBpmHex(cbpm * count / s.BpmColorMax, true)}>" : "";
         string kpsSuffix = isPseudo ? "</color>" : "";
-        _overlay.BPMText.text = Overlay.BuildBpmText(s.BpmLineOrder, colorHex, s, bpm.TileBpm, cbpm, kps, kpsPrefix, kpsSuffix);
+        string text = Overlay.BuildBpmText(s.BpmLineOrder, colorHex, s, bpm.TileBpm, cbpm, kps, kpsPrefix, kpsSuffix);
+        if (twValid) text += _overlay.BuildTimingWindowLines(tw);
+        _overlay.BPMText.text = text;
         if (_overlay.LastCurBpm != cbpm) _overlay.BPMText.color = s.Colors.GetBpmColor(cbpm / s.BpmColorMax);
         _overlay.LastTileBpm = bpm.TileBpm; _overlay.LastCurBpm = cbpm; _lastCurKps = kps;
     }

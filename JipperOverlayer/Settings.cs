@@ -18,6 +18,7 @@ public class Settings
     public bool ShowMusicTime = true, ShowMapTime, ShowMapTimeIfNotMusic = true;
     public bool ShowCheckpoint, ShowBest, ShowProgressBar = true;
     public bool ShowBPM = true, ShowCombo = true, ShowJudgement = true, ShowTimingScale = true;
+    public bool ShowTimingWindow = true;
     public bool ShowAttempt = true, ShowFullAttempt = true;
     public float Size = 1f;
     public TextEffectConfig TextEffects = new();
@@ -312,6 +313,7 @@ public class Settings
                 Colors.Bpm.SettingGUI(ColorChanged(() => Overlayer.Overlay.Instance?.UpdateBPM()), Tr.Get(Tr.Key.BpmColor),
                     () => { Colors.Bpm = new([(0f, Color.white), (1f, Color.magenta)]); Colors.Save(); });
                 DrawBpmLineOrder();
+                ShowTimingWindow = Tog(Tr.Get(Tr.Key.ShowTimingWindow), ShowTimingWindow);
             }
         });
 
@@ -945,6 +947,10 @@ public class Settings
         DrawLabelField("Attempt", ref Labels.Attempt);
         DrawLabelField("Full Attempt", ref Labels.FullAttempt);
         DrawLabelField("Timing Scale", ref Labels.TimingScale);
+        DrawLabelField("XPerfect", ref Labels.XPerfectLabel);
+        DrawLabelField("Perfect", ref Labels.PerfectLabel);
+        DrawLabelField("Great", ref Labels.GreatLabel);
+        DrawLabelField("Good", ref Labels.GoodLabel);
         DrawLabelField("Combo Title", ref Labels.ComboTitle);
         DrawLabelField("Combo Title Alt", ref Labels.ComboTitleAlt);
 
