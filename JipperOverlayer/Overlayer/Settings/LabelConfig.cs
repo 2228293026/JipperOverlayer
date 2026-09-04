@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Newtonsoft.Json;
 using JipperOverlayer.Overlayer.Localization;
@@ -21,6 +21,10 @@ public class LabelConfig
     public string Attempt = "Attempt";
     public string FullAttempt = "Full Attempt";
     public string TimingScale = "Timing Scale";
+    public string XPerfectLabel = "XPerfect";
+    public string PerfectLabel = "Perfect";
+    public string GreatLabel = "Great";
+    public string GoodLabel = "Good";
     public string ComboTitle = "Perfect";
     public string ComboTitleAlt = "Combo";
 
@@ -84,6 +88,10 @@ public class LabelConfig
         Attempt = "시도 횟수",
         FullAttempt = "전체 시도",
         TimingScale = "타이밍 스케일",
+        XPerfectLabel = "X완벽",
+        PerfectLabel = "완벽",
+        GreatLabel = "빠름/느림",
+        GoodLabel = "너무 빠름/느림",
         ComboTitle = "완벽",
         ComboTitleAlt = "콤보",
         FPS = "FPS",
@@ -119,6 +127,10 @@ public class LabelConfig
         Attempt = "尝试次数",
         FullAttempt = "总尝试",
         TimingScale = "判定区间",
+        XPerfectLabel = "X完美",
+        PerfectLabel = "完美",
+        GreatLabel = "稍快/稍慢",
+        GoodLabel = "太快/太慢",
         ComboTitle = "完美",
         ComboTitleAlt = "连击",
         FPS = "FPS",
