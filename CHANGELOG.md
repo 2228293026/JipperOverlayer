@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Features
+
+- **Judgement timing window display** (PR #5 by Wang125510, closes #4): four judgement tiers (optional XPerfect / Perfect / Great / Good) shown as ±milliseconds appended under the BPM block, computed through the game's own `scrMisc.GetAdjustedAngleBoundaryInDeg` so the numbers match real judgement exactly; the XPerfect row uses the upstream boundary formula `max(15° × marginScale, 16.67 ms)`. Adds the `ShowTimingWindow` toggle, four customizable tier labels, and EN/KO/CN localization
+
 ### Bug Fixes
 
 - **XPerfect probe hardening**: `EnsureInitialized` wraps the UMM probe in try/catch and permanently disables probing when the UnityModManager assembly is absent (pure MelonLoader installs), instead of throwing once per frame
@@ -17,6 +21,7 @@
 
 ### Performance
 
+- **Timing window per-frame cost**: `TimingWindowCalculator` memoizes its result keyed on every input the game function secretly reads (`GCS.difficulty` / `currentSpeedTrial` / `HITMARGIN_COUNTED`, plus bpm × speed, pitch, marginScale, XPerfect availability) — unchanged inputs skip the four game-function calls entirely; the ms-conversion lambda became a static method (no per-frame closure allocation); persistent failures warn once instead of every frame. The overlay throttle compares rounded whole milliseconds, so TMP re-meshes only when a displayed value actually changes
 - **Settings GUI throttle**: `OnGUI` runs the full `RefreshVisibility` pass only during the Layout phase or after an actual edit, instead of on every IMGUI event
 - **Coop text pooling**: per-player death/state rendering reuses a static `StringBuilder` instead of allocating per call
 - **Slide inputs keep raw text**: slider text fields preserve intermediate input (cleared box, minus sign) instead of snapping back, matching the `PosSlide2` behavior

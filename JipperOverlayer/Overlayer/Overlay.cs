@@ -76,7 +76,7 @@ public class Overlay
     private static readonly StringBuilder _timingSb = new(64);
     private static readonly StringBuilder _twSb = new(64);
     private float _lastTimingScale = -1f;
-    private float _lastTwP = -1f, _lastTwX = -1f, _lastTwGr = -1f, _lastTwGd = -1f;
+    private int _lastTwP = -1, _lastTwX = -1, _lastTwGr = -1, _lastTwGd = -1;
     private OverlayMono _mono;
 
     private static readonly IReadOnlyList<TextMeshProUGUI> _emptyTexts = Array.Empty<TextMeshProUGUI>();
@@ -935,15 +935,13 @@ public class Overlay
         LastTileBpm = bpm.TileBpm; LastCurBpm = bpm.CurrentBpm;
     }
 
-    /// <summary>判定时间窗数值是否变化（带节流）；变化时记录新值。</summary>
+    /// <summary>判定时间窗显示值（整毫秒）是否变化；变化时记录新值。按显示值比较，显示未变就不触发 TMP 重建。</summary>
     internal bool TimingWindowChanged(in TimingWindowCalculator.Result tw)
     {
-        float x = tw.XPerfectValid ? tw.XPerfectMs : -1f;
-        if (Math.Abs(tw.PerfectMs - _lastTwP) < 0.05f &&
-            Math.Abs(tw.GreatMs - _lastTwGr) < 0.05f &&
-            Math.Abs(tw.GoodMs - _lastTwGd) < 0.05f &&
-            Math.Abs(x - _lastTwX) < 0.05f) return false;
-        _lastTwP = tw.PerfectMs; _lastTwGr = tw.GreatMs; _lastTwGd = tw.GoodMs; _lastTwX = x;
+        int x = tw.XPerfectValid ? (int)Math.Round(tw.XPerfectMs) : -1;
+        int p = (int)Math.Round(tw.PerfectMs), gr = (int)Math.Round(tw.GreatMs), gd = (int)Math.Round(tw.GoodMs);
+        if (p == _lastTwP && gr == _lastTwGr && gd == _lastTwGd && x == _lastTwX) return false;
+        _lastTwP = p; _lastTwGr = gr; _lastTwGd = gd; _lastTwX = x;
         return true;
     }
 
